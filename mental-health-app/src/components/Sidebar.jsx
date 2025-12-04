@@ -87,7 +87,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
 
         {/* === HERO FEATURE: ANALYZE AI (Organic Blob Shape) === */}
         <motion.div 
-          className="mb-8 relative"
+          className="mb-6 relative"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -147,8 +147,8 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
               <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-indigo-500/20 blur-sm"></div>
               
               {/* Content */}
-              <div className="relative px-6 py-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
+              <div className="relative px-2 py-4 flex items-center justify-center">
+                <div className="flex items-center gap-2">
                   {/* Floating Icon */}
                   <motion.div
                     animate={{
@@ -161,7 +161,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                     <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full blur-xl opacity-70"></div>
                     <div className="relative p-3 bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 shadow-2xl"
                          style={{ borderRadius: "45% 55% 50% 50%/50% 60% 40% 50%" }}>
-                      <BrainCircuit className="w-6 h-6 text-white" strokeWidth={2.5} />
+                      <BrainCircuit className="w-3 h-3 text-white" strokeWidth={2.5} />
                     </div>
                   </motion.div>
 
