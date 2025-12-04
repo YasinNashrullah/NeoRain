@@ -131,7 +131,7 @@ const App = () => {
                 ) : (
                   // Dashboard Mode (Home, Tracker, dll)
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
-                    <div className="w-full min-h-full mx-auto md:max-w-5xl"> 
+                    <div className="w-full min-h-full mx-auto"> 
                       {activeTab === 'home' && <Home userData={userData} />}
                       {activeTab === 'tracker' && <Tracker userData={userData} />}
                       {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}
