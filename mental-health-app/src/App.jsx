@@ -33,6 +33,58 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [authPage, setAuthPage] = useState('login');
   const [activeTab, setActiveTab] = useState('home');
+  const [currentMood, setCurrentMood] = useState('default');
+
+  // Global Theme Configuration
+  const themeConfig = {
+    default: { // Happy & Calm -> Default
+      primary: 'from-pink-500 via-purple-600 to-indigo-600',
+      accent: 'text-cyan-400',
+      bgGradient: 'bg-slate-950', // Default dark background
+      sidebarBg: 'bg-[#0a0a12]',
+      activeBorder: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
+      activeBg: 'bg-[#1e1b4b]/80',
+      glowColor: 'rgba(168,85,247,0.6)'
+    },
+    angry: {
+      primary: 'from-orange-500 via-red-600 to-rose-600',
+      accent: 'text-orange-400',
+      bgGradient: 'bg-gradient-to-br from-slate-950 via-[#331408] to-slate-950',
+      sidebarBg: 'bg-[#1a0500]',
+      activeBorder: 'linear-gradient(90deg, #f97316, #dc2626, #e11d48)',
+      activeBg: 'bg-[#450a0a]/80',
+      glowColor: 'rgba(220, 38, 38, 0.6)'
+    },
+    sad: {
+      primary: 'from-slate-500 via-slate-600 to-slate-700',
+      accent: 'text-slate-300',
+      bgGradient: 'bg-gradient-to-br from-slate-950 via-[#0f172a] to-slate-950',
+      sidebarBg: 'bg-[#020617]',
+      activeBorder: 'linear-gradient(90deg, #94a3b8, #475569, #334155)',
+      activeBg: 'bg-[#1e293b]/80',
+      glowColor: 'rgba(71, 85, 105, 0.6)'
+    },
+    manic: {
+      primary: 'from-yellow-400 via-amber-500 to-orange-500',
+      accent: 'text-yellow-300',
+      bgGradient: 'bg-gradient-to-br from-slate-950 via-[#422006] to-slate-950',
+      sidebarBg: 'bg-[#1c1917]',
+      activeBorder: 'linear-gradient(90deg, #facc15, #f59e0b, #ea580c)',
+      activeBg: 'bg-[#451a03]/80',
+      glowColor: 'rgba(234, 88, 12, 0.6)'
+    }
+  };
+
+  // Map specific moods to themes
+  const getTheme = (mood) => {
+    if (mood === 'happy' || mood === 'calm') return themeConfig.default;
+    if (mood === 'angry') return themeConfig.angry;
+    if (mood === 'sad') return themeConfig.sad;
+    if (mood === 'manic') return themeConfig.manic;
+    return themeConfig.default;
+  };
+
+  const currentTheme = getTheme(currentMood);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -106,6 +158,7 @@ const App = () => {
             setActiveTab={setActiveTab}
             onLogout={handleLogout}
             userData={userData}
+            currentTheme={currentTheme}
           />
 
           {/* --- MAIN CONTENT AREA --- */}
@@ -113,8 +166,13 @@ const App = () => {
 
             {/* Mobile Chat Overlay */}
             {activeTab === 'chat' && (
-              <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
-                <Chat onBack={() => setActiveTab('home')} userData={userData} />
+              <div className={`md:hidden fixed inset-0 z-[9999] w-full h-full ${currentTheme.bgGradient}`}>
+                <Chat
+                  onBack={() => setActiveTab('home')}
+                  userData={userData}
+                  currentMood={currentMood}
+                  setCurrentMood={setCurrentMood}
+                />
               </div>
             )}
 
@@ -126,7 +184,12 @@ const App = () => {
                 {activeTab === 'chat' ? (
                   // Chat Mode (Desktop)
                   <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
-                    <Chat onBack={() => setActiveTab('home')} userData={userData} />
+                    <Chat
+                      onBack={() => setActiveTab('home')}
+                      userData={userData}
+                      currentMood={currentMood}
+                      setCurrentMood={setCurrentMood}
+                    />
                   </div>
                 ) : (
                   // Dashboard Mode (Home, Tracker, dll)
