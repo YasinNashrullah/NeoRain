@@ -237,7 +237,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, currentTheme }) 
               <motion.button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className="relative w-full group outline-none"
+                className="relative w-full h-[40px] align-middle group outline-none"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -272,9 +272,10 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, currentTheme }) 
                 )}
 
                 {/* Button Content */}
-                <div className={`relative flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-200 ${isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                  }`}>
-
+                <div className={`relative flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-200 ${
+                  isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                }`}>
+                  
                   {/* Icon */}
                   <item.icon
                     className={`w-[18px] h-[18px] transition-all duration-300 ${isActive
