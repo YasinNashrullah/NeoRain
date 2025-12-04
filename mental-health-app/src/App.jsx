@@ -89,49 +89,49 @@ const App = () => {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-black font-sans flex overflow-hidden">
-      
+
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[150px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[150px] pointer-events-none"></div>
 
       {!hasOnboarded ? (
         <div className="w-full h-full flex items-center justify-center p-4">
-           <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
-              <Onboarding onFinish={handleOnboardingFinish} />
-           </div>
+          <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
+            <Onboarding onFinish={handleOnboardingFinish} />
+          </div>
         </div>
       ) : (
         <>
-          <Sidebar 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-            onLogout={handleLogout} 
-            userData={userData} 
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onLogout={handleLogout}
+            userData={userData}
           />
 
           {/* --- MAIN CONTENT AREA --- */}
           <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
-            
+
             {/* Mobile Chat Overlay */}
             {activeTab === 'chat' && (
               <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
-                 <Chat onBack={() => setActiveTab('home')} />
+                <Chat onBack={() => setActiveTab('home')} userData={userData} />
               </div>
             )}
 
             {/* Desktop Container - Satu Wrapper untuk Semua */}
             <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
               <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/50 md:backdrop-blur-sm md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
-                
+
                 {/* KONTEN */}
                 {activeTab === 'chat' ? (
                   // Chat Mode (Desktop)
                   <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
-                     <Chat onBack={() => setActiveTab('home')} />
+                    <Chat onBack={() => setActiveTab('home')} userData={userData} />
                   </div>
                 ) : (
                   // Dashboard Mode (Home, Tracker, dll)
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
-                    <div className="w-full min-h-full mx-auto"> 
+                    <div className="w-full min-h-full mx-auto">
                       {activeTab === 'home' && <Home userData={userData} />}
                       {activeTab === 'tracker' && <Tracker userData={userData} />}
                       {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}
