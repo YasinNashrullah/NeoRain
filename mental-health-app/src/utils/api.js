@@ -1,8 +1,8 @@
-// URL Backend Laravel
+// URL Backend Laravel kamu
 const BASE_URL = "http://127.0.0.1:8000/api";
 
 export const api = {
-  // Kirim Data User ke MySQL saat Login
+  // 1. Kirim Data User ke Database saat Login
   syncUser: async (userData) => {
     try {
       const response = await fetch(`${BASE_URL}/sync-user`, {
@@ -16,7 +16,7 @@ export const api = {
     }
   },
 
-  // Simpan Mood ke MySQL
+  // 2. Simpan Mood ke Database
   saveMood: async (moodData) => {
     try {
       const response = await fetch(`${BASE_URL}/moods`, {
@@ -31,14 +31,32 @@ export const api = {
     }
   },
 
-  // Ambil History Mood dari MySQL
+  // 3. Ambil History Mood Harian
   getMoods: async (firebaseUid) => {
     try {
       const response = await fetch(`${BASE_URL}/moods?firebase_uid=${firebaseUid}`);
       const result = await response.json();
-      return result.data;
+      return result.data || []; // Pastikan return array
     } catch (error) {
       console.error("API Error (Get Moods):", error);
+      return [];
+    }
+  },
+
+  // 4. Ambil Mood Mingguan (Endpoint Baru)
+  getWeeklyMoods: async (firebaseUid) => {
+    try {
+      const response = await fetch(`${BASE_URL}/moods/weekly?firebase_uid=${firebaseUid}`);
+      
+      // Cek jika response tidak OK (misal 404 atau 500)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      return result.data || [];
+    } catch (error) {
+      console.error("API Error (Get Weekly):", error);
       return [];
     }
   }

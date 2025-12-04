@@ -3,7 +3,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from './firebase';
 import { api } from './utils/api';
 
-// Import Pages
+// Pages
 import Home from './pages/Home';
 import Onboarding from './pages/Onboarding';
 import Chat from './pages/Chat';
@@ -12,13 +12,13 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
-// Import Components
+// Components
 import BottomNav from './components/BottomNav';
+import Sidebar from './components/Sidebar';
 import { BarChart2, Loader2 } from 'lucide-react';
 
-// Placeholder untuk halaman yang belum jadi
 const Placeholder = ({ title, icon: Icon }) => (
-  <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 bg-slate-950">
+  <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
     <div className="p-6 bg-white/5 rounded-full mb-4 animate-pulse">
       <Icon className="w-12 h-12 opacity-50" />
     </div>
@@ -28,146 +28,130 @@ const Placeholder = ({ title, icon: Icon }) => (
 );
 
 const App = () => {
-  // --- STATE MANAGEMENT ---
-  const [user, setUser] = useState(null); // User dari Firebase Auth
-  const [userData, setUserData] = useState(null); // Data tambahan (Survey/Role)
-  const [loading, setLoading] = useState(true); // Loading awal cek auth
-  const [authPage, setAuthPage] = useState('login'); // login atau register
-  const [activeTab, setActiveTab] = useState('home'); // Tab navigasi aktif
+  const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [authPage, setAuthPage] = useState('login');
+  const [activeTab, setActiveTab] = useState('home');
 
-  // --- CEK STATUS LOGIN (PERSISTENCE) ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => { // Tambah async
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        
         const userDataObj = {
           uid: currentUser.uid,
           name: currentUser.displayName,
           email: currentUser.email,
           role: "Mahasiswa"
         };
-
         setUserData(userDataObj);
-
-        // Kirim data ke Laravel agar tersimpan di tabel users
         await api.syncUser({
           firebase_uid: currentUser.uid,
-          name: currentUser.displayName || "User Tanpa Nama",
+          name: currentUser.displayName || "User",
           email: currentUser.email
         });
-        // ---------------------------------------------
-
       } else {
         setUser(null);
         setUserData(null);
       }
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  
-  // Saat Login/Register Berhasil
-  const handleAuthSuccess = (data) => {
-    setUserData(data); 
-  };
-
-  // Saat Selesai Survey Onboarding
-  const handleOnboardingFinish = (surveyData) => {
-    setUserData((prev) => ({ ...prev, ...surveyData }));
-  };
-
-  // Saat Logout
+  const handleAuthSuccess = (data) => setUserData(data);
+  const handleOnboardingFinish = (surveyData) => setUserData((prev) => ({ ...prev, ...surveyData }));
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-      setUserData(null);
-      setActiveTab('home');
-      setAuthPage('login');
-    } catch (error) {
-      console.error("Logout Error:", error);
-    }
+    await signOut(auth);
+    setUser(null);
+    setUserData(null);
+    setActiveTab('home');
+    setAuthPage('login');
   };
 
-  // --- RENDER LOADING SCREEN ---
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-      </div>
-    );
-  }
+  if (loading) return <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>;
 
-  // --- RENDER AUTH PAGES (LOGIN/REGISTER) ---
   if (!user) {
     return (
-      <div className="fixed inset-0 w-full h-full bg-black flex justify-center items-center font-sans">
-        <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
+      <div className="fixed inset-0 w-full h-full bg-black flex justify-center items-center font-sans p-4">
+        <div className="w-full h-full sm:h-auto sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
           {authPage === 'login' ? (
-            <Login 
-              onLoginSuccess={handleAuthSuccess} 
-              onSwitchToRegister={() => setAuthPage('register')} 
-            />
+            <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => setAuthPage('register')} />
           ) : (
-            <Register 
-              onRegisterSuccess={handleAuthSuccess} 
-              onSwitchToLogin={() => setAuthPage('login')} 
-            />
+            <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => setAuthPage('login')} />
           )}
         </div>
       </div>
     );
   }
 
-  // Cek apakah user sudah punya data survey (role/struggle)?
-  const hasOnboarded = userData && userData.role; 
+  const hasOnboarded = userData && userData.role;
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-black flex justify-center items-center font-sans">
-      <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
-        
-        {!hasOnboarded ? (
-          // SURVEY (ONBOARDING)
-          <Onboarding onFinish={handleOnboardingFinish} />
-        ) : (
-          // APLIKASI UTAMA
-          <>
-            <div className="flex-1 w-full h-full overflow-hidden relative z-0">
-              
-              {/* HOME */}
-              {activeTab === 'home' && <Home userData={userData} />}
-              
-              {/* TRACKER */}
-              {activeTab === 'tracker' && <Tracker userData={userData} />}
-              
-              {/* STATS (Placeholder) */}
-              {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}
-              
-              {/* PROFILE */}
-              {activeTab === 'profile' && (
-                <Profile userData={userData} onLogout={handleLogout} />
-              )}
+    <div className="fixed inset-0 w-full h-full bg-black font-sans flex overflow-hidden">
+      
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[150px] pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[150px] pointer-events-none"></div>
 
-            </div>
+      {!hasOnboarded ? (
+        <div className="w-full h-full flex items-center justify-center p-4">
+           <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
+              <Onboarding onFinish={handleOnboardingFinish} />
+           </div>
+        </div>
+      ) : (
+        <>
+          <Sidebar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            onLogout={handleLogout} 
+            userData={userData} 
+          />
 
-            {/* CHAT PAGE (OVERLAY FULLSCREEN) */}
+          {/* --- MAIN CONTENT AREA --- */}
+          <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
+            
+            {/* Mobile Chat Overlay */}
             {activeTab === 'chat' && (
-              <div className="absolute inset-0 z-[100] w-full h-full">
-                <Chat onBack={() => setActiveTab('home')} />
+              <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
+                 <Chat onBack={() => setActiveTab('home')} />
               </div>
             )}
 
-            {/* BOTTOM NAVIGATION (Sembunyi saat di Chat) */}
-            {activeTab !== 'chat' && (
-              <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-            )}
-          </>
-        )}
+            {/* Desktop Container - Satu Wrapper untuk Semua */}
+            <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
+              <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/50 md:backdrop-blur-sm md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
+                
+                {/* KONTEN */}
+                {activeTab === 'chat' ? (
+                  // Chat Mode (Desktop)
+                  <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
+                     <Chat onBack={() => setActiveTab('home')} />
+                  </div>
+                ) : (
+                  // Dashboard Mode (Home, Tracker, dll)
+                  <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
+                    <div className="w-full min-h-full mx-auto md:max-w-5xl"> 
+                      {activeTab === 'home' && <Home userData={userData} />}
+                      {activeTab === 'tracker' && <Tracker userData={userData} />}
+                      {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}
+                      {activeTab === 'profile' && <Profile userData={userData} onLogout={handleLogout} />}
+                    </div>
+                  </div>
+                )}
 
-      </div>
+              </div>
+            </div>
+
+            {activeTab !== 'chat' && (
+              <div className="md:hidden">
+                <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+              </div>
+            )}
+
+          </div>
+        </>
+      )}
     </div>
   );
 };
