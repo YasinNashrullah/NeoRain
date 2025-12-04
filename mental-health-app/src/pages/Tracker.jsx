@@ -219,8 +219,8 @@ const Tracker = ({ userData }) => {
                 exit={{ opacity: 0, y: -20 }}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full"
               >
-                {/* KOLOM KIRI: INPUT CARD (Lebih Lebar) */}
-                <div className="lg:col-span-8 space-y-6">
+                {/* Input Card */}
+                <div className="md: lg:col-span-7 space-y-8">
                   <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-2xl relative overflow-hidden h-full flex flex-col justify-center">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
                     <div className="relative z-10">
@@ -271,8 +271,8 @@ const Tracker = ({ userData }) => {
                   </div>
                 </div>
 
-                {/* KOLOM KANAN: TODAY'S HISTORY */}
-                <div className="lg:col-span-4 flex flex-col h-full">
+                {/* Today History */}
+                <div className="md:w-auto lg:col-span-5 flex flex-col h-full">
                   <div className="bg-white/5 border border-white/10 rounded-[30px] p-6 h-full backdrop-blur-md">
                     <h3 className="text-sm font-bold text-white mb-6 flex items-center justify-between">
                       Mood Today <span className="bg-white/10 px-3 py-1 rounded-full text-sm">{todayLogs.length}</span>
