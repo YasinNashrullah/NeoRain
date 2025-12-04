@@ -34,6 +34,14 @@ const App = () => {
   const [authPage, setAuthPage] = useState('login');
   const [activeTab, setActiveTab] = useState('home');
   const [currentMood, setCurrentMood] = useState(localStorage.getItem('lastMood') || 'default');
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      text: "Halo! Gue NeoRain. Cerita aja, gue bakal dengerin tapi gak bakal ceramah panjang lebar. Ada apa?",
+      sender: 'ai',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+  ]);
 
   // Global Theme Configuration
   const themeConfig = {
@@ -86,22 +94,34 @@ const App = () => {
 
   const currentTheme = getTheme(currentMood);
 
+  const moodTimeoutRef = React.useRef(null);
+
   // Handle Mood Change (Persist to DB & LocalStorage)
   const handleMoodChange = async (newMood) => {
+    // 1. Update UI & LocalStorage Instantly
     setCurrentMood(newMood);
     localStorage.setItem('lastMood', newMood);
 
-    if (user) {
-      try {
-        await api.saveMood({
-          firebase_uid: user.uid,
-          mood: newMood,
-          note: "Mood Scanner Update"
-        });
-      } catch (error) {
-        console.error("Failed to save mood:", error);
-      }
+    // 2. Clear previous timeout (Debounce)
+    if (moodTimeoutRef.current) {
+      clearTimeout(moodTimeoutRef.current);
     }
+
+    // 3. Set new timeout to save to DB after 6 seconds
+    moodTimeoutRef.current = setTimeout(async () => {
+      if (user) {
+        try {
+          await api.saveMood({
+            firebase_uid: user.uid,
+            mood: newMood,
+            note: "Mood Scanner Update"
+          });
+          console.log("Mood saved to DB:", newMood);
+        } catch (error) {
+          console.error("Failed to save mood:", error);
+        }
+      }
+    }, 6000);
   };
 
   useEffect(() => {
@@ -127,7 +147,6 @@ const App = () => {
         try {
           const history = await api.getMoods(currentUser.uid);
           if (history && history.length > 0) {
-            // Assuming API returns sorted by latest, or we take the first one
             const lastMood = history[0]?.mood;
             if (lastMood) {
               setCurrentMood(lastMood);
@@ -138,10 +157,33 @@ const App = () => {
           console.error("Failed to fetch mood history", e);
         }
 
+        // Fetch Chat History
+        try {
+          const chatHistory = await api.getChats(currentUser.uid);
+          if (chatHistory && chatHistory.length > 0) {
+            const formattedHistory = chatHistory.map(msg => ({
+              id: msg.id,
+              text: msg.message,
+              sender: msg.sender,
+              time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }));
+            setMessages(formattedHistory);
+          }
+        } catch (e) {
+          console.error("Failed to fetch chat history", e);
+        }
+
       } else {
         setUser(null);
         setUserData(null);
-        localStorage.removeItem('lastMood'); // Optional: Clear on logout
+        localStorage.removeItem('lastMood');
+        // Reset messages on logout
+        setMessages([{
+          id: 1,
+          text: "Halo! Gue NeoRain. Cerita aja, gue bakal dengerin tapi gak bakal ceramah panjang lebar. Ada apa?",
+          sender: 'ai',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
       }
       setLoading(false);
     });
@@ -209,6 +251,8 @@ const App = () => {
                   userData={userData}
                   currentMood={currentMood}
                   setCurrentMood={handleMoodChange}
+                  messages={messages}
+                  setMessages={setMessages}
                 />
               </div>
             )}
@@ -226,6 +270,8 @@ const App = () => {
                       userData={userData}
                       currentMood={currentMood}
                       setCurrentMood={handleMoodChange}
+                      messages={messages}
+                      setMessages={setMessages}
                     />
                   </div>
                 ) : (

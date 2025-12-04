@@ -5,6 +5,7 @@ import {
   ArrowLeft, Sparkles, Loader2
 } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { api } from '../utils/api';
 import '../App.css';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -56,22 +57,15 @@ const moodColors = {
   }
 };
 
-const Chat = ({ onBack, userData, currentMood, setCurrentMood }) => {
+const Chat = ({ onBack, userData, currentMood, setCurrentMood, messages, setMessages }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Halo! Gue NeoRain. Cerita aja, gue bakal dengerin tapi gak bakal ceramah panjang lebar. Ada apa?",
-      sender: 'ai',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
+  // Local messages state removed - using props instead
 
   const messagesEndRef = useRef(null);
 
-  // Fetch last mood logic removed as it is now handled globally or defaults
+  // Load Chat History logic removed - handled in App.jsx
 
 
   const scrollToBottom = () => {
@@ -95,6 +89,15 @@ const Chat = ({ onBack, userData, currentMood, setCurrentMood }) => {
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
+
+    // Save User Message to DB
+    if (userData?.uid) {
+      api.saveChat({
+        firebase_uid: userData.uid,
+        message: userMsg.text,
+        sender: 'user'
+      }).catch(err => console.error("Failed to save user chat:", err));
+    }
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -135,6 +138,16 @@ const Chat = ({ onBack, userData, currentMood, setCurrentMood }) => {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, aiMsg]);
+
+      // Save AI Message to DB
+      if (userData?.uid) {
+        api.saveChat({
+          firebase_uid: userData.uid,
+          message: aiMsg.text,
+          sender: 'ai'
+        }).catch(err => console.error("Failed to save AI chat:", err));
+      }
+
     } catch (error) {
       console.error(error);
       setMessages(prev => [...prev, {
@@ -204,9 +217,9 @@ const Chat = ({ onBack, userData, currentMood, setCurrentMood }) => {
               animate={{ opacity: 1, y: 0 }}
               className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md transition-colors duration-700 ease-in-out ${msg.sender === 'user'
-                ? `${currentStyle.primary} text-white rounded-tr-sm`
-                : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5'
+              <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md transition-colors duration-700 ease-in-out whitespace-pre-wrap break-words ${msg.sender === 'user'
+                ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
+                : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5 text-left'
                 }`}>
                 {msg.text}
                 <div className="text-[10px] opacity-50 mt-1 text-right">{msg.time}</div>
@@ -230,17 +243,27 @@ const Chat = ({ onBack, userData, currentMood, setCurrentMood }) => {
       {/* --- 3. INPUT AREA (Static) --- */}
       <div className="flex-none w-full bg-transparent border-t border-white/5 p-4 pb-6 z-20">
         <div className="flex items-end gap-2">
-          <div className="flex-1 bg-slate-900 border border-slate-800 rounded-[24px] flex items-center px-2 py-1">
-            <input
-              type="text"
+          <div className="flex-1 bg-slate-900 border border-slate-800 rounded-[24px] flex items-end px-2 py-2">
+            <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px'; // Max height approx 4 lines
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                  e.target.style.height = 'auto'; // Reset height
+                }
+              }}
               placeholder="Cerita sini..."
-              className="flex-1 bg-transparent text-white text-sm px-3 py-3 focus:outline-none"
-              autoComplete="off"
+              rows={1}
+              className="flex-1 bg-transparent text-white text-sm px-3 py-1 focus:outline-none resize-none max-h-[100px] scrollbar-hide"
+              style={{ height: 'auto' }}
             />
-            <Mic className="w-5 h-5 text-slate-400 mx-2" />
+            <Mic className="w-5 h-5 text-slate-400 mx-2 mb-1" />
           </div>
           <button
             onClick={handleSend}
