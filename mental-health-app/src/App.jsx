@@ -34,6 +34,96 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [authPage, setAuthPage] = useState('login');
   const [activeTab, setActiveTab] = useState('home');
+  const [currentMood, setCurrentMood] = useState(localStorage.getItem('lastMood') || 'default');
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      text: "Halo! Gue NeoRain. Cerita aja, gue bakal dengerin tapi gak bakal ceramah panjang lebar. Ada apa?",
+      sender: 'ai',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+  ]);
+
+  // Global Theme Configuration
+  const themeConfig = {
+    default: { // Happy & Calm -> Default
+      primary: 'from-pink-500 via-purple-600 to-indigo-600',
+      accent: 'text-cyan-400',
+      bgGradient: 'bg-slate-950', // Default dark background
+      sidebarBg: 'bg-[#0a0a12]',
+      activeBorder: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
+      activeBg: 'bg-[#1e1b4b]/80',
+      glowColor: 'rgba(168,85,247,0.6)'
+    },
+    angry: {
+      primary: 'from-orange-500 via-red-600 to-rose-600',
+      accent: 'text-orange-400',
+      bgGradient: 'bg-gradient-to-br from-slate-950 via-[#331408] to-slate-950',
+      sidebarBg: 'bg-[#1a0500]',
+      activeBorder: 'linear-gradient(90deg, #f97316, #dc2626, #e11d48)',
+      activeBg: 'bg-[#450a0a]/80',
+      glowColor: 'rgba(220, 38, 38, 0.6)'
+    },
+    sad: {
+      primary: 'from-slate-500 via-slate-600 to-slate-700',
+      accent: 'text-slate-300',
+      bgGradient: 'bg-gradient-to-br from-slate-950 via-[#0f172a] to-slate-950',
+      sidebarBg: 'bg-[#020617]',
+      activeBorder: 'linear-gradient(90deg, #94a3b8, #475569, #334155)',
+      activeBg: 'bg-[#1e293b]/80',
+      glowColor: 'rgba(71, 85, 105, 0.6)'
+    },
+    manic: {
+      primary: 'from-yellow-400 via-amber-500 to-orange-500',
+      accent: 'text-yellow-300',
+      bgGradient: 'bg-gradient-to-br from-slate-950 via-[#422006] to-slate-950',
+      sidebarBg: 'bg-[#1c1917]',
+      activeBorder: 'linear-gradient(90deg, #facc15, #f59e0b, #ea580c)',
+      activeBg: 'bg-[#451a03]/80',
+      glowColor: 'rgba(234, 88, 12, 0.6)'
+    }
+  };
+
+  // Map specific moods to themes
+  const getTheme = (mood) => {
+    if (mood === 'happy' || mood === 'calm') return themeConfig.default;
+    if (mood === 'angry') return themeConfig.angry;
+    if (mood === 'sad') return themeConfig.sad;
+    if (mood === 'manic') return themeConfig.manic;
+    return themeConfig.default;
+  };
+
+  const currentTheme = getTheme(currentMood);
+
+  const moodTimeoutRef = React.useRef(null);
+
+  // Handle Mood Change (Persist to DB & LocalStorage)
+  const handleMoodChange = async (newMood) => {
+    // 1. Update UI & LocalStorage Instantly
+    setCurrentMood(newMood);
+    localStorage.setItem('lastMood', newMood);
+
+    // 2. Clear previous timeout (Debounce)
+    if (moodTimeoutRef.current) {
+      clearTimeout(moodTimeoutRef.current);
+    }
+
+    // 3. Set new timeout to save to DB after 6 seconds
+    moodTimeoutRef.current = setTimeout(async () => {
+      if (user) {
+        try {
+          await api.saveMood({
+            firebase_uid: user.uid,
+            mood: newMood,
+            note: "Mood Scanner Update"
+          });
+          console.log("Mood saved to DB:", newMood);
+        } catch (error) {
+          console.error("Failed to save mood:", error);
+        }
+      }
+    }, 6000);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -46,14 +136,55 @@ const App = () => {
           role: "Mahasiswa"
         };
         setUserData(userDataObj);
+
+        // Sync User
         await api.syncUser({
           firebase_uid: currentUser.uid,
           name: currentUser.displayName || "User",
           email: currentUser.email
         });
+
+        // Fetch Last Mood from DB
+        try {
+          const history = await api.getMoods(currentUser.uid);
+          if (history && history.length > 0) {
+            const lastMood = history[0]?.mood;
+            if (lastMood) {
+              setCurrentMood(lastMood);
+              localStorage.setItem('lastMood', lastMood);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch mood history", e);
+        }
+
+        // Fetch Chat History
+        try {
+          const chatHistory = await api.getChats(currentUser.uid);
+          if (chatHistory && chatHistory.length > 0) {
+            const formattedHistory = chatHistory.map(msg => ({
+              id: msg.id,
+              text: msg.message,
+              sender: msg.sender,
+              time: new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }));
+            setMessages(formattedHistory);
+          }
+        } catch (e) {
+          console.error("Failed to fetch chat history", e);
+        }
+
       } else {
         setUser(null);
         setUserData(null);
+        localStorage.removeItem('lastMood');
+        // Reset messages on logout
+        setMessages([{
+          id: 1,
+          text: "Halo! Gue NeoRain. Cerita aja, gue bakal dengerin tapi gak bakal ceramah panjang lebar. Ada apa?",
+          sender: 'ai',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
       }
       setLoading(false);
     });
@@ -107,6 +238,7 @@ const App = () => {
             setActiveTab={setActiveTab}
             onLogout={handleLogout}
             userData={userData}
+            currentTheme={currentTheme}
           />
 
           {/* --- MAIN CONTENT AREA --- */}
@@ -114,8 +246,15 @@ const App = () => {
 
             {/* Mobile Chat Overlay */}
             {activeTab === 'chat' && (
-              <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
-                <Chat onBack={() => setActiveTab('home')} userData={userData} />
+              <div className={`md:hidden fixed inset-0 z-[9999] w-full h-full ${currentTheme.bgGradient}`}>
+                <Chat
+                  onBack={() => setActiveTab('home')}
+                  userData={userData}
+                  currentMood={currentMood}
+                  setCurrentMood={handleMoodChange}
+                  messages={messages}
+                  setMessages={setMessages}
+                />
               </div>
             )}
 
@@ -127,14 +266,25 @@ const App = () => {
                 {activeTab === 'chat' ? (
                   // Chat Mode (Desktop)
                   <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
-                    <Chat onBack={() => setActiveTab('home')} userData={userData} />
+                    <Chat
+                      onBack={() => setActiveTab('home')}
+                      userData={userData}
+                      currentMood={currentMood}
+                      setCurrentMood={handleMoodChange}
+                      messages={messages}
+                      setMessages={setMessages}
+                    />
                   </div>
                 ) : (
                   // Dashboard Mode (Home, Tracker, dll)
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
                     <div className="w-full min-h-full mx-auto">
+<<<<<<< HEAD
                       {activeTab === 'analyze' && <Placeholder title="Analyze" icon={BrainCircuit}/>}
                       {activeTab === 'home' && <Home userData={userData} />}
+=======
+                      {activeTab === 'home' && <Home userData={userData} currentMood={currentMood} setCurrentMood={handleMoodChange} />}
+>>>>>>> b579ed54614851c4ef7bf181f3683a2116a0880e
                       {activeTab === 'tracker' && <Tracker userData={userData} />}
                       {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}
                       {activeTab === 'profile' && <Profile userData={userData} onLogout={handleLogout} />}

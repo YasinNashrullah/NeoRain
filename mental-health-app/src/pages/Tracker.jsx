@@ -34,8 +34,10 @@ const Tracker = ({ userData }) => {
   const fetchData = async () => {
     if (userData?.uid) {
       const allData = await api.getMoods(userData.uid);
-      setHistoryLogs(allData);
-      setWeeklyLogs(allData);
+      // Filter out auto-saved mood scanner updates
+      const filteredData = allData.filter(log => log.note !== "Mood Scanner Update");
+      setHistoryLogs(filteredData);
+      setWeeklyLogs(filteredData);
     }
   };
 
@@ -234,9 +236,15 @@ const Tracker = ({ userData }) => {
                           <button
                             key={m.id}
                             onClick={() => setSelectedMood(m.id)}
+<<<<<<< HEAD
                             className={`flex flex-col items-center gap-2 p-6 rounded-2xl border transition-all duration-300 min-w-[80px] md:min-w-[100px] ${selectedMood === m.id
                                 ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
                                 : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
+=======
+                            className={`flex flex-col items-center gap-2 p-5 rounded-2xl border transition-all duration-300 min-w-[80px] ${selectedMood === m.id
+                              ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
+                              : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
+>>>>>>> b579ed54614851c4ef7bf181f3683a2116a0880e
                               }`}
                           >
                             <m.icon className={`w-8 h-8 ${m.color}`} />

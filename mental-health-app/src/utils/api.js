@@ -47,16 +47,59 @@ export const api = {
   getWeeklyMoods: async (firebaseUid) => {
     try {
       const response = await fetch(`${BASE_URL}/moods/weekly?firebase_uid=${firebaseUid}`);
-      
+
       // Cek jika response tidak OK (misal 404 atau 500)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
       return result.data || [];
     } catch (error) {
       console.error("API Error (Get Weekly):", error);
+      return [];
+    }
+  },
+
+  // 5. Simpan Chat
+  saveChat: async (chatData) => {
+    try {
+      const response = await fetch(`${BASE_URL}/chats`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(chatData)
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn("API Warning: Chat endpoint not found (404). Please update backend.");
+          return null;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("API Error (Save Chat):", error);
+    }
+  },
+
+  // 6. Ambil History Chat
+  getChats: async (firebaseUid) => {
+    try {
+      const response = await fetch(`${BASE_URL}/chats?firebase_uid=${firebaseUid}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn("API Warning: Chat history endpoint not found (404). Backend update required.");
+          return [];
+        }
+        console.warn(`API Error (Get Chats): ${response.status} ${response.statusText}`);
+        return [];
+      }
+      const result = await response.json();
+      return result.data || [];
+    } catch (error) {
+      console.error("API Error (Get Chats):", error);
       return [];
     }
   }
