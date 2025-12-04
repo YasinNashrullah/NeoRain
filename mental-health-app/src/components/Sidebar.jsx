@@ -133,8 +133,8 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, currentTheme }) 
             {/* Main Card with Organic Shape */}
             <motion.div
               className={`relative bg-gradient-to-br from-slate-900/90 via-purple-900/20 to-slate-900/90 backdrop-blur-xl shadow-2xl overflow-hidden ${activeTab === 'analyze'
-                  ? `shadow-[0_0_40px_${currentTheme?.glowColor || 'rgba(168,85,247,0.6)'}]`
-                  : ''
+                ? `shadow-[0_0_40px_${currentTheme?.glowColor || 'rgba(168,85,247,0.6)'}]`
+                : ''
                 }`}
               animate={{
                 borderRadius: ["50% 50% 45% 55%/50% 50% 50% 50%", "45% 55% 50% 50%/55% 45% 50% 50%", "50% 50% 45% 55%/50% 50% 50% 50%"],
@@ -272,15 +272,14 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, currentTheme }) 
                 )}
 
                 {/* Button Content */}
-                <div className={`relative flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-200 ${
-                  isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                }`}>
-                  
+                <div className={`relative flex items-center gap-3 px-5 py-3 rounded-xl transition-all duration-200 ${isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}>
+
                   {/* Icon */}
                   <item.icon
                     className={`w-[18px] h-[18px] transition-all duration-300 ${isActive
-                        ? `${currentTheme?.accent || 'text-cyan-400'} drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]`
-                        : 'group-hover:text-purple-400'
+                      ? `${currentTheme?.accent || 'text-cyan-400'} drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]`
+                      : 'group-hover:text-purple-400'
                       }`}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
@@ -316,7 +315,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, currentTheme }) 
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{userData?.name || 'Pengguna'}</p>
-              <p className="text-[11px] text-slate-500 truncate">user@mail.com</p>
+              <p className="text-[11px] text-slate-500 truncate">{userData?.email || 'user@mail.com'}</p>
             </div>
             <button onClick={onLogout} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 hover:text-red-400 transition-colors">
               <LogOut className="w-4 h-4" />

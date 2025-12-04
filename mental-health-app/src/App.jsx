@@ -33,7 +33,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [authPage, setAuthPage] = useState('login');
   const [activeTab, setActiveTab] = useState('home');
-  const [currentMood, setCurrentMood] = useState('default');
+  const [currentMood, setCurrentMood] = useState(localStorage.getItem('lastMood') || 'default');
 
   // Global Theme Configuration
   const themeConfig = {
@@ -86,6 +86,24 @@ const App = () => {
 
   const currentTheme = getTheme(currentMood);
 
+  // Handle Mood Change (Persist to DB & LocalStorage)
+  const handleMoodChange = async (newMood) => {
+    setCurrentMood(newMood);
+    localStorage.setItem('lastMood', newMood);
+
+    if (user) {
+      try {
+        await api.saveMood({
+          firebase_uid: user.uid,
+          mood: newMood,
+          note: "Mood Scanner Update"
+        });
+      } catch (error) {
+        console.error("Failed to save mood:", error);
+      }
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -97,14 +115,33 @@ const App = () => {
           role: "Mahasiswa"
         };
         setUserData(userDataObj);
+
+        // Sync User
         await api.syncUser({
           firebase_uid: currentUser.uid,
           name: currentUser.displayName || "User",
           email: currentUser.email
         });
+
+        // Fetch Last Mood from DB
+        try {
+          const history = await api.getMoods(currentUser.uid);
+          if (history && history.length > 0) {
+            // Assuming API returns sorted by latest, or we take the first one
+            const lastMood = history[0]?.mood;
+            if (lastMood) {
+              setCurrentMood(lastMood);
+              localStorage.setItem('lastMood', lastMood);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch mood history", e);
+        }
+
       } else {
         setUser(null);
         setUserData(null);
+        localStorage.removeItem('lastMood'); // Optional: Clear on logout
       }
       setLoading(false);
     });
@@ -171,7 +208,7 @@ const App = () => {
                   onBack={() => setActiveTab('home')}
                   userData={userData}
                   currentMood={currentMood}
-                  setCurrentMood={setCurrentMood}
+                  setCurrentMood={handleMoodChange}
                 />
               </div>
             )}
@@ -188,14 +225,14 @@ const App = () => {
                       onBack={() => setActiveTab('home')}
                       userData={userData}
                       currentMood={currentMood}
-                      setCurrentMood={setCurrentMood}
+                      setCurrentMood={handleMoodChange}
                     />
                   </div>
                 ) : (
                   // Dashboard Mode (Home, Tracker, dll)
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
                     <div className="w-full min-h-full mx-auto">
-                      {activeTab === 'home' && <Home userData={userData} />}
+                      {activeTab === 'home' && <Home userData={userData} currentMood={currentMood} setCurrentMood={handleMoodChange} />}
                       {activeTab === 'tracker' && <Tracker userData={userData} />}
                       {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}
                       {activeTab === 'profile' && <Profile userData={userData} onLogout={handleLogout} />}
