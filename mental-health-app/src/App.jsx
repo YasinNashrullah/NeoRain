@@ -12,10 +12,11 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
+
 // Components
 import BottomNav from './components/BottomNav';
 import Sidebar from './components/Sidebar';
-import { BarChart2, Loader2 } from 'lucide-react';
+import { BarChart2, Loader2, BrainCircuit } from 'lucide-react';
 
 const Placeholder = ({ title, icon: Icon }) => (
   <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
@@ -132,6 +133,7 @@ const App = () => {
                   // Dashboard Mode (Home, Tracker, dll)
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
                     <div className="w-full min-h-full mx-auto">
+                      {activeTab === 'analyze' && <Placeholder title="Analyze" icon={BrainCircuit}/>}
                       {activeTab === 'home' && <Home userData={userData} />}
                       {activeTab === 'tracker' && <Tracker userData={userData} />}
                       {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}

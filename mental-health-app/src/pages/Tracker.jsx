@@ -224,17 +224,17 @@ const Tracker = ({ userData }) => {
                   <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-2xl relative overflow-hidden h-full flex flex-col justify-center">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
                     <div className="relative z-10">
-                      <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-                        How are you feeling? <span className="text-2xl">✨</span>
+                      <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-3">
+                        How are you feeling? <span className="text-xl">✨</span>
                       </h2>
 
                       {/* container scroll */}
-                      <div className="flex gap-3 overflow-x-auto py-4 pb-4 -mx-6 px-6 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      <div className="flex gap-4 overflow-x-auto py-4 pb-4 -mx-6 px-6 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {moods.map((m) => (
                           <button
                             key={m.id}
                             onClick={() => setSelectedMood(m.id)}
-                            className={`flex flex-col items-center gap-2 p-5 rounded-2xl border transition-all duration-300 min-w-[80px] ${selectedMood === m.id
+                            className={`flex flex-col items-center gap-2 p-6 rounded-2xl border transition-all duration-300 min-w-[80px] md:min-w-[100px] ${selectedMood === m.id
                                 ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
                                 : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
                               }`}
@@ -260,7 +260,7 @@ const Tracker = ({ userData }) => {
                       <button
                         onClick={handleSaveMood}
                         disabled={isSaving || !selectedMood}
-                        className={`w-full py-5 rounded-2xl font-bold text-lg shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${isSaving || !selectedMood
+                        className={`w-full py-3 rounded-2xl font-bold text-[16px] shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95 ${isSaving || !selectedMood
                           ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
                           : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/25'
                           }`}
@@ -300,7 +300,7 @@ const Tracker = ({ userData }) => {
                                       {formatTime(log.created_at)}
                                     </span>
                                   </div>
-                                  <p className="text-xs text-white/90 mt-2 line-clamp-2 italic">
+                                  <p className="text-xs text-white/90 mt-2 line-clamp-2 ml-2 flex italic">
                                     "{log.note || 'No notes'}"
                                   </p>
                                 </div>
