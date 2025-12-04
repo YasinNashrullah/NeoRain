@@ -1,28 +1,58 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Send, Mic, MoreVertical, 
-  ArrowLeft, Sparkles, Loader2 
+import {
+  Send, Mic, MoreVertical,
+  ArrowLeft, Sparkles, Loader2
 } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import '../App.css';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-const Chat = ({ onBack }) => {
+// Mood color mapping
+const moodColors = {
+  happy: { bubble1: 'rgba(236, 72, 153, 0.05)', bubble2: 'rgba(244, 114, 182, 0.04)' },   // pink
+  calm: { bubble1: 'rgba(34, 211, 238, 0.05)', bubble2: 'rgba(6, 182, 212, 0.04)' },      // cyan
+  manic: { bubble1: 'rgba(250, 204, 21, 0.05)', bubble2: 'rgba(234, 179, 8, 0.04)' },     // yellow
+  angry: { bubble1: 'rgba(251, 146, 60, 0.05)', bubble2: 'rgba(249, 115, 22, 0.04)' },    // orange
+  sad: { bubble1: 'rgba(99, 102, 241, 0.05)', bubble2: 'rgba(79, 70, 229, 0.04)' },       // indigo
+  default: { bubble1: 'rgba(99, 102, 241, 0.05)', bubble2: 'rgba(139, 92, 246, 0.04)' }   // default indigo/purple
+};
+
+const Chat = ({ onBack, userData }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  
+  const [currentMood, setCurrentMood] = useState('default');
+
   const [messages, setMessages] = useState([
-    { 
-      id: 1, 
-      text: "Halo! Gue NeoRain. Cerita aja, gue bakal dengerin tapi gak bakal ceramah panjang lebar. Ada apa?", 
-      sender: 'ai', 
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+    {
+      id: 1,
+      text: "Halo! Gue NeoRain. Cerita aja, gue bakal dengerin tapi gak bakal ceramah panjang lebar. Ada apa?",
+      sender: 'ai',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
 
   const messagesEndRef = useRef(null);
+
+  // Fetch last mood
+  useEffect(() => {
+    const fetchLastMood = async () => {
+      if (userData?.uid) {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/moods/${userData.uid}`);
+          const data = await response.json();
+          if (data && data.length > 0) {
+            setCurrentMood(data[0].mood || 'default');
+          }
+        } catch (error) {
+          console.log('Could not fetch mood');
+        }
+      }
+    };
+    fetchLastMood();
+  }, [userData]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -84,16 +114,30 @@ const Chat = ({ onBack }) => {
     }
   };
 
+  const bubbleColors = moodColors[currentMood] || moodColors.default;
+
   return (
     // STRUKTUR: Flex Column Full Height
     <div className="flex flex-col w-full h-full bg-slate-950 relative overflow-hidden">
-      
+
+      {/* Animated Bubble Background - Dynamic Colors */}
+      <div className="chat-bubbles-container">
+        <div
+          className="chat-bubble chat-bubble-1"
+          style={{ background: bubbleColors.bubble1 }}
+        ></div>
+        <div
+          className="chat-bubble chat-bubble-2"
+          style={{ background: bubbleColors.bubble2 }}
+        ></div>
+      </div>
+
       {/* --- 1. HEADER (Static) --- */}
       <div className="flex-none w-full bg-slate-950 border-b border-white/10 z-20">
         <div className="px-4 py-3 pt-8 md:pt-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <button 
-              onClick={onBack} 
+            <button
+              onClick={onBack}
               className="p-2 -ml-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10"
             >
               <ArrowLeft className="w-6 h-6" />
@@ -114,22 +158,21 @@ const Chat = ({ onBack }) => {
 
       {/* --- 2. CHAT AREA (Scrollable) --- */}
       {/* FIX PENTING: min-h-0 mencegah flex item meluap keluar container */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-100 relative">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative z-10">
         <div className="p-4 space-y-4 flex flex-col justify-end min-h-full">
           <div className="h-4 flex-none"></div> {/* Spacer atas */}
-          
+
           {messages.map((msg) => (
-            <motion.div 
+            <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md ${
-                msg.sender === 'user' 
-                  ? 'bg-indigo-600 text-white rounded-tr-sm' 
-                  : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5'
-              }`}>
+              <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md ${msg.sender === 'user'
+                ? 'bg-indigo-600 text-white rounded-tr-sm'
+                : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5'
+                }`}>
                 {msg.text}
                 <div className="text-[10px] opacity-50 mt-1 text-right">{msg.time}</div>
               </div>
@@ -153,8 +196,8 @@ const Chat = ({ onBack }) => {
       <div className="flex-none w-full bg-slate-950 border-t border-white/5 p-4 pb-6 z-20">
         <div className="flex items-end gap-2">
           <div className="flex-1 bg-slate-900 border border-slate-800 rounded-[24px] flex items-center px-2 py-1">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
@@ -164,7 +207,7 @@ const Chat = ({ onBack }) => {
             />
             <Mic className="w-5 h-5 text-slate-400 mx-2" />
           </div>
-          <button 
+          <button
             onClick={handleSend}
             disabled={!input.trim() || isTyping}
             className={`p-3 rounded-full ${input.trim() ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-600'}`}
