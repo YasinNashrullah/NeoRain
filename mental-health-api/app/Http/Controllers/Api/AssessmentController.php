@@ -23,6 +23,7 @@ class AssessmentController extends Controller
             'depression_score' => $request->depression_score,
             'anxiety_score' => $request->anxiety_score,
             'stress_score' => $request->stress_score,
+            'ai_analysis' => json_encode($request->ai_analysis),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

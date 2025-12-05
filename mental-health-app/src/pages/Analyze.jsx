@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { ChevronRight, CheckCircle, AlertCircle, BrainCircuit } from 'lucide-react';
 import { api } from '../utils/api';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Pertanyaan DASS-21 (Hardcoded)
-// Type: D = Depression, A = Anxiety, S = Stress
+// --- KONFIGURASI GEMINI ---
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+// --- DATA PERTANYAAN (DASS-21) ---
 const questions = [
   { id: 1, type: 'S', text: "Saya merasa susah untuk beristirahat" },
   { id: 2, type: 'A', text: "Saya merasa mulut saya kering" },
@@ -39,23 +42,22 @@ const options = [
 const Analyze = ({ userData, onFinish }) => {
   const [step, setStep] = useState('intro'); // intro, quiz, processing
   const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState({}); // { 1: 0, 2: 3, ... }
+  const [answers, setAnswers] = useState({});
 
   const handleAnswer = (val) => {
     setAnswers({ ...answers, [questions[currentQ].id]: val });
-    
     if (currentQ < questions.length - 1) {
-      // Delay sedikit biar animasi smooth
       setTimeout(() => setCurrentQ(currentQ + 1), 200);
     } else {
       finishQuiz();
     }
   };
 
+  // --- FUNGSI UTAMA: HITUNG SKOR & PANGGIL AI ---
   const finishQuiz = async () => {
     setStep('processing');
     
-    // Hitung Skor (DASS-21 Score * 2)
+    // 1. Hitung Skor Manual (DASS-21)
     let d = 0, a = 0, s = 0;
     questions.forEach(q => {
       const val = answers[q.id] || 0;
@@ -63,20 +65,81 @@ const Analyze = ({ userData, onFinish }) => {
       if (q.type === 'A') a += val;
       if (q.type === 'S') s += val;
     });
-
-    const payload = {
-      firebase_uid: userData?.uid,
-      depression_score: d * 2,
-      anxiety_score: a * 2,
-      stress_score: s * 2
-    };
-
-    await api.saveAssessment(payload);
     
-    // Redirect ke Statistics (lewat prop function dari App.jsx)
-    setTimeout(() => {
-      onFinish(); 
-    }, 1500);
+    // Skor DASS-21 dikali 2 untuk menyamai DASS-42
+    const scores = { depression: d * 2, anxiety: a * 2, stress: s * 2 };
+
+    try {
+      if (!API_KEY) {
+        throw new Error("API Key Gemini belum dipasang di .env");
+      }
+
+      const genAI = new GoogleGenerativeAI(API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      
+      const prompt = `
+        Bertindaklah sebagai Psikolog Klinis.
+        User memiliki skor DASS-21:
+        - Depresi: ${scores.depression}
+        - Kecemasan: ${scores.anxiety}
+        - Stres: ${scores.stress}
+        
+        Tugas: Berikan analisis dalam format JSON murni.
+        JANGAN gunakan markdown code block (seperti \`\`\`json). Langsung kurung kurawal { ... }.
+        
+        Format JSON wajib seperti ini:
+        {
+          "summary": "Kalimat penenang singkat (maks 2 kalimat).",
+          "factors": "Dugaan faktor penyebab umum (bahasa halus).",
+          "actions": ["Saran aksi 1", "Saran aksi 2", "Saran aksi 3"],
+          "education": "Info edukatif singkat."
+        }
+        Gunakan Bahasa Indonesia yang santai tapi profesional.
+      `;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text();
+      
+      console.log("Raw AI Response:", text); 
+
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+      let aiAnalysis;
+      try {
+        aiAnalysis = JSON.parse(text);
+      } catch (e) {
+        // Fallback jika AI gagal generate JSON valid
+        aiAnalysis = {
+          summary: "Analisis selesai. Skor kamu telah direkam.",
+          factors: "Tidak dapat memuat detail faktor saat ini.",
+          actions: ["Istirahat yang cukup", "Konsultasi profesional jika perlu"],
+          education: "Kesehatan mental sama pentingnya dengan kesehatan fisik."
+        };
+      }
+
+      // Simpan ke Database Laravel
+      const payload = {
+        firebase_uid: userData?.uid,
+        depression_score: scores.depression,
+        anxiety_score: scores.anxiety,
+        stress_score: scores.stress,
+        ai_analysis: aiAnalysis
+      };
+
+
+      await api.saveAssessment(payload);
+      
+      // Selesai & Pindah Halaman
+      setTimeout(() => {
+        onFinish(); 
+      }, 1000);
+
+    } catch (error) {
+      console.error("CRITICAL ERROR:", error);
+      alert(`Gagal memproses: ${error.message}. Cek Console untuk detail.`);
+      setStep('intro');
+    }
   };
 
   return (
@@ -87,7 +150,7 @@ const Analyze = ({ userData, onFinish }) => {
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
         
         <AnimatePresence mode='wait'>
-          {/* 1. INTRO SCREEN */}
+          {/* INTRO SCREEN */}
           {step === 'intro' && (
             <motion.div 
               key="intro"
@@ -101,11 +164,7 @@ const Analyze = ({ userData, onFinish }) => {
               </div>
               <h1 className="text-3xl font-bold mb-4">Cek Kesehatan Mentalmu</h1>
               <p className="text-slate-400 mb-8 leading-relaxed">
-                Kuesioner ini menggunakan metode <strong>DASS-21</strong> untuk mengukur tingkat Depresi, Kecemasan, dan Stres.
-                <br/><br/>
-                <span className="text-yellow-400 text-sm flex items-center justify-center gap-2">
-                  <AlertCircle className="w-4 h-4" /> Bukan diagnosis medis.
-                </span>
+                Kuesioner ini menggunakan metode <strong>DASS-21</strong> dibantu <strong>AI</strong> untuk memberikan saran yang personal.
               </p>
               <button 
                 onClick={() => setStep('quiz')}
@@ -116,7 +175,7 @@ const Analyze = ({ userData, onFinish }) => {
             </motion.div>
           )}
 
-          {/* 2. QUIZ SCREEN */}
+          {/* QUIZ SCREEN */}
           {step === 'quiz' && (
             <motion.div 
               key="quiz"
@@ -164,7 +223,7 @@ const Analyze = ({ userData, onFinish }) => {
             </motion.div>
           )}
 
-          {/* 3. PROCESSING SCREEN */}
+          {/* PROCESSING SCREEN */}
           {step === 'processing' && (
             <motion.div 
               key="processing"
@@ -172,9 +231,13 @@ const Analyze = ({ userData, onFinish }) => {
               animate={{ opacity: 1 }}
               className="text-center"
             >
-              <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
-              <h2 className="text-xl font-bold">Menganalisa Jawaban...</h2>
-              <p className="text-slate-400">Mohon tunggu sebentar.</p>
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
+                <div className="absolute inset-0 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                <BrainCircuit className="absolute inset-0 m-auto w-10 h-10 text-purple-400 animate-pulse" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">AI Sedang Menganalisa...</h2>
+              <p className="text-slate-400">Menyusun laporan kesehatan mentalmu.</p>
             </motion.div>
           )}
         </AnimatePresence>
