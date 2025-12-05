@@ -11,7 +11,8 @@ import Tracker from './pages/Tracker';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
+import Statistics from './pages/Statistics';
+import Analyze from './pages/Analyze';
 
 // Components
 import BottomNav from './components/BottomNav';
@@ -216,7 +217,10 @@ const App = () => {
       </div>
     );
   }
-
+ // Pindah ke tab Statistics
+  const handleAnalyzeFinish = () => {
+    setActiveTab('stats');
+  };
   const hasOnboarded = userData && userData.role;
 
   return (
@@ -279,14 +283,11 @@ const App = () => {
                   // Dashboard Mode (Home, Tracker, dll)
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
                     <div className="w-full min-h-full mx-auto">
-<<<<<<< HEAD
-                      {activeTab === 'analyze' && <Placeholder title="Analyze" icon={BrainCircuit}/>}
-                      {activeTab === 'home' && <Home userData={userData} />}
-=======
+                      {activeTab === 'analyze' && <Analyze userData={userData} onFinish={handleAnalyzeFinish} />}
+                      {/* {activeTab === 'home' && <Home userData={userData} />} */}
                       {activeTab === 'home' && <Home userData={userData} currentMood={currentMood} setCurrentMood={handleMoodChange} />}
->>>>>>> b579ed54614851c4ef7bf181f3683a2116a0880e
                       {activeTab === 'tracker' && <Tracker userData={userData} />}
-                      {activeTab === 'stats' && <Placeholder title="Statistik Mood" icon={BarChart2} />}
+                      {activeTab === 'stats' && <Statistics userData={userData} />}
                       {activeTab === 'profile' && <Profile userData={userData} onLogout={handleLogout} />}
                     </div>
                   </div>

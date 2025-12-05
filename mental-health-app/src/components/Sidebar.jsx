@@ -66,19 +66,19 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
           transition={{ duration: 0.6 }}
         >
           <div className="flex items-center gap-3">
-            <div className="relative w-11 h-11 flex items-center justify-center group">
-              {/* Logo Border - Static Glow */}
-              <div className="absolute inset-0 rounded-2xl border-2 border-purple-500/30 shadow-[0_0_15px_rgba(168,85,247,0.2)] group-hover:border-purple-500/60 transition-all duration-500" />
-              
-              <div className="relative w-full h-full bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-cyan-400" strokeWidth={2.5} />
+            <motion.div 
+              className="relative w-12 h-12 flex items-center justify-center"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 rounded-3xl blur-lg opacity-70 animate-pulse"></div>
+              <div className="relative w-full h-full bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900 rounded-3xl flex items-center justify-center shadow-2xl border border-purple-500/20">
+                <Sparkles className="w-6 h-6 text-purple-300" strokeWidth={2.5} />
               </div>
-            </div>
+            </motion.div>
             <div>
-              <h1 className="text-2xl font-black leading-none">
-                <span className="text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text">
-                  NeoRain
-                </span>
+              <h1 className="text-2xl font-black text-transparent bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text leading-none">
+                NeoRain
               </h1>
               <p className="text-[11px] text-slate-500 font-semibold tracking-wide mt-0.5">Mental Health AI</p>
             </div>

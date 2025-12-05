@@ -222,7 +222,7 @@ const Tracker = ({ userData }) => {
                 className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full"
               >
                 {/* Input Card */}
-                <div className="md: lg:col-span-7 space-y-8">
+                <div className="lg:col-span-7 space-y-8">
                   <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-2xl relative overflow-hidden h-full flex flex-col justify-center">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
                     <div className="relative z-10">
@@ -236,15 +236,9 @@ const Tracker = ({ userData }) => {
                           <button
                             key={m.id}
                             onClick={() => setSelectedMood(m.id)}
-<<<<<<< HEAD
                             className={`flex flex-col items-center gap-2 p-6 rounded-2xl border transition-all duration-300 min-w-[80px] md:min-w-[100px] ${selectedMood === m.id
-                                ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
-                                : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
-=======
-                            className={`flex flex-col items-center gap-2 p-5 rounded-2xl border transition-all duration-300 min-w-[80px] ${selectedMood === m.id
                               ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
                               : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
->>>>>>> b579ed54614851c4ef7bf181f3683a2116a0880e
                               }`}
                           >
                             <m.icon className={`w-8 h-8 ${m.color}`} />
@@ -368,7 +362,7 @@ const Tracker = ({ userData }) => {
                   </div>
                 </div>
 
-                {/* KOLOM KANAN: FILTERED LIST (STYLE LAMA YANG KAMU SUKA) */}
+                {/* KOLOM KANAN: FILTERED LIST */}
                 <div className="lg:col-span-5 flex flex-col h-full">
                   <div className="bg-slate-900 border border-white/10 rounded-[30px] p-6 h-fit min-h-[500px]">
                     <div className="flex justify-between items-center mb-6">

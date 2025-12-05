@@ -102,5 +102,43 @@ export const api = {
       console.error("API Error (Get Chats):", error);
       return [];
     }
+  },
+
+    // 5. Simpan Hasil Analisis
+  saveAssessment: async (data) => {
+    try {
+      const response = await fetch(`${BASE_URL}/assessments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      return await response.json();
+    } catch (error) {
+      console.error("API Error (Save Assessment):", error);
+    }
+  },
+
+  // 6. Ambil Hasil Analisis Terakhir
+  getLatestAssessment: async (firebaseUid) => {
+    try {
+      const response = await fetch(`${BASE_URL}/assessments/latest?firebase_uid=${firebaseUid}`);
+      const result = await response.json();
+      return result.data; // Bisa null jika belum pernah tes
+    } catch (error) {
+      console.error("API Error (Get Assessment):", error);
+      return null;
+    }
+  },
+
+    // 7. Ambil Semua Riwayat Analisis
+  getAssessmentHistory: async (firebaseUid) => {
+    try {
+      const response = await fetch(`${BASE_URL}/assessments/history?firebase_uid=${firebaseUid}`);
+      const result = await response.json();
+      return result.data || [];
+    } catch (error) {
+      console.error("API Error (Get History):", error);
+      return [];
+    }
   }
 };
