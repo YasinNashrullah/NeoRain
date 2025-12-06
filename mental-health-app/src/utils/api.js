@@ -10,9 +10,17 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
       });
+
+      if (!response.ok) {
+        // Silently fail or log warning if backend is not ready
+        console.warn(`API Warning (Sync User): ${response.status} ${response.statusText}`);
+        return null;
+      }
+
       return await response.json();
     } catch (error) {
       console.error("API Error (Sync User):", error);
+      return null;
     }
   },
 
@@ -104,7 +112,7 @@ export const api = {
     }
   },
 
-    // 5. Simpan Hasil Analisis
+  // 5. Simpan Hasil Analisis
   saveAssessment: async (data) => {
     try {
       const response = await fetch(`${BASE_URL}/assessments`, {
@@ -130,7 +138,7 @@ export const api = {
     }
   },
 
-    // 7. Ambil Semua Riwayat Analisis
+  // 7. Ambil Semua Riwayat Analisis
   getAssessmentHistory: async (firebaseUid) => {
     try {
       const response = await fetch(`${BASE_URL}/assessments/history?firebase_uid=${firebaseUid}`);

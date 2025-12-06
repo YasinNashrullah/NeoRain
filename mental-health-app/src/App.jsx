@@ -38,7 +38,17 @@ const App = () => {
 
   // STATE BARU: Menyimpan konteks analisis untuk Chat (dikirim dari Statistics)
   const [chatContext, setChatContext] = useState(null);
-  const [currentMood, setCurrentMood] = useState('default');
+
+  // MOOD STATE & PERSISTENCE
+  const [currentMood, setCurrentMood] = useState(() => {
+    return localStorage.getItem('currentMood') || 'default';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('currentMood', currentMood);
+  }, [currentMood]);
+
+  const [lastAssessment, setLastAssessment] = useState(null);
 
   // CHAT STATE & PERSISTENCE
   const [messages, setMessages] = useState(() => {
@@ -70,11 +80,23 @@ const App = () => {
           name: currentUser.displayName || "User",
           email: currentUser.email
         });
+
+        // Fetch Last Assessment
+        try {
+          const history = await api.getAssessmentHistory(currentUser.uid);
+          if (history && history.length > 0) {
+            setLastAssessment(history[0]); // Assuming API returns sorted desc
+          }
+        } catch (e) {
+          console.error("Failed to fetch history", e);
+        }
+
       } else {
         setUser(null);
         setUserData(null);
         setMessages([]); // Clear chat on logout
         localStorage.removeItem('chatHistory');
+        setLastAssessment(null);
       }
       setLoading(false);
     });
@@ -105,6 +127,11 @@ const App = () => {
   const handleChatWithContext = (assessmentData) => {
     setChatContext(assessmentData);
     setActiveTab('chat');
+  };
+
+  // Handler: Dari Home -> Analyze
+  const handleStartAnalysis = () => {
+    setActiveTab('analyze');
   };
 
   if (loading) return <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>;
@@ -198,6 +225,9 @@ const App = () => {
                           userData={userData}
                           currentMood={currentMood}
                           setCurrentMood={setCurrentMood}
+                          onStartAnalysis={handleStartAnalysis}
+                          onNavigate={setActiveTab}
+                          lastAssessment={lastAssessment}
                         />
                       )}
 
