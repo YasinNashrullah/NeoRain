@@ -80,7 +80,7 @@ const Tracker = ({ userData }) => {
     return new Date(isoString).toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
   };
 
-  // Helper: Grouping Data Mingguan berdasarkan Tanggal (UNTUK LIST DETAIL)
+  // Helper
   const groupLogsByDate = (logs) => {
     return logs.reduce((acc, log) => {
       const date = formatDate(log.created_at);
@@ -90,14 +90,14 @@ const Tracker = ({ userData }) => {
     }, {});
   };
 
-  // Filter: Hanya ambil log hari ini (Untuk Tab Daily)
+  // Filter daily
   const todayLogs = historyLogs.filter(log => {
     const logDate = new Date(log.created_at).setHours(0, 0, 0, 0);
     const today = new Date().setHours(0, 0, 0, 0);
     return logDate === today;
   });
 
-  // --- CALENDAR LOGIC ---
+  // calendar
   const handleDateClick = (day) => {
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     clickedDate.setHours(0, 0, 0, 0);
@@ -113,7 +113,7 @@ const Tracker = ({ userData }) => {
     }
   };
 
-  // Filter Data Mingguan Berdasarkan Range Kalender
+  // Filter Mingguan
   const filteredWeeklyLogs = weeklyLogs.filter(log => {
     if (!dateRange.start) return true;
 
@@ -180,7 +180,7 @@ const Tracker = ({ userData }) => {
 
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-indigo-900/20 blur-[100px] pointer-events-none"></div>
 
-      {/* HEADER & TABS */}
+      {/* Header */}
       <div className="md:px-9 px-6 pt-8 pb-4 relative z-10 flex-none">
         <div className="w-full mx-auto bg-white/5 p-1.5 rounded-2xl flex relative border border-white/10 backdrop-blur-md shadow-xl">
           {['daily', 'weekly', 'stats'].map((tab) => (
@@ -205,14 +205,13 @@ const Tracker = ({ userData }) => {
         </div>
       </div>
 
-      {/* --- CONTENT AREA --- */}
+      {/* Container */}
       <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-24 scrollbar-hide relative z-10">
-        {/* WRAPPER AGAR TIDAK TERLALU LEBAR DI DESKTOP */}
         <div className="max-w-6xl mx-auto h-full">
 
           <AnimatePresence mode='wait'>
 
-            {/* ====== TAB HARIAN (DAILY) ====== */}
+            {/* Daily */}
             {activeTab === 'daily' && (
               <motion.div
                 key="daily"
@@ -317,7 +316,7 @@ const Tracker = ({ userData }) => {
               </motion.div>
             )}
 
-            {/* ====== TAB MINGGUAN (CALENDAR & FILTER) ====== */}
+            {/* Weekly & calendar */}
             {activeTab === 'weekly' && (
               <motion.div
                 key="weekly"
@@ -326,10 +325,9 @@ const Tracker = ({ userData }) => {
                 exit={{ opacity: 0, x: -20 }}
                 className="grid grid-cols-1 lg:grid-cols-12 gap-6"
               >
-                {/* KOLOM KIRI: CALENDAR (col-span-7) */}
                 <div className="lg:col-span-7 space-y-6">
 
-                  {/* 2. CALENDAR WIDGET */}
+                  {/* calendar */}
                   <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 min-h-[500px]">
                     <div className="flex justify-between items-center mb-8">
                       <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -362,7 +360,7 @@ const Tracker = ({ userData }) => {
                   </div>
                 </div>
 
-                {/* KOLOM KANAN: FILTERED LIST */}
+                {/* filter list */}
                 <div className="lg:col-span-5 flex flex-col h-full">
                   <div className="bg-slate-900 border border-white/10 rounded-[30px] p-6 h-fit min-h-[500px]">
                     <div className="flex justify-between items-center mb-6">
@@ -384,7 +382,6 @@ const Tracker = ({ userData }) => {
                       </div>
                     ) : (
                       <div className="space-y-6 overflow-y-auto max-h-[600px] scrollbar-hide">
-                        {/* MENGGUNAKAN LOGIKA GROUPING BY DATE */}
                         {Object.entries(groupLogsByDate(filteredWeeklyLogs)).map(([date, logs]) => (
                           <div key={date}>
                             <h4 className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider sticky top-0 bg-slate-900 py-1 z-10">{date}</h4>
@@ -418,7 +415,7 @@ const Tracker = ({ userData }) => {
               </motion.div>
             )}
 
-            {/* STATS PLACEHOLDER */}
+            {/* Statistic chart */}
             {activeTab === 'stats' && (
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}

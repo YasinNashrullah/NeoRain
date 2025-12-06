@@ -10,14 +10,12 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
   ];
 
   return (
-    // PENTING: z-50 agar selalu di atas konten scroll
     <div className="absolute bottom-0 w-full z-50">
       
       {/* Background Bar */}
       <div className="bg-slate-950/90 backdrop-blur-xl border-t border-white/5 px-6 py-4 flex justify-between items-center rounded-t-3xl relative">
         
         {navItems.map((item) => {
-          // Spacer di tengah untuk tombol Chat
           if (item.id === 'stats') {
             return (
               <React.Fragment key={item.id}>
@@ -31,8 +29,6 @@ const BottomNav = ({ activeTab, setActiveTab }) => {
 
       </div>
 
-      {/* FLOATING ACTION BUTTON (CHAT) */}
-      {/* Posisikan absolute terhadap container BottomNav, bukan screen */}
       <div className="absolute left-1/2 -translate-x-1/2 -top-6 z-[60]">
         <button 
           onClick={() => setActiveTab('chat')}

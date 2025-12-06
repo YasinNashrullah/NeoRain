@@ -7,14 +7,10 @@ import {
 } from 'lucide-react';
 
 const Home = ({ userData, currentMood, setCurrentMood }) => {
-  // const [selectedMood, setSelectedMood] = useState('calm'); // Removed local state
   const [timeGreeting, setTimeGreeting] = useState('Pagi');
   const [weather, setWeather] = useState({ temp: 28, condition: 'Cerah', icon: Sun });
-
-  // Helper to handle display mood (if 'default', show 'calm')
   const displayMood = currentMood === 'default' ? 'calm' : currentMood;
 
-  // Data Mood yang SAMA PERSIS dengan Tracker (Single Source of Truth Concept)
   const moods = [
     { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-400', bg: 'bg-pink-500/20', border: 'border-pink-500/50' },
     { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50' },
@@ -38,7 +34,7 @@ const Home = ({ userData, currentMood, setCurrentMood }) => {
     };
 
     updateTime();
-    const interval = setInterval(updateTime, 60000); // Update tiap menit
+    const interval = setInterval(updateTime, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -59,7 +55,7 @@ const Home = ({ userData, currentMood, setCurrentMood }) => {
 
       <div className="flex-1 overflow-y-auto pb-24 relative z-10 scrollbar-hide">
 
-        {/* 1. HEADER */}
+        {/* header */}
         <div className="px-6 pt-8 pb-3 flex justify-between items-start">
           <div>
             <p className="text-slate-400 text-xs mb-1">{timeGreeting},</p>
@@ -82,7 +78,7 @@ const Home = ({ userData, currentMood, setCurrentMood }) => {
           </div>
         </div>
 
-        {/* 2. mood scanner */}
+        {/* mood scanner */}
         <div className="px-6 mb-6">
           <h2 className="text-slate-300 text-sm font-medium mb-1">Mood Scanner</h2>
 
@@ -140,7 +136,7 @@ const Home = ({ userData, currentMood, setCurrentMood }) => {
           </motion.div>
         </div>
 
-        {/* QUICK ACTIONS */}
+        {/* quick action */}
         <div className="px-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5 flex items-center gap-3 hover:bg-slate-800 transition-colors cursor-pointer">

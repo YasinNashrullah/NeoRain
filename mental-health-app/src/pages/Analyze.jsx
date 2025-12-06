@@ -4,10 +4,9 @@ import { ChevronRight, CheckCircle, AlertCircle, BrainCircuit } from 'lucide-rea
 import { api } from '../utils/api';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// --- KONFIGURASI GEMINI ---
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-// --- DATA PERTANYAAN (DASS-21) ---
+// pertanyaan DASS 21
 const questions = [
   { id: 1, type: 'S', text: "Saya merasa susah untuk beristirahat" },
   { id: 2, type: 'A', text: "Saya merasa mulut saya kering" },
@@ -40,7 +39,7 @@ const options = [
 ];
 
 const Analyze = ({ userData, onFinish }) => {
-  const [step, setStep] = useState('intro'); // intro, quiz, processing
+  const [step, setStep] = useState('intro');
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
 
@@ -53,11 +52,10 @@ const Analyze = ({ userData, onFinish }) => {
     }
   };
 
-  // --- FUNGSI UTAMA: HITUNG SKOR & PANGGIL AI ---
   const finishQuiz = async () => {
     setStep('processing');
     
-    // 1. Hitung Skor Manual (DASS-21)
+    // Hitung Skor manual
     let d = 0, a = 0, s = 0;
     questions.forEach(q => {
       const val = answers[q.id] || 0;
@@ -66,7 +64,7 @@ const Analyze = ({ userData, onFinish }) => {
       if (q.type === 'S') s += val;
     });
     
-    // Skor DASS-21 dikali 2 untuk menyamai DASS-42
+    // Skor DASS-21 dikali 2 = DASS-42
     const scores = { depression: d * 2, anxiety: a * 2, stress: s * 2 };
 
     try {
@@ -109,7 +107,6 @@ const Analyze = ({ userData, onFinish }) => {
       try {
         aiAnalysis = JSON.parse(text);
       } catch (e) {
-        // Fallback jika AI gagal generate JSON valid
         aiAnalysis = {
           summary: "Analisis selesai. Skor kamu telah direkam.",
           factors: "Tidak dapat memuat detail faktor saat ini.",
@@ -150,7 +147,7 @@ const Analyze = ({ userData, onFinish }) => {
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
         
         <AnimatePresence mode='wait'>
-          {/* INTRO SCREEN */}
+          {/* Intro */}
           {step === 'intro' && (
             <motion.div 
               key="intro"
@@ -175,7 +172,7 @@ const Analyze = ({ userData, onFinish }) => {
             </motion.div>
           )}
 
-          {/* QUIZ SCREEN */}
+          {/* Quiz screen */}
           {step === 'quiz' && (
             <motion.div 
               key="quiz"
@@ -223,7 +220,7 @@ const Analyze = ({ userData, onFinish }) => {
             </motion.div>
           )}
 
-          {/* PROCESSING SCREEN */}
+          {/* proses ai */}
           {step === 'processing' && (
             <motion.div 
               key="processing"
