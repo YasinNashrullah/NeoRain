@@ -38,6 +38,7 @@ const App = () => {
 
   // STATE BARU: Menyimpan konteks analisis untuk Chat (dikirim dari Statistics)
   const [chatContext, setChatContext] = useState(null);
+  const [currentMood, setCurrentMood] = useState('default');
 
   // CHAT STATE & PERSISTENCE
   const [messages, setMessages] = useState(() => {
@@ -157,6 +158,8 @@ const App = () => {
                   initialContext={chatContext}
                   messages={messages}
                   setMessages={setMessages}
+                  currentMood={currentMood}
+                  setCurrentMood={setCurrentMood}
                 />
               </div>
             )}
@@ -175,6 +178,8 @@ const App = () => {
                       initialContext={chatContext}
                       messages={messages}
                       setMessages={setMessages}
+                      currentMood={currentMood}
+                      setCurrentMood={setCurrentMood}
                     />
                   </div>
                 ) : (
@@ -188,7 +193,13 @@ const App = () => {
                         <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
                       )}
 
-                      {activeTab === 'home' && <Home userData={userData} />}
+                      {activeTab === 'home' && (
+                        <Home
+                          userData={userData}
+                          currentMood={currentMood}
+                          setCurrentMood={setCurrentMood}
+                        />
+                      )}
 
                       {activeTab === 'tracker' && <Tracker userData={userData} />}
 

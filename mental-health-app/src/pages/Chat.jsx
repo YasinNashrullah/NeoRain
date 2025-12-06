@@ -59,11 +59,11 @@ const moodColors = {
   }
 };
 
-const Chat = ({ onBack, userData, initialContext, messages, setMessages }) => {
+const Chat = ({ onBack, userData, initialContext, messages, setMessages, currentMood, setCurrentMood }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   // Removed local messages state
-  const [currentMood, setCurrentMood] = useState('default');
+  // Removed local currentMood state
 
   // State Context
   const [activeContext, setActiveContext] = useState(initialContext || null);
