@@ -62,11 +62,15 @@ const Chat = ({ onBack, userData, initialContext }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState([]);
   const [currentMood, setCurrentMood] = useState('default');
-  
+
   // State Context
   const [activeContext, setActiveContext] = useState(initialContext || null);
   const [showHistoryMenu, setShowHistoryMenu] = useState(false);
   const [assessmentHistory, setAssessmentHistory] = useState([]);
+
+  // Suggestions State
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const messagesEndRef = useRef(null);
   const userName = userData?.name?.split(" ")[0] || "Teman"; // Ambil nama depan saja
@@ -82,22 +86,94 @@ const Chat = ({ onBack, userData, initialContext }) => {
     fetchHistory();
   }, [userData]);
 
+  // Generate Smart Suggestions
+  useEffect(() => {
+    const generateSuggestions = async () => {
+      setLoadingSuggestions(true);
+
+      // 1. Default Suggestions (Deep & Reflective - No Emojis)
+      let defaultSuggestions = [
+        "Rasanya berat sekali hari ini",
+        "Aku merasa sendirian di keramaian",
+        "Bagaimana cara berdamai dengan diri sendiri?",
+        "Aku butuh seseorang yang mengerti",
+        "Pikiranku tidak bisa diam",
+        "Aku lelah berpura-pura kuat",
+        "Apa arti dari semua ini?"
+      ];
+
+      // 2. Context-based Suggestions (Rule-based Fallback)
+      if (activeContext) {
+        const { stress_score, anxiety_score, depression_score } = activeContext;
+        defaultSuggestions = []; // Reset defaults
+
+        if (stress_score > 14) defaultSuggestions.push("Kenapa dadaku terasa sesak terus?");
+        if (anxiety_score > 7) defaultSuggestions.push("Bagaimana menghentikan rasa takut ini?");
+        if (depression_score > 9) defaultSuggestions.push("Aku merasa hampa dan kosong");
+        defaultSuggestions.push("Jelaskan apa yang terjadi padaku");
+        defaultSuggestions.push("Aku ingin merasa lebih baik");
+        defaultSuggestions.push("Apakah ini akan berlalu?");
+      }
+
+      setSuggestions(defaultSuggestions); // Show immediate fallback
+
+      // 3. AI-based Suggestions (Personalized)
+      if (activeContext && import.meta.env.VITE_GEMINI_API_KEY) {
+        try {
+          const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+          const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+          const prompt = `
+            Based on this mental health data:
+            Depression: ${activeContext.depression_score}, Anxiety: ${activeContext.anxiety_score}, Stress: ${activeContext.stress_score}.
+            Summary: ${activeContext.ai_analysis?.summary || '-'}.
+            
+            Generate 6 deep, emotional, and reflective Indonesian conversation starters (max 8 words) for the user to say to their AI therapist.
+            Tone: Vulnerable, seeking understanding, heart-to-heart.
+            Constraint: NO EMOJIS. Plain text only.
+            Example: ["Aku takut tidak ada yang mengerti", "Rasanya ingin menyerah saja", "Bagaimana cara mencintai diri sendiri?"].
+            Output ONLY a JSON array of strings.
+          `;
+
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const text = response.text().replace(/```json|```/g, '').trim();
+
+          try {
+            const aiSuggestions = JSON.parse(text);
+            if (Array.isArray(aiSuggestions) && aiSuggestions.length > 0) {
+              setSuggestions(aiSuggestions);
+            }
+          } catch (e) {
+            console.error("Failed to parse AI suggestions", e);
+          }
+        } catch (error) {
+          console.error("Failed to generate AI suggestions", error);
+        }
+      }
+
+      setLoadingSuggestions(false);
+    };
+
+    generateSuggestions();
+  }, [activeContext]);
+
   useEffect(() => {
     if (initialContext) {
       setActiveContext(initialContext);
       setMessages([{
         id: 'sys-init',
-        text: `Mode Analisis Aktif: Menggunakan data tanggal ${new Date(initialContext.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}. Silakan tanya tentang hasil ini.`,
+        text: `Mode Analisis Aktif: Menggunakan data tanggal ${new Date(initialContext.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}. Silakan tanya tentang hasil ini.`,
         sender: 'system',
         time: 'Info'
       }]);
     } else {
       setActiveContext(null);
-      setMessages([{ 
-        id: 'ai-init', 
-        text: `Halo ${userName}! Gue NeoRain. Cerita aja, gue bakal dengerin. Ada yang mengganggu pikiranmu hari ini?`, 
-        sender: 'ai', 
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      setMessages([{
+        id: 'ai-init',
+        text: `Halo ${userName}! Gue NeoRain. Cerita aja, gue bakal dengerin. Ada yang mengganggu pikiranmu hari ini?`,
+        sender: 'ai',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
     }
   }, [initialContext, userName]);
@@ -106,7 +182,7 @@ const Chat = ({ onBack, userData, initialContext }) => {
   const handleContextChange = (context) => {
     setActiveContext(context);
     setShowHistoryMenu(false);
-    
+
     if (context) {
       setMessages(prev => [...prev, {
         id: Date.now(),
@@ -148,12 +224,12 @@ const Chat = ({ onBack, userData, initialContext }) => {
 
     // Save User Message
     if (userData?.uid) {
-      api.saveChat({ firebase_uid: userData.uid, message: userMsg.text, sender: 'user' }).catch(err => {});
+      api.saveChat({ firebase_uid: userData.uid, message: userMsg.text, sender: 'user' }).catch(err => { });
     }
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
+
       // sistem prompt
       let systemInstruction = `
         SYSTEM: Kamu adalah NeoRain, teman curhat mahasiswa.
@@ -161,11 +237,11 @@ const Chat = ({ onBack, userData, initialContext }) => {
         Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lo-gue". Panggil user dengan nama "${userName}" sesekali agar akrab.
         Tugas: Analisis emosi user. Di AKHIR response, WAJIB sertakan tag mood: ||MOOD:happy||, ||MOOD:sad||, dll.
       `;
-      
+
       // Inject Data Analisis jika ada
       if (activeContext) {
-        const aiReport = typeof activeContext.ai_analysis === 'string' 
-          ? JSON.parse(activeContext.ai_analysis) 
+        const aiReport = typeof activeContext.ai_analysis === 'string'
+          ? JSON.parse(activeContext.ai_analysis)
           : activeContext.ai_analysis;
 
         systemInstruction += `
@@ -218,7 +294,7 @@ const Chat = ({ onBack, userData, initialContext }) => {
       setMessages(prev => [...prev, aiMsg]);
 
       if (userData?.uid) {
-        api.saveChat({ firebase_uid: userData.uid, message: aiMsg.text, sender: 'ai' }).catch(err => {});
+        api.saveChat({ firebase_uid: userData.uid, message: aiMsg.text, sender: 'ai' }).catch(err => { });
       }
 
     } catch (error) {
@@ -258,19 +334,28 @@ const Chat = ({ onBack, userData, initialContext }) => {
             <div>
               <h1 className="text-white font-bold text-sm">NeoRain AI</h1>
               {activeContext ? (
-                <p className="text-green-400 text-[10px] flex items-center gap-1 font-bold">
-                  <FileText className="w-3 h-3" />
-                  Mode Analisis
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-green-400 text-[10px] flex items-center gap-1 font-bold">
+                    <FileText className="w-3 h-3" />
+                    Mode Analisis
+                  </p>
+                  <button
+                    onClick={() => handleContextChange(null)}
+                    className="p-0.5 bg-white/10 rounded-full hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                    title="Matikan Mode Analisis"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
               ) : (
                 <p className={`${currentStyle.text} text-[10px]`}>Teman Curhat</p>
               )}
             </div>
           </div>
-          
+
           {/* History selector */}
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowHistoryMenu(!showHistoryMenu)}
               className={`p-2 rounded-full transition-colors ${showHistoryMenu ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
             >
@@ -280,7 +365,7 @@ const Chat = ({ onBack, userData, initialContext }) => {
             {/* dropdown menu */}
             <AnimatePresence>
               {showHistoryMenu && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -288,17 +373,17 @@ const Chat = ({ onBack, userData, initialContext }) => {
                 >
                   <div className="p-3 border-b border-white/5 flex justify-between items-center">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pilih Konteks Data</span>
-                    <button onClick={() => setShowHistoryMenu(false)}><X className="w-4 h-4 text-slate-500 hover:text-white"/></button>
+                    <button onClick={() => setShowHistoryMenu(false)}><X className="w-4 h-4 text-slate-500 hover:text-white" /></button>
                   </div>
-                  
+
                   <div className="max-h-60 overflow-y-auto scrollbar-hide p-2 space-y-1">
-                    <button 
+                    <button
                       onClick={() => handleContextChange(null)}
                       className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors ${!activeContext ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-white/5'}`}
                     >
                       Tanpa Konteks (Umum)
                     </button>
-                    
+
                     {assessmentHistory.map((item) => (
                       <button
                         key={item.id}
@@ -310,16 +395,16 @@ const Chat = ({ onBack, userData, initialContext }) => {
                             {new Date(item.created_at).toLocaleDateString('id-ID')}
                           </span>
                           <span className={`text-[9px] ${activeContext?.id === item.id ? 'text-indigo-200' : 'text-slate-500'}`}>
-                            {new Date(item.created_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}
+                            {new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                         <div className="flex gap-1">
-                           {item.stress_score > 18 && <span className="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded">Stres</span>}
-                           {item.anxiety_score > 9 && <span className="text-[9px] bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded">Cemas</span>}
-                           {item.depression_score > 13 && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">Depresi</span>}
-                           {item.stress_score <= 18 && item.anxiety_score <= 9 && item.depression_score <= 13 && 
-                             <span className="text-[9px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded">Normal</span>
-                           }
+                          {item.stress_score > 18 && <span className="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded">Stres</span>}
+                          {item.anxiety_score > 9 && <span className="text-[9px] bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded">Cemas</span>}
+                          {item.depression_score > 13 && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">Depresi</span>}
+                          {item.stress_score <= 18 && item.anxiety_score <= 9 && item.depression_score <= 13 &&
+                            <span className="text-[9px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded">Normal</span>
+                          }
                         </div>
                       </button>
                     ))}
@@ -335,7 +420,7 @@ const Chat = ({ onBack, userData, initialContext }) => {
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative z-10">
         <div className="p-4 space-y-4 flex flex-col justify-end min-h-full">
           <div className="h-4 flex-none"></div>
-          
+
           {messages.map((msg) => (
             <motion.div
               key={msg.id}
@@ -351,11 +436,10 @@ const Chat = ({ onBack, userData, initialContext }) => {
                   </span>
                 </div>
               ) : (
-                <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md whitespace-pre-wrap break-words ${
-                  msg.sender === 'user'
-                    ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
-                    : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5 text-left'
-                }`}>
+                <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md whitespace-pre-wrap break-words ${msg.sender === 'user'
+                  ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
+                  : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5 text-left'
+                  }`}>
                   {msg.text}
                   <div className="text-[10px] opacity-50 mt-1 text-right">{msg.time}</div>
                 </div>
@@ -371,12 +455,35 @@ const Chat = ({ onBack, userData, initialContext }) => {
               </div>
             </div>
           )}
+          {/* Elemen target scroll */}
           <div ref={messagesEndRef} className="h-1" />
         </div>
       </div>
 
-      {/* input chat */}
+      {/* --- SUGGESTION CHIPS --- */}
+      <div className="flex-none w-full px-4 pb-2 z-20">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          {loadingSuggestions && suggestions.length === 0 ? (
+            <div className="flex gap-2">
+              {[1, 2, 3].map(i => <div key={i} className="h-8 w-24 bg-white/5 rounded-full animate-pulse" />)}
+            </div>
+          ) : (
+            suggestions.map((text, idx) => (
+              <button
+                key={idx}
+                onClick={() => setInput(text)}
+                className="flex-none bg-slate-800/80 backdrop-blur-md border border-white/10 rounded-full px-4 py-2 text-xs text-slate-300 whitespace-nowrap hover:bg-indigo-600 hover:text-white hover:border-indigo-500 transition-all duration-300 shadow-lg active:scale-95"
+              >
+                {text}
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* --- 3. INPUT AREA (Static) --- */}
       <div className="flex-none w-full bg-transparent border-t border-white/5 p-4 pb-6 z-20">
+
         <div className="flex items-end gap-2">
           <div className="flex-1 bg-slate-900 border border-slate-800 rounded-[24px] flex items-end px-2 py-2">
             <textarea
