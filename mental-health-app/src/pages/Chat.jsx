@@ -70,6 +70,11 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   const [showHistoryMenu, setShowHistoryMenu] = useState(false);
   const [assessmentHistory, setAssessmentHistory] = useState([]);
 
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   // Suggestions State
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -77,16 +82,54 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   const messagesEndRef = useRef(null);
   const userName = userData?.name?.split(" ")[0] || "Teman"; // Ambil nama depan saja
 
-  // Load History Dropdown
+  // Load History & Initial Messages
   useEffect(() => {
-    const fetchHistory = async () => {
+    const initData = async () => {
       if (userData?.uid) {
+        // 1. Load Assessment History
         const history = await api.getAssessmentHistory(userData.uid);
         setAssessmentHistory(history);
+
+        // 2. Load Chat History (Page 1)
+        if (messages.length === 0) {
+          const { data, hasMore: more } = await api.getChats(userData.uid, 1);
+          if (data.length > 0) {
+            // Backend usually returns newest first or last? 
+            // Assuming backend returns [newest, ..., oldest] for pagination efficiency
+            // But frontend needs [oldest, ..., newest]
+            // Let's reverse if needed. 
+            // If backend returns standard paginate [msg1, msg2] where msg1 is older?
+            // Usually chat APIs return [newest...oldest].
+            // Let's assume we need to reverse them to show chronologically.
+            setMessages(data.reverse());
+            setHasMore(more);
+            setPage(2); // Next page is 2
+          }
+        }
       }
     };
-    fetchHistory();
+    initData();
   }, [userData]);
+
+  const loadMoreMessages = async () => {
+    if (isLoadingMore || !hasMore || !userData?.uid) return;
+
+    setIsLoadingMore(true);
+    try {
+      const { data, hasMore: more } = await api.getChats(userData.uid, page);
+      if (data.length > 0) {
+        setMessages(prev => [...data.reverse(), ...prev]);
+        setHasMore(more);
+        setPage(prev => prev + 1);
+      } else {
+        setHasMore(false);
+      }
+    } catch (e) {
+      console.error("Failed to load more chats", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // Generate Smart Suggestions
   useEffect(() => {
@@ -201,8 +244,8 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   }, [activeContext, messages]);
 
   useEffect(() => {
-    // Only set initial message if history is empty
-    if (messages.length > 0) return;
+    // Only set initial message if history is empty AND we are not loading
+    if (messages.length > 0 || isLoadingMore) return;
 
     if (initialContext) {
       setActiveContext(initialContext);
@@ -379,6 +422,9 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         currentStyle={currentStyle}
         isTyping={isTyping}
         messagesEndRef={messagesEndRef}
+        onLoadMore={loadMoreMessages}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
       />
 
       <SuggestionChips

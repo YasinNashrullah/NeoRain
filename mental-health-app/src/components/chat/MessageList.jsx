@@ -1,11 +1,41 @@
-import React from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Loader2 } from 'lucide-react';
 
-const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef }) => {
+const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadMore, hasMore, isLoadingMore }) => {
+    const containerRef = useRef(null);
+    const [prevScrollHeight, setPrevScrollHeight] = useState(0);
+
+    const handleScroll = () => {
+        if (containerRef.current.scrollTop === 0 && hasMore && !isLoadingMore) {
+            setPrevScrollHeight(containerRef.current.scrollHeight);
+            onLoadMore();
+        }
+    };
+
+    useLayoutEffect(() => {
+        if (prevScrollHeight > 0 && containerRef.current) {
+            const newScrollHeight = containerRef.current.scrollHeight;
+            const diff = newScrollHeight - prevScrollHeight;
+            containerRef.current.scrollTop = diff;
+            setPrevScrollHeight(0);
+        }
+    }, [messages, prevScrollHeight]);
+
     return (
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative z-10">
+        <div
+            ref={containerRef}
+            onScroll={handleScroll}
+            className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative z-10"
+        >
             <div className="p-4 space-y-4 flex flex-col justify-end min-h-full">
+                {/* Loading Indicator for Pagination */}
+                {isLoadingMore && (
+                    <div className="w-full flex justify-center py-2">
+                        <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
+                    </div>
+                )}
+
                 <div className="h-4 flex-none"></div>
 
                 {messages.map((msg) => (

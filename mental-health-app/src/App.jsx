@@ -231,7 +231,7 @@ const App = () => {
                         />
                       )}
 
-                      {activeTab === 'tracker' && <Tracker userData={userData} />}
+                      {activeTab === 'tracker' && <Tracker userData={userData} onNavigate={setActiveTab} />}
 
                       {activeTab === 'stats' && (
                         <Statistics

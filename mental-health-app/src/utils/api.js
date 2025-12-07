@@ -92,23 +92,32 @@ export const api = {
     }
   },
 
-  // 6. Ambil History Chat
-  getChats: async (firebaseUid) => {
+  // 6. Ambil History Chat (dengan Pagination)
+  getChats: async (firebaseUid, page = 1, limit = 20) => {
     try {
-      const response = await fetch(`${BASE_URL}/chats?firebase_uid=${firebaseUid}`);
+      const response = await fetch(`${BASE_URL}/chats?firebase_uid=${firebaseUid}&page=${page}&limit=${limit}`);
       if (!response.ok) {
         if (response.status === 404) {
           console.warn("API Warning: Chat history endpoint not found (404). Backend update required.");
-          return [];
+          return { data: [], hasMore: false };
         }
         console.warn(`API Error (Get Chats): ${response.status} ${response.statusText}`);
-        return [];
+        return { data: [], hasMore: false };
       }
       const result = await response.json();
-      return result.data || [];
+
+      // Handle format response baru (dengan meta) atau lama (array langsung)
+      if (Array.isArray(result)) {
+        return { data: result, hasMore: false }; // Old format fallback
+      }
+
+      return {
+        data: result.data || [],
+        hasMore: result.meta ? result.meta.current_page < result.meta.last_page : false
+      };
     } catch (error) {
       console.error("API Error (Get Chats):", error);
-      return [];
+      return { data: [], hasMore: false };
     }
   },
 
@@ -147,6 +156,19 @@ export const api = {
     } catch (error) {
       console.error("API Error (Get History):", error);
       return [];
+    }
+  },
+
+  // 8. Ambil Statistik Mood
+  getMoodStatistics: async (firebaseUid, range = 'monthly') => {
+    try {
+      const response = await fetch(`${BASE_URL}/moods/stats?firebase_uid=${firebaseUid}&range=${range}`);
+      if (!response.ok) return null; // Fallback to frontend calc if 404
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      console.warn("API Error (Get Stats):", error);
+      return null;
     }
   }
 };
