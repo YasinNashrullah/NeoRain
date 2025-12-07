@@ -5,6 +5,8 @@ import {
   Smile, Frown, Zap, Wind, Cloud,
   ArrowRight, MessageCircle
 } from 'lucide-react';
+import { api } from '../utils/api';
+import { checkStreak } from '../utils/gamification';
 
 const Home = ({ userData, currentMood, setCurrentMood }) => {
   const [timeGreeting, setTimeGreeting] = useState('Pagi');
@@ -37,7 +39,21 @@ const Home = ({ userData, currentMood, setCurrentMood }) => {
     const interval = setInterval(updateTime, 60000);
     return () => clearInterval(interval);
   }, []);
+  useEffect(() => {
+    const initHome = async () => {
+      if (userData?.uid) {
+        // Logika Streak
+        const lastLogin = localStorage.getItem('last_login') || new Date(Date.now() - 86400000).toISOString(); // Default kemarin
+        const currentStreak = parseInt(localStorage.getItem('streak') || '0');
+        const newStreak = checkStreak(lastLogin, currentStreak);
+        // Simpan ke LocalStorage / Database
+        localStorage.setItem('last_login', new Date().toISOString());
+        localStorage.setItem('streak', newStreak);
+      }
+    };
 
+    initHome();
+  }, [userData]);
   return (
     <div className="relative w-full h-full flex flex-col">
 
@@ -45,9 +61,9 @@ const Home = ({ userData, currentMood, setCurrentMood }) => {
       <motion.div
         animate={{
           background: `radial-gradient(circle at 50% 0%, ${displayMood === 'happy' ? '#ec4899' :
-              displayMood === 'angry' ? '#ea580c' :
-                displayMood === 'manic' ? '#eab308' :
-                  '#6366f1'
+            displayMood === 'angry' ? '#ea580c' :
+              displayMood === 'manic' ? '#eab308' :
+                '#6366f1'
             } 0%, transparent 70%)`
         }}
         className="absolute top-0 left-0 w-full h-[500px] opacity-20 blur-3xl pointer-events-none transition-colors duration-1000 z-0"
@@ -89,8 +105,8 @@ const Home = ({ userData, currentMood, setCurrentMood }) => {
                 key={m.id}
                 onClick={() => setCurrentMood(m.id)}
                 className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all duration-300 min-w-[70px] ${displayMood === m.id
-                    ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
-                    : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
+                  ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
+                  : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
                   }`}
               >
                 <m.icon className={`w-6 h-6 ${m.color}`} />

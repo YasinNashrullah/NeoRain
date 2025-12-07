@@ -12,7 +12,7 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Statistics from './pages/Statistics';
-import Analyze from './pages/Analyze'; // IMPORT WAJIB
+import Analyze from './pages/Analyze';
 
 // Components
 import BottomNav from './components/BottomNav';
@@ -35,30 +35,45 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [authPage, setAuthPage] = useState('login');
   const [activeTab, setActiveTab] = useState('home');
-
-  // STATE BARU: Menyimpan konteks analisis untuk Chat (dikirim dari Statistics)
   const [chatContext, setChatContext] = useState(null);
 
-  // --- AUTH LOGIC ---
+  const refreshUserData = async (uid) => {
+    try {
+      const dbUser = await api.getUserDetail(uid);
+      if (dbUser) {
+        setUserData((prev) => ({
+          ...prev,
+          ...dbUser,
+          name: dbUser.name
+        }));
+      }
+    } catch (error) {
+      console.error("Gagal refresh user:", error);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        
-        const userDataObj = {
+
+        // Firebase
+        const basicData = {
           uid: currentUser.uid,
-          name: currentUser.displayName,
           email: currentUser.email,
+          name: currentUser.displayName,
           role: "Mahasiswa"
         };
-        setUserData(userDataObj);
+        setUserData(basicData);
 
-        // Sync ke Database Laravel
         await api.syncUser({
           firebase_uid: currentUser.uid,
           name: currentUser.displayName || "User",
           email: currentUser.email
         });
+
+        await refreshUserData(currentUser.uid);
+
       } else {
         setUser(null);
         setUserData(null);
@@ -68,10 +83,9 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  // --- HANDLERS ---
   const handleAuthSuccess = (data) => setUserData(data);
   const handleOnboardingFinish = (surveyData) => setUserData((prev) => ({ ...prev, ...surveyData }));
-  
+
   const handleLogout = async () => {
     await signOut(auth);
     setUser(null);
@@ -81,23 +95,21 @@ const App = () => {
     setAuthPage('login');
   };
 
-  // Handler: Setelah selesai Analyze -> Pindah ke Statistics
   const handleAnalyzeFinish = () => {
     setActiveTab('stats');
   };
 
-  // Handler: Dari Statistics -> Chat dengan membawa data
   const handleChatWithContext = (assessmentData) => {
-    setChatContext(assessmentData); 
-    setActiveTab('chat'); 
+    setChatContext(assessmentData);
+    setActiveTab('chat');
   };
 
   if (loading) return <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>;
 
   if (!user) {
     return (
-      <div className="fixed inset-0 w-full h-full flex justify-center items-center font-sans p-4">
-        <div className="w-full h-full sm:h-auto bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
+      <div className="fixed inset-0 w-full h-full bg-black flex justify-center items-center font-sans p-4">
+        <div className="w-full h-full sm:h-auto sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
           {authPage === 'login' ? (
             <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => setAuthPage('register')} />
           ) : (
@@ -149,7 +161,6 @@ const App = () => {
             <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
               <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/50 md:backdrop-blur-sm md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
                 
-                {/* content*/}
                 {activeTab === 'chat' ? (
                   // Chat Mode (Desktop)
                   <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
@@ -163,8 +174,6 @@ const App = () => {
                   // Dashboard Mode
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
                     <div className="w-full h-full mx-auto"> 
-                      
-                      {/* --- HALAMAN-HALAMAN --- */}
                       
                       {activeTab === 'analyze' && (
                         <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
@@ -181,7 +190,14 @@ const App = () => {
                         />
                       )}
                       
-                      {activeTab === 'profile' && <Profile userData={userData} onLogout={handleLogout} />}
+                      {activeTab === 'profile' && (
+                        <Profile 
+                          userData={userData} 
+                          onLogout={handleLogout} 
+                          onUpdateProfile={() => refreshUserData(user.uid)} 
+                        />
+                      )}
+
                     </div>
                   </div>
                 )}

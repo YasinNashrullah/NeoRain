@@ -15,7 +15,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
     { id: 'profile', label: 'Profiles', icon: User },
   ];
 
-  // Konfigurasi animasi transisi (geser)
+  // Konfigurasi animasi transisi 
   const springTransition = {
     type: "spring",
     stiffness: 400,
@@ -111,7 +111,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                   }}
                   transition={{ duration: 0.6, type: "spring", stiffness: 300, damping: 30 }}
                 />
-                {/* Active Background (Shared Transition) */}
+                {/* Active Background */}
                 <motion.div
                   layoutId="activeNav"
                   className="absolute inset-0 bg-[#1e1b4b]/80 rounded-[1.5rem] border border-purple-500/50 z-0"
@@ -305,17 +305,17 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
           })}
         </div>
 
-        {/* === PROFILE CARD === */}
+        {/* Profile card */}
         <div className="mt-6 pt-6 border-t border-purple-500/10">
           <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
             <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.name || 'User'}`}
-              alt="User"
+              src={userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`}
+              alt="Profile"
               className="w-10 h-10 rounded-full bg-slate-800 border border-purple-500/20"
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{userData?.name || 'Pengguna'}</p>
-              <p className="text-[11px] text-slate-500 truncate">user@mail.com</p>
+              <p className="text-[11px] text-slate-500 truncate">{userData?.email || ''}</p>
             </div>
             <button onClick={onLogout} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 hover:text-red-400 transition-colors">
               <LogOut className="w-4 h-4" />

@@ -1,155 +1,525 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { 
-  User, Settings, Bell, Shield, HelpCircle, 
-  LogOut, Flame, Award, ChevronRight, Edit2, 
-  Mail, Trophy 
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User, Lock, HelpCircle, LogOut, Camera, ChevronRight,
+  MapPin, Calendar, Mail, Flame, Award, Phone, MessageSquare,
+  HeartHandshake, Save, X, Star, ShieldCheck
 } from 'lucide-react';
+import { updateProfile, updatePassword, deleteUser } from "firebase/auth";
+import { auth } from '../firebase';
+import { api } from '../utils/api';
 
-const Profile = ({ userData, onLogout }) => {
-  // Data Menu Settings
-  const menuItems = [
-    { icon: User, label: 'Edit Profil', action: () => console.log('Edit') },
-    { icon: Bell, label: 'Notifikasi', action: () => console.log('Notif') },
-    { icon: Shield, label: 'Privasi & Keamanan', action: () => console.log('Privacy') },
-    { icon: HelpCircle, label: 'Bantuan & Dukungan', action: () => console.log('Help') },
+const Profile = ({ userData, onLogout, onUpdateProfile }) => {
+  const [activeView, setActiveView] = useState('main');
+  const [streak, setStreak] = useState(0);
+
+  // State untuk Modal Achievement
+  const [selectedAchievement, setSelectedAchievement] = useState(null);
+
+  // State Form Edit
+  const [formData, setFormData] = useState({
+    name: '',
+    gender: '',
+    dob: '',
+    location: ''
+  });
+
+  // State Security
+  const [passData, setPassData] = useState({ newPass: '', confirmPass: '' });
+
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        name: userData.name || '',
+        gender: userData.gender || '',
+        dob: userData.date_of_birth || '',
+        location: userData.location || ''
+      });
+
+      // Load Streak Local
+      const s = localStorage.getItem('streak') || 0;
+      setStreak(s);
+    }
+  }, [userData]);
+
+  const achievementsList = [
+    {
+      id: 1, label: 'Langkah Awal', desc: 'Bergabung dengan NeoRain', icon: '🚀',
+      unlocked: true
+    },
+    {
+      id: 2, label: 'Pejuang Minggu', desc: 'Login berturut-turut selama 7 hari', icon: '🔥',
+      unlocked: parseInt(streak) >= 7
+    },
+    {
+      id: 3, label: 'Mood Master', desc: 'Mencatat mood minimal 20 kali', icon: '🎭',
+      unlocked: (userData?.mood_count || 0) >= 20
+    },
+    {
+      id: 4, label: 'Supporter', desc: 'Melengkapi profil data diri (Lokasi & Gender)', icon: '🤝',
+      unlocked: userData?.location && userData?.gender && userData.location !== 'Belum diisi'
+    },
+    {
+      id: 5, label: 'Verified', desc: 'Memiliki foto profil custom', icon: '📸',
+      unlocked: userData?.photo_url && !userData.photo_url.includes('dicebear')
+    }
   ];
 
-  return (
-    <div className="w-full h-full bg-slate-950 text-white flex flex-col relative overflow-hidden">
-      
-      {/* Background Glow (Sama seperti halaman lain) */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-indigo-900/20 blur-[100px] pointer-events-none"></div>
+  // --- HANDLERS ---
 
-      {/* --- HEADER --- */}
-      <div className="px-6 pt-8 pb-2 relative z-10">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          Profil <User className="w-6 h-6 text-indigo-400" />
-        </h1>
-        <p className="text-slate-400 text-sm">Kelola akun dan preferensi</p>
-      </div>
+  // Upload Foto
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-      {/* --- CONTENT AREA (SCROLLABLE) --- */}
-      <div className="flex-1 overflow-y-auto px-6 pb-24 scrollbar-hide relative z-10 space-y-4 pt-4">
-        
-        {/* 1. USER CARD (INFO & STATS) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-900 border border-white/10 rounded-[30px] p-6 relative overflow-hidden shadow-2xl"
-        >
-          {/* Dekorasi Background */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl"></div>
+    // Validasi Ukuran Max 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      return alert("Ukuran file terlalu besar! Maksimal 2MB.");
+    }
 
-          {/* Profile Info */}
-          <div className="flex items-center gap-4 mb-6 relative z-10">
-            <div className="relative">
-              <img 
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.name || 'User'}`} 
-                alt="Avatar" 
-                className="w-16 h-16 rounded-full border-2 border-indigo-500 bg-slate-800"
+    try {
+      const res = await api.uploadProfilePhoto(userData.uid, file);
+
+      if (res.status === 'success') {
+        alert("Foto berhasil diupdate!");
+        if (onUpdateProfile) onUpdateProfile();
+      } else {
+        alert("Gagal upload foto (Server Error).");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Gagal upload foto. Cek koneksi.");
+    }
+  };
+
+  // Simpan Profil
+  const handleSaveProfile = async () => {
+    if (!formData.name.trim()) return alert("Nama tidak boleh kosong!");
+
+    try {
+      await api.updateUserProfile({
+        firebase_uid: userData.uid,
+        name: formData.name,
+        gender: formData.gender,
+        date_of_birth: formData.dob,
+        location: formData.location
+      });
+
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: formData.name });
+      }
+      alert("Profil berhasil disimpan!");
+
+      if (onUpdateProfile) {
+        await onUpdateProfile();
+      }
+
+      setActiveView('main');
+
+    } catch (error) {
+      console.error("Save Error:", error);
+      alert("Gagal update profil. Pastikan server Laravel berjalan.");
+    }
+  };
+
+  // Ganti Password (Firebase)
+  const handleChangePassword = async () => {
+    if (passData.newPass.length < 6) return alert("Password minimal 6 karakter!");
+    if (passData.newPass !== passData.confirmPass) return alert("Password konfirmasi tidak cocok!");
+
+    try {
+      await updatePassword(auth.currentUser, passData.newPass);
+      alert("Password berhasil diubah. Silakan login ulang.");
+      onLogout();
+    } catch (e) { alert("Gagal: " + e.message); }
+  };
+
+  // Hapus Akun
+  const handleDeleteAccount = async () => {
+    if (confirm("Yakin hapus akun? Data hilang permanen!")) {
+      try {
+        await deleteUser(auth.currentUser);
+        onLogout();
+      } catch (e) { alert("Login ulang dulu untuk menghapus akun."); }
+    }
+  };
+
+  // Format Tanggal Bergabung
+  const joinDate = auth.currentUser?.metadata?.creationTime
+    ? new Date(auth.currentUser.metadata.creationTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '-';
+
+
+  // render
+  const renderMain = () => (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        {/* profile card */}
+        <div className="lg:col-span-7 bg-slate-900 border border-white/10 rounded-[30px] p-8 relative overflow-hidden shadow-xl">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl"></div>
+
+          <div className="flex items-center gap-6 mb-8 relative z-10">
+            <div className="relative group">
+              {/* Foto Profile dari Database */}
+              <img
+                src={userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`}
+                alt="Profile"
+                className="w-24 h-24 rounded-full border-4 border-slate-800 bg-slate-700 object-cover"
               />
-              <button className="absolute -bottom-1 -right-1 bg-indigo-600 p-1 rounded-full border-2 border-slate-900 text-white">
-                <Edit2 className="w-3 h-3" />
-              </button>
+              <label className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full cursor-pointer hover:bg-indigo-500 transition-colors shadow-lg">
+                <Camera className="w-4 h-4 text-white" />
+                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
+              </label>
             </div>
             <div>
-              <h2 className="text-xl font-bold capitalize">{userData?.name || "Pengguna Baru"}</h2>
-              <div className="flex items-center gap-1 text-xs text-slate-400">
-                <Mail className="w-3 h-3" />
-                <span>{userData?.email || "email@contoh.com"}</span>
-              </div>
+              <h2 className="text-2xl font-bold text-white capitalize">{formData.name || "User"}</h2>
+              <button
+                onClick={() => setActiveView('edit')}
+                className="mt-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-full transition-colors"
+              >
+                Edit Profile
+              </button>
             </div>
           </div>
 
-          {/* Stats Grid (Streak & Achievement) */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Streak */}
-            <div className="bg-slate-800/50 rounded-2xl p-3 text-center border border-white/5">
-              <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-bold">Streak Harian</p>
-              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-orange-400 drop-shadow-[0_0_10px_rgba(251,146,60,0.5)]">
-                <Flame className="w-6 h-6 fill-current" /> 14
-              </div>
+          {/* Grid Info Detail */}
+          <div className="grid grid-cols-2 gap-y-6 gap-x-4 relative z-10">
+            <div>
+              <p className="text-xs text-slate-500 font-bold uppercase mb-1">Email</p>
+              <p className="text-sm text-slate-300 truncate">{userData?.email}</p>
             </div>
-            {/* Achievement Count */}
-            <div className="bg-slate-800/50 rounded-2xl p-3 text-center border border-white/5">
-              <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-bold">Pencapaian</p>
-              <div className="flex items-center justify-center gap-1 text-2xl font-bold text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
-                <Award className="w-6 h-6 fill-current" /> 5
-              </div>
+            <div>
+              <p className="text-xs text-slate-500 font-bold uppercase mb-1">Bergabung</p>
+              <p className="text-sm text-slate-300">{joinDate}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-bold uppercase mb-1">Jenis Kelamin</p>
+              <p className="text-sm text-slate-300 capitalize">{formData.gender || '-'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-bold uppercase mb-1">Lokasi</p>
+              <p className="text-sm text-slate-300 capitalize">{formData.location || '-'}</p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* 2. RECENT ACHIEVEMENT (PENCAPAIAN TERBARU) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-slate-900 border border-white/10 rounded-[30px] p-6 shadow-lg"
-        >
-          <h3 className="font-bold text-white mb-4 flex items-center gap-2">
-            Pencapaian Terbaru <Trophy className="w-4 h-4 text-yellow-400" />
-          </h3>
-          
-          {/* Gradient Box */}
-          <div className="h-24 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 flex items-center justify-between px-6 relative overflow-hidden shadow-lg shadow-indigo-500/20 group cursor-pointer">
-            {/* Pattern Overlay */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-            
+        {/* KANAN: STATS (Dark Mode) */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+
+          {/* Streak Card */}
+          <div className="bg-slate-900 border border-white/10 rounded-[30px] p-6 shadow-xl flex items-center justify-between relative overflow-hidden h-full">
             <div className="relative z-10">
-              <p className="text-xs text-indigo-200 font-medium mb-1">Badge Didapatkan</p>
-              <h4 className="text-xl font-bold text-white">Early Bird 🦜</h4>
+              <h3 className="text-slate-400 font-bold text-sm uppercase tracking-wider mb-1">Your Streak</h3>
+              <div className="flex items-center gap-3">
+                <Flame className="w-10 h-10 text-orange-500 fill-orange-500 animate-pulse" />
+                <span className="text-4xl font-black text-white">{streak} <span className="text-lg font-medium text-slate-500">Days</span></span>
+              </div>
             </div>
-            
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
-              <Award className="w-6 h-6 text-yellow-300 fill-current" />
+            <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
+          </div>
+
+          {/* Achievement Card (Preview) */}
+          <button
+            onClick={() => setActiveView('achievements')}
+            className="bg-slate-900 border border-white/10 rounded-[30px] p-6 shadow-xl flex items-center justify-between relative overflow-hidden h-full hover:bg-slate-800 transition-colors group"
+          >
+            <div className="relative z-10 text-left">
+              <h3 className="text-slate-400 font-bold text-sm uppercase tracking-wider mb-1">Achievements</h3>
+              <div className="flex items-center gap-3">
+                <Award className="w-10 h-10 text-yellow-400 fill-yellow-400/20" />
+                <span className="text-4xl font-black text-white">
+                  {achievementsList.filter(a => a.unlocked).length}
+                  <span className="text-lg font-medium text-slate-500"> / {achievementsList.length}</span>
+                </span>
+              </div>
+            </div>
+            <div className="p-2 bg-white/5 rounded-full group-hover:bg-white/10 transition-colors">
+              <ChevronRight className="w-6 h-6 text-slate-400" />
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+      {/* BOTTOM: MENU LIST (Dark Mode) */}
+      <div className="grid grid-cols-1 gap-4">
+        <button onClick={() => setActiveView('security')} className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex items-center justify-between hover:bg-slate-800 transition-colors shadow-sm group">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-white/5 rounded-xl text-slate-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-400 transition-colors"><Lock className="w-6 h-6" /></div>
+            <div className="text-left">
+              <p className="font-bold text-white text-lg">Privacy & Security</p>
+              <p className="text-xs text-slate-500">Manage password & data</p>
             </div>
           </div>
-        </motion.div>
+          <ChevronRight className="w-5 h-5 text-slate-600" />
+        </button>
 
-        {/* 3. SETTINGS MENU */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-slate-900 border border-white/10 rounded-[30px] overflow-hidden shadow-lg"
-        >
-          {menuItems.map((item, index) => (
-            <button 
-              key={index}
-              onClick={item.action}
-              className={`w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors ${
-                index !== menuItems.length - 1 ? 'border-b border-white/5' : ''
-              }`}
+        <button onClick={() => setActiveView('help')} className="bg-slate-900 border border-white/10 rounded-2xl p-5 flex items-center justify-between hover:bg-slate-800 transition-colors shadow-sm group">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-white/5 rounded-xl text-slate-400 group-hover:bg-green-500/20 group-hover:text-green-400 transition-colors"><HelpCircle className="w-6 h-6" /></div>
+            <div className="text-left">
+              <p className="font-bold text-white text-lg">Help & Support</p>
+              <p className="text-xs text-slate-500">Crisis center & guide</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-600" />
+        </button>
+      </div>
+
+      {/* LOGOUT */}
+      <div className="pt-4 pb-8 text-center">
+        <button onClick={onLogout} className="text-red-400 font-bold text-sm hover:text-red-300 flex items-center justify-center gap-2 mx-auto mb-4">
+          <LogOut className="w-4 h-4" /> Keluar Akun
+        </button>
+        <p className="text-[10px] text-slate-600">NeoRain v1.0.0 • Build 2025</p>
+      </div>
+
+    </motion.div>
+  );
+
+  // --- RENDER: ACHIEVEMENTS VIEW ---
+  const renderAchievements = () => (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-4xl mx-auto">
+      <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+        <div className="p-1 bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
+        <span className="font-bold">Kembali</span>
+      </button>
+
+      <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-2xl">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-white mb-2">Pencapaian Kamu</h2>
+          <p className="text-slate-400">Kumpulkan semua lencana untuk menjadi master kesehatan mental!</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+          {achievementsList.map((ach) => (
+            <button
+              key={ach.id}
+              onClick={() => setSelectedAchievement(ach)}
+              className={`relative p-6 rounded-2xl border flex flex-col items-center text-center transition-all group ${ach.unlocked
+                ? 'bg-indigo-900/20 border-indigo-500/30 hover:bg-indigo-900/30 hover:scale-105'
+                : 'bg-slate-800/50 border-white/5 opacity-60 grayscale hover:opacity-80'
+                }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">
-                  <item.icon className="w-4 h-4" />
+              <div className="text-4xl mb-3 drop-shadow-lg">{ach.icon}</div>
+              <h4 className={`font-bold text-sm mb-1 ${ach.unlocked ? 'text-white' : 'text-slate-400'}`}>{ach.label}</h4>
+              <p className="text-[10px] text-slate-500">{ach.unlocked ? 'Tercapai' : 'Terkunci'}</p>
+
+              {ach.unlocked && (
+                <div className="absolute top-2 right-2">
+                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                 </div>
-                <span className="text-sm font-medium text-slate-200">{item.label}</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-600" />
+              )}
             </button>
           ))}
-        </motion.div>
+        </div>
+      </div>
 
-        {/* 4. LOGOUT BUTTON */}
-        <motion.button 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          onClick={onLogout}
-          className="w-full bg-red-500/10 border border-red-500/20 text-red-400 font-bold py-4 rounded-[20px] flex items-center justify-center gap-2 hover:bg-red-500/20 transition-all active:scale-95"
-        >
-          <LogOut className="w-5 h-5" /> Keluar Akun
-        </motion.button>
+      {/* MODAL DETAIL ACHIEVEMENT */}
+      <AnimatePresence>
+        {selectedAchievement && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-900 border border-white/10 p-8 rounded-[30px] max-w-sm w-full text-center relative shadow-2xl"
+            >
+              <button onClick={() => setSelectedAchievement(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <X className="w-6 h-6" />
+              </button>
 
-        {/* Footer Info */}
-        <p className="text-center text-[10px] text-slate-600 pb-4">
-          Versi Aplikasi 1.0.0 • Build by Tim Amikom
-        </p>
+              <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-6xl shadow-inner">
+                {selectedAchievement.icon}
+              </div>
 
+              <h3 className="text-2xl font-bold text-white mb-2">{selectedAchievement.label}</h3>
+              <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-4 ${selectedAchievement.unlocked ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'
+                }`}>
+                {selectedAchievement.unlocked ? 'UNLOCKED' : 'LOCKED'}
+              </div>
+
+              <p className="text-slate-300 leading-relaxed">
+                {selectedAchievement.desc}
+              </p>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+    </motion.div>
+  );
+
+  // --- RENDER: EDIT PROFILE VIEW (Dark Mode) ---
+  const renderEdit = () => (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl mx-auto">
+      <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+        <div className="p-1 bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
+        <span className="font-bold">Kembali</span>
+      </button>
+
+      <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-2xl">
+        <h2 className="text-2xl font-bold text-white mb-6">Edit Profile</h2>
+
+        <div className="space-y-5">
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Nama Lengkap</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 mt-1 text-white focus:border-indigo-500 outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-slate-400 uppercase ml-1">Jenis Kelamin</label>
+              <select
+                value={formData.gender}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 mt-1 text-white focus:border-indigo-500 outline-none appearance-none"
+              >
+                <option value="" className="bg-slate-900">Pilih</option>
+                <option value="Laki-laki" className="bg-slate-900">Laki-laki</option>
+                <option value="Perempuan" className="bg-slate-900">Perempuan</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-slate-400 uppercase ml-1">Tanggal Lahir</label>
+              <input
+                type="date"
+                value={formData.dob}
+                onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 mt-1 text-white focus:border-indigo-500 outline-none [color-scheme:dark]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Lokasi (Negara/Provinsi)</label>
+            <div className="relative">
+              <MapPin className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" />
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full bg-slate-800 border border-white/10 rounded-xl pl-12 pr-4 py-3 mt-1 text-white focus:border-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleSaveProfile}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-500/25 mt-4 transition-all active:scale-95 flex justify-center gap-2"
+          >
+            <Save className="w-5 h-5" /> Simpan Perubahan
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  // --- RENDER: SECURITY VIEW (Dark Mode & Validation) ---
+  const renderSecurity = () => (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl mx-auto">
+      <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+        <div className="p-1 bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
+        <span className="font-bold">Kembali</span>
+      </button>
+
+      <div className="space-y-6">
+        {/* Change Password */}
+        <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-xl">
+          <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Lock className="w-5 h-5 text-indigo-400" /> Ganti Password
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <input
+                type="password"
+                placeholder="Password Baru (Min. 6 Karakter)"
+                className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none"
+                onChange={(e) => setPassData({ ...passData, newPass: e.target.value })}
+              />
+            </div>
+            <input
+              type="password"
+              placeholder="Konfirmasi Password Baru"
+              className="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-indigo-500 outline-none"
+              onChange={(e) => setPassData({ ...passData, confirmPass: e.target.value })}
+            />
+            <button onClick={handleChangePassword} className="w-full bg-indigo-600/20 text-indigo-300 font-bold py-3 rounded-xl hover:bg-indigo-600/30 transition-colors">
+              Update Password
+            </button>
+          </div>
+        </div>
+
+        {/* Delete Account */}
+        <div className="bg-red-900/10 border border-red-500/20 rounded-[30px] p-8 shadow-xl">
+          <h3 className="text-lg font-bold text-red-400 mb-2 flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5" /> Zona Bahaya
+          </h3>
+          <p className="text-sm text-red-300/70 mb-4">
+            Menghapus akun akan menghilangkan semua data analisis, mood tracker, dan chat secara permanen.
+          </p>
+          <button onClick={handleDeleteAccount} className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+            Hapus Akun Permanen
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  // --- RENDER: HELP VIEW (Dark Mode) ---
+  const renderHelp = () => (
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl mx-auto">
+      <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+        <div className="p-1 bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
+        <span className="font-bold">Kembali</span>
+      </button>
+
+      <div className="space-y-6">
+        <div className="bg-red-500 text-white rounded-[30px] p-8 shadow-xl relative overflow-hidden">
+          <div className="relative z-10">
+            <h3 className="text-2xl font-bold mb-2 flex items-center gap-2"><Phone className="w-6 h-6" /> Butuh Bantuan Segera?</h3>
+            <p className="text-red-100 mb-6">Jika kamu atau orang yang kamu kenal sedang dalam krisis, jangan ragu untuk menghubungi bantuan profesional.</p>
+            <div className="space-y-3">
+              <div className="bg-white/20 p-4 rounded-xl flex justify-between items-center">
+                <span className="font-bold">Layanan Sejiwa (Indonesia)</span>
+                <span className="font-mono text-xl font-black">119 (Ext 8)</span>
+              </div>
+            </div>
+          </div>
+          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-xl">
+          <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><HeartHandshake className="w-5 h-5 text-green-400" /> Hubungi Kami</h3>
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-800 rounded-xl border border-white/5">
+              <h4 className="font-bold text-white mb-1 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-indigo-400" /> Feedback & Saran</h4>
+              <p className="text-sm text-slate-400">Punya ide untuk NeoRain? Kirim email ke:</p>
+              <p className="text-indigo-400 font-medium mt-1">support@neorain.app</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  return (
+    <div className="w-full h-full bg-slate-950 text-white overflow-y-auto scrollbar-hide pb-24">
+      <div className="max-w-6xl mx-auto p-6 md:p-8">
+        <AnimatePresence mode='wait'>
+          {activeView === 'main' && renderMain()}
+          {activeView === 'edit' && renderEdit()}
+          {activeView === 'security' && renderSecurity()}
+          {activeView === 'help' && renderHelp()}
+          {activeView === 'achievements' && renderAchievements()}
+        </AnimatePresence>
       </div>
     </div>
   );
