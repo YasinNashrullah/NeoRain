@@ -1,8 +1,9 @@
+// URL Backend Laravel kamu
 const BASE_URL = "http://127.0.0.1:8000/api";
 
 const headers = {
   "Content-Type": "application/json",
-  "Accept": "application/json",
+  "Accept": "application/json", // PENTING: Memaksa Laravel return JSON, bukan HTML
 };
 
 export const api = {
@@ -14,9 +15,16 @@ export const api = {
         headers: headers,
         body: JSON.stringify(userData),
       });
+
+      if (!response.ok) {
+        console.warn(`API Warning (Sync User): ${response.status} ${response.statusText}`);
+        return null;
+      }
+
       return await response.json();
     } catch (error) {
       console.error("API Error (Sync User):", error);
+      return null;
     }
   },
 
@@ -90,19 +98,38 @@ export const api = {
     }
   },
 
-  // 6. Ambil History Chat
-  getChats: async (firebaseUid) => {
+  // 6. Ambil History Chat (dengan Pagination)
+  getChats: async (firebaseUid, page = 1, limit = 20) => {
     try {
+      // Menggunakan endpoint dengan pagination
       const response = await fetch(
-        `${BASE_URL}/chats?firebase_uid=${firebaseUid}`,
+        `${BASE_URL}/chats?firebase_uid=${firebaseUid}&page=${page}&limit=${limit}`,
         { method: "GET", headers: headers }
       );
-      if (!response.ok) return [];
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn("API Warning: Chat history endpoint not found (404). Backend update required.");
+          return { data: [], hasMore: false };
+        }
+        console.warn(`API Error (Get Chats): ${response.status} ${response.statusText}`);
+        return { data: [], hasMore: false };
+      }
+
       const result = await response.json();
-      return result.data || [];
+
+      // Handle format response lama (array langsung) vs baru (pagination object)
+      if (Array.isArray(result)) {
+        return { data: result, hasMore: false };
+      }
+
+      return {
+        data: result.data || [],
+        hasMore: result.meta ? result.meta.current_page < result.meta.last_page : false
+      };
     } catch (error) {
       console.error("API Error (Get Chats):", error);
-      return [];
+      return { data: [], hasMore: false };
     }
   },
 
@@ -150,7 +177,7 @@ export const api = {
     }
   },
 
-  // 8. Ambil Detail User
+  // 10. Ambil Detail User
   getUserDetail: async (firebaseUid) => {
     try {
       const response = await fetch(
@@ -167,7 +194,7 @@ export const api = {
     }
   },
 
-  // 9. Update Profile
+  // 11. Update Profile
   updateUserProfile: async (data) => {
     try {
       const response = await fetch(`${BASE_URL}/user/update`, {
@@ -188,7 +215,7 @@ export const api = {
     }
   },
 
-  // 10. Upload Foto Profile
+  // 12. Upload Foto Profile
   uploadProfilePhoto: async (firebaseUid, file) => {
     const formData = new FormData();
     formData.append("firebase_uid", firebaseUid);
@@ -199,6 +226,7 @@ export const api = {
         method: "POST",
         headers: { 
             "Accept": "application/json" 
+            // Jangan set Content-Type manual untuk FormData
         }, 
         body: formData,
       });
@@ -214,4 +242,20 @@ export const api = {
       throw error;
     }
   },
+
+  // 13. Ambil Statistik Mood (Opsional/Future Use)
+  getMoodStatistics: async (firebaseUid, range = 'monthly') => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/moods/stats?firebase_uid=${firebaseUid}&range=${range}`,
+        { method: "GET", headers: headers }
+      );
+      if (!response.ok) return null;
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      console.warn("API Error (Get Stats):", error);
+      return null;
+    }
+  }
 };

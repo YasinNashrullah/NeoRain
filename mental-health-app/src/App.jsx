@@ -30,13 +30,38 @@ const Placeholder = ({ title, icon: Icon }) => (
 );
 
 const App = () => {
+  // --- STATE MANAGEMENT ---
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authPage, setAuthPage] = useState('login');
   const [activeTab, setActiveTab] = useState('home');
   const [chatContext, setChatContext] = useState(null);
+  const [lastAssessment, setLastAssessment] = useState(null);
 
+  // Mood Persistence
+  const [currentMood, setCurrentMood] = useState(() => {
+    return localStorage.getItem('currentMood') || 'default';
+  });
+
+  // Chat Persistence
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem('chatHistory');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // --- EFFECTS ---
+
+  // 1. Simpan Mood & Chat ke LocalStorage setiap berubah
+  useEffect(() => {
+    localStorage.setItem('currentMood', currentMood);
+  }, [currentMood]);
+
+  useEffect(() => {
+    localStorage.setItem('chatHistory', JSON.stringify(messages));
+  }, [messages]);
+
+  // 2. Fungsi Refresh Data User dari MySQL
   const refreshUserData = async (uid) => {
     try {
       const dbUser = await api.getUserDetail(uid);
@@ -52,36 +77,54 @@ const App = () => {
     }
   };
 
+  // 3. Auth Listener & Initial Data Fetch
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
 
-        // Firebase
-        const basicData = {
+        // Setup Data Awal
+        const userDataObj = {
           uid: currentUser.uid,
           email: currentUser.email,
           name: currentUser.displayName,
           role: "Mahasiswa"
         };
-        setUserData(basicData);
+        setUserData(userDataObj);
 
+        // Sync ke Database
         await api.syncUser({
           firebase_uid: currentUser.uid,
           name: currentUser.displayName || "User",
           email: currentUser.email
         });
 
+        // Ambil Data Lengkap & History
         await refreshUserData(currentUser.uid);
+        
+        try {
+          const history = await api.getAssessmentHistory(currentUser.uid);
+          if (history && history.length > 0) {
+            setLastAssessment(history[0]); 
+          }
+        } catch (e) {
+          console.error("Failed to fetch history", e);
+        }
 
       } else {
+        // Reset State saat Logout
         setUser(null);
         setUserData(null);
+        setMessages([]);
+        setLastAssessment(null);
+        localStorage.removeItem('chatHistory');
       }
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
+
+  // --- HANDLERS ---
 
   const handleAuthSuccess = (data) => setUserData(data);
   const handleOnboardingFinish = (surveyData) => setUserData((prev) => ({ ...prev, ...surveyData }));
@@ -91,20 +134,28 @@ const App = () => {
     setUser(null);
     setUserData(null);
     setChatContext(null);
+    setMessages([]);
+    localStorage.removeItem('chatHistory');
     setActiveTab('home');
     setAuthPage('login');
   };
 
-  const handleAnalyzeFinish = () => {
-    setActiveTab('stats');
-  };
-
+  const handleAnalyzeFinish = () => setActiveTab('stats');
+  
   const handleChatWithContext = (assessmentData) => {
     setChatContext(assessmentData);
     setActiveTab('chat');
   };
 
-  if (loading) return <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>;
+  const handleStartAnalysis = () => setActiveTab('analyze');
+
+  // --- RENDER ---
+
+  if (loading) return (
+    <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white">
+      <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+    </div>
+  );
 
   if (!user) {
     return (
@@ -124,36 +175,40 @@ const App = () => {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-black font-sans flex overflow-hidden">
-      
+
       {/* Background Blobs */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[150px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[150px] pointer-events-none"></div>
 
       {!hasOnboarded ? (
         <div className="w-full h-full flex items-center justify-center p-4">
-           <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
-              <Onboarding onFinish={handleOnboardingFinish} />
-           </div>
+          <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
+            <Onboarding onFinish={handleOnboardingFinish} />
+          </div>
         </div>
       ) : (
         <>
-          <Sidebar 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-            onLogout={handleLogout} 
-            userData={userData} 
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onLogout={handleLogout}
+            userData={userData}
           />
 
           <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
-            
+
             {/* Mobile Chat Overlay */}
             {activeTab === 'chat' && (
               <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
-                 <Chat 
-                    onBack={() => setActiveTab('home')} 
-                    userData={userData}
-                    initialContext={chatContext} 
-                 />
+                <Chat
+                  onBack={() => setActiveTab('home')}
+                  userData={userData}
+                  initialContext={chatContext}
+                  messages={messages}
+                  setMessages={setMessages}
+                  currentMood={currentMood}
+                  setCurrentMood={setCurrentMood}
+                />
               </div>
             )}
 
@@ -161,14 +216,19 @@ const App = () => {
             <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
               <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/50 md:backdrop-blur-sm md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
                 
+                {/* --- CONTENT SWITCHER --- */}
                 {activeTab === 'chat' ? (
                   // Chat Mode (Desktop)
                   <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
-                     <Chat 
-                        onBack={() => setActiveTab('home')} 
-                        userData={userData}
-                        initialContext={chatContext} 
-                     />
+                    <Chat
+                      onBack={() => setActiveTab('home')}
+                      userData={userData}
+                      initialContext={chatContext}
+                      messages={messages}
+                      setMessages={setMessages}
+                      currentMood={currentMood}
+                      setCurrentMood={setCurrentMood}
+                    />
                   </div>
                 ) : (
                   // Dashboard Mode
@@ -179,17 +239,28 @@ const App = () => {
                         <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
                       )}
 
-                      {activeTab === 'home' && <Home userData={userData} />}
-                      
-                      {activeTab === 'tracker' && <Tracker userData={userData} />}
-                      
-                      {activeTab === 'stats' && (
-                        <Statistics 
-                            userData={userData} 
-                            onChatRequest={handleChatWithContext} 
+                      {activeTab === 'home' && (
+                        <Home
+                          userData={userData}
+                          currentMood={currentMood}
+                          setCurrentMood={setCurrentMood}
+                          onStartAnalysis={handleStartAnalysis}
+                          onNavigate={setActiveTab}
+                          lastAssessment={lastAssessment}
                         />
                       )}
-                      
+
+                      {activeTab === 'tracker' && (
+                        <Tracker userData={userData} />
+                      )}
+
+                      {activeTab === 'stats' && (
+                        <Statistics
+                          userData={userData}
+                          onChatRequest={handleChatWithContext}
+                        />
+                      )}
+
                       {activeTab === 'profile' && (
                         <Profile 
                           userData={userData} 
@@ -197,7 +268,6 @@ const App = () => {
                           onUpdateProfile={() => refreshUserData(user.uid)} 
                         />
                       )}
-
                     </div>
                   </div>
                 )}

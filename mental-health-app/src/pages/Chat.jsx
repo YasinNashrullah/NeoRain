@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Send, Mic, MoreVertical,
-  ArrowLeft, Sparkles, Loader2, X, FileText
-} from 'lucide-react';
+import { motion } from 'framer-motion';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { api } from '../utils/api';
 import '../App.css';
+
+// Sub-components
+import ChatHeader from '../components/chat/ChatHeader';
+import MessageList from '../components/chat/MessageList';
+import SuggestionChips from '../components/chat/SuggestionChips';
+import ChatInput from '../components/chat/ChatInput';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -57,47 +59,209 @@ const moodColors = {
   }
 };
 
-const Chat = ({ onBack, userData, initialContext }) => {
+const Chat = ({ onBack, userData, initialContext, messages, setMessages, currentMood, setCurrentMood }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [currentMood, setCurrentMood] = useState('default');
-  
+  // Removed local messages state
+  // Removed local currentMood state
+
   // State Context
   const [activeContext, setActiveContext] = useState(initialContext || null);
   const [showHistoryMenu, setShowHistoryMenu] = useState(false);
   const [assessmentHistory, setAssessmentHistory] = useState([]);
 
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Suggestions State
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
   const messagesEndRef = useRef(null);
   const userName = userData?.name?.split(" ")[0] || "Teman"; // Ambil nama depan saja
 
-  // Load History Dropdown
+  // Load History & Initial Messages
   useEffect(() => {
-    const fetchHistory = async () => {
+    const initData = async () => {
       if (userData?.uid) {
+        // 1. Load Assessment History
         const history = await api.getAssessmentHistory(userData.uid);
         setAssessmentHistory(history);
+
+        // 2. Load Chat History (Page 1)
+        if (messages.length === 0) {
+          const { data, hasMore: more } = await api.getChats(userData.uid, 1);
+          if (data.length > 0) {
+            // Backend usually returns newest first or last? 
+            // Assuming backend returns [newest, ..., oldest] for pagination efficiency
+            // But frontend needs [oldest, ..., newest]
+            // Let's reverse if needed. 
+            // If backend returns standard paginate [msg1, msg2] where msg1 is older?
+            // Usually chat APIs return [newest...oldest].
+            // Let's assume we need to reverse them to show chronologically.
+            setMessages(data.reverse());
+            setHasMore(more);
+            setPage(2); // Next page is 2
+          }
+        }
       }
     };
-    fetchHistory();
+    initData();
   }, [userData]);
 
+  const loadMoreMessages = async () => {
+    if (isLoadingMore || !hasMore || !userData?.uid) return;
+
+    setIsLoadingMore(true);
+    try {
+      const { data, hasMore: more } = await api.getChats(userData.uid, page);
+      if (data.length > 0) {
+        setMessages(prev => [...data.reverse(), ...prev]);
+        setHasMore(more);
+        setPage(prev => prev + 1);
+      } else {
+        setHasMore(false);
+      }
+    } catch (e) {
+      console.error("Failed to load more chats", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  // Generate Smart Suggestions
   useEffect(() => {
+    const generateSuggestions = async () => {
+      // Avoid re-generating if typing or no API key
+      if (!import.meta.env.VITE_GEMINI_API_KEY) return;
+
+      const lastMsg = messages[messages.length - 1];
+      const isAiLast = lastMsg?.sender === 'ai';
+
+      // If AI just replied, generate relevant follow-ups
+      if (isAiLast) {
+        setLoadingSuggestions(true);
+        try {
+          const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+          const prompt = `
+            Context: User is chatting with an AI therapist.
+            AI just said: "${lastMsg.text}"
+            
+            Generate 3 short, natural, deep/reflective Indonesian replies (max 6 words) for the USER to say next.
+            Tone: Vulnerable, honest, or curious.
+            Constraint: NO EMOJIS. Plain text only.
+            Example: ["Aku merasa sedikit lega", "Tapi sulit melupakannya", "Apa saranmu?"].
+            Output ONLY a JSON array of strings.
+          `;
+
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const text = response.text().replace(/```json|```/g, '').trim();
+
+          const aiSuggestions = JSON.parse(text);
+          if (Array.isArray(aiSuggestions) && aiSuggestions.length > 0) {
+            setSuggestions(aiSuggestions);
+          }
+        } catch (error) {
+          console.error("Failed to generate follow-up suggestions", error);
+        } finally {
+          setLoadingSuggestions(false);
+        }
+        return; // Exit after handling AI response
+      }
+
+      // If no messages or last was user (waiting for AI), show defaults/context
+      if (messages.length === 0 || lastMsg?.sender === 'user') {
+        if (suggestions.length > 0 && lastMsg?.sender === 'user') return;
+      }
+
+      setLoadingSuggestions(true);
+
+      // 1. Default Suggestions (Deep & Reflective - No Emojis)
+      let defaultSuggestions = [
+        "Rasanya berat sekali hari ini",
+        "Aku merasa sendirian di keramaian",
+        "Bagaimana cara berdamai dengan diri sendiri?",
+        "Aku butuh seseorang yang mengerti",
+        "Pikiranku tidak bisa diam",
+        "Aku lelah berpura-pura kuat",
+        "Apa arti dari semua ini?"
+      ];
+
+      // 2. Context-based Suggestions (Rule-based Fallback)
+      if (activeContext) {
+        const { stress_score, anxiety_score, depression_score } = activeContext;
+        defaultSuggestions = []; // Reset defaults
+
+        if (stress_score > 14) defaultSuggestions.push("Kenapa dadaku terasa sesak terus?");
+        if (anxiety_score > 7) defaultSuggestions.push("Bagaimana menghentikan rasa takut ini?");
+        if (depression_score > 9) defaultSuggestions.push("Aku merasa hampa dan kosong");
+        defaultSuggestions.push("Jelaskan apa yang terjadi padaku");
+        defaultSuggestions.push("Aku ingin merasa lebih baik");
+        defaultSuggestions.push("Apakah ini akan berlalu?");
+      }
+
+      setSuggestions(defaultSuggestions); // Show immediate fallback
+
+      // 3. AI-based Suggestions (Personalized Context)
+      if (activeContext && import.meta.env.VITE_GEMINI_API_KEY) {
+        try {
+          const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+          const prompt = `
+            Based on this mental health data:
+            Depression: ${activeContext.depression_score}, Anxiety: ${activeContext.anxiety_score}, Stress: ${activeContext.stress_score}.
+            Summary: ${activeContext.ai_analysis?.summary || '-'}.
+            
+            Generate 6 deep, emotional, and reflective Indonesian conversation starters (max 8 words) for the user to say to their AI therapist.
+            Tone: Vulnerable, seeking understanding, heart-to-heart.
+            Constraint: NO EMOJIS. Plain text only.
+            Output ONLY a JSON array of strings.
+          `;
+
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const text = response.text().replace(/```json|```/g, '').trim();
+
+          const aiSuggestions = JSON.parse(text);
+          if (Array.isArray(aiSuggestions) && aiSuggestions.length > 0) {
+            setSuggestions(aiSuggestions);
+          }
+        } catch (error) {
+          console.error("Failed to generate AI suggestions", error);
+        }
+      }
+
+      setLoadingSuggestions(false);
+    };
+
+    generateSuggestions();
+  }, [activeContext, messages]);
+
+  useEffect(() => {
+    // Only set initial message if history is empty AND we are not loading
+    if (messages.length > 0 || isLoadingMore) return;
+
     if (initialContext) {
       setActiveContext(initialContext);
       setMessages([{
         id: 'sys-init',
-        text: `Mode Analisis Aktif: Menggunakan data tanggal ${new Date(initialContext.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}. Silakan tanya tentang hasil ini.`,
+        text: `Mode Analisis Aktif: Menggunakan data tanggal ${new Date(initialContext.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}. Silakan tanya tentang hasil ini.`,
         sender: 'system',
         time: 'Info'
       }]);
     } else {
       setActiveContext(null);
-      setMessages([{ 
-        id: 'ai-init', 
-        text: `Halo ${userName}! Gue NeoRain. Cerita aja, gue bakal dengerin. Ada yang mengganggu pikiranmu hari ini?`, 
-        sender: 'ai', 
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+      setMessages([{
+        id: 'ai-init',
+        text: `Halo ${userName}! Gue NeoRain. Cerita aja, gue bakal dengerin. Ada yang mengganggu pikiranmu hari ini?`,
+        sender: 'ai',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
     }
   }, [initialContext, userName]);
@@ -106,7 +270,7 @@ const Chat = ({ onBack, userData, initialContext }) => {
   const handleContextChange = (context) => {
     setActiveContext(context);
     setShowHistoryMenu(false);
-    
+
     if (context) {
       setMessages(prev => [...prev, {
         id: Date.now(),
@@ -148,12 +312,12 @@ const Chat = ({ onBack, userData, initialContext }) => {
 
     // Save User Message
     if (userData?.uid) {
-      api.saveChat({ firebase_uid: userData.uid, message: userMsg.text, sender: 'user' }).catch(err => {});
+      api.saveChat({ firebase_uid: userData.uid, message: userMsg.text, sender: 'user' }).catch(err => { });
     }
 
     try {
       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
+
       // sistem prompt
       let systemInstruction = `
         SYSTEM: Kamu adalah NeoRain, teman curhat mahasiswa.
@@ -161,11 +325,11 @@ const Chat = ({ onBack, userData, initialContext }) => {
         Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lo-gue". Panggil user dengan nama "${userName}" sesekali agar akrab.
         Tugas: Analisis emosi user. Di AKHIR response, WAJIB sertakan tag mood: ||MOOD:happy||, ||MOOD:sad||, dll.
       `;
-      
+
       // Inject Data Analisis jika ada
       if (activeContext) {
-        const aiReport = typeof activeContext.ai_analysis === 'string' 
-          ? JSON.parse(activeContext.ai_analysis) 
+        const aiReport = typeof activeContext.ai_analysis === 'string'
+          ? JSON.parse(activeContext.ai_analysis)
           : activeContext.ai_analysis;
 
         systemInstruction += `
@@ -218,7 +382,7 @@ const Chat = ({ onBack, userData, initialContext }) => {
       setMessages(prev => [...prev, aiMsg]);
 
       if (userData?.uid) {
-        api.saveChat({ firebase_uid: userData.uid, message: aiMsg.text, sender: 'ai' }).catch(err => {});
+        api.saveChat({ firebase_uid: userData.uid, message: aiMsg.text, sender: 'ai' }).catch(err => { });
       }
 
     } catch (error) {
@@ -243,172 +407,40 @@ const Chat = ({ onBack, userData, initialContext }) => {
         <div className="chat-bubble chat-bubble-2" style={{ background: currentStyle.bubble2 }}></div>
       </div>
 
-      {/* header */}
-      <div className="flex-none w-full bg-transparent border-b border-white/10 z-30 relative">
-        <div className="px-4 py-3 pt-8 md:pt-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <button onClick={onBack} className="p-2 -ml-2 rounded-full text-slate-300 hover:text-white hover:bg-white/10">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 p-[2px]">
-              <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=NeoRain" alt="AI" className="w-8 h-8" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-white font-bold text-sm">NeoRain AI</h1>
-              {activeContext ? (
-                <p className="text-green-400 text-[10px] flex items-center gap-1 font-bold">
-                  <FileText className="w-3 h-3" />
-                  Mode Analisis
-                </p>
-              ) : (
-                <p className={`${currentStyle.text} text-[10px]`}>Teman Curhat</p>
-              )}
-            </div>
-          </div>
-          
-          {/* History selector */}
-          <div className="relative">
-            <button 
-              onClick={() => setShowHistoryMenu(!showHistoryMenu)}
-              className={`p-2 rounded-full transition-colors ${showHistoryMenu ? 'bg-white/20 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
+      <ChatHeader
+        onBack={onBack}
+        currentStyle={currentStyle}
+        activeContext={activeContext}
+        handleContextChange={handleContextChange}
+        showHistoryMenu={showHistoryMenu}
+        setShowHistoryMenu={setShowHistoryMenu}
+        assessmentHistory={assessmentHistory}
+      />
 
-            {/* dropdown menu */}
-            <AnimatePresence>
-              {showHistoryMenu && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute right-0 top-12 w-64 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50"
-                >
-                  <div className="p-3 border-b border-white/5 flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pilih Konteks Data</span>
-                    <button onClick={() => setShowHistoryMenu(false)}><X className="w-4 h-4 text-slate-500 hover:text-white"/></button>
-                  </div>
-                  
-                  <div className="max-h-60 overflow-y-auto scrollbar-hide p-2 space-y-1">
-                    <button 
-                      onClick={() => handleContextChange(null)}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium transition-colors ${!activeContext ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-white/5'}`}
-                    >
-                      Tanpa Konteks (Umum)
-                    </button>
-                    
-                    {assessmentHistory.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleContextChange(item)}
-                        className={`w-full text-left px-3 py-2 rounded-xl transition-colors ${activeContext?.id === item.id ? 'bg-indigo-600 text-white' : 'hover:bg-white/5 group'}`}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <span className={`text-xs font-bold ${activeContext?.id === item.id ? 'text-white' : 'text-slate-200'}`}>
-                            {new Date(item.created_at).toLocaleDateString('id-ID')}
-                          </span>
-                          <span className={`text-[9px] ${activeContext?.id === item.id ? 'text-indigo-200' : 'text-slate-500'}`}>
-                            {new Date(item.created_at).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                           {item.stress_score > 18 && <span className="text-[9px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded">Stres</span>}
-                           {item.anxiety_score > 9 && <span className="text-[9px] bg-yellow-500/20 text-yellow-300 px-1.5 py-0.5 rounded">Cemas</span>}
-                           {item.depression_score > 13 && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded">Depresi</span>}
-                           {item.stress_score <= 18 && item.anxiety_score <= 9 && item.depression_score <= 13 && 
-                             <span className="text-[9px] bg-green-500/20 text-green-300 px-1.5 py-0.5 rounded">Normal</span>
-                           }
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
+      <MessageList
+        messages={messages}
+        currentStyle={currentStyle}
+        isTyping={isTyping}
+        messagesEndRef={messagesEndRef}
+        onLoadMore={loadMoreMessages}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+      />
 
-      {/* Chat Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative z-10">
-        <div className="p-4 space-y-4 flex flex-col justify-end min-h-full">
-          <div className="h-4 flex-none"></div>
-          
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              {msg.sender === 'system' ? (
-                <div className="w-full flex justify-center my-2">
-                  <span className="text-[10px] bg-white/10 text-slate-300 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5 flex items-center gap-2">
-                    <Sparkles className="w-3 h-3 text-yellow-400" />
-                    {msg.text}
-                  </span>
-                </div>
-              ) : (
-                <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md whitespace-pre-wrap break-words ${
-                  msg.sender === 'user'
-                    ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
-                    : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5 text-left'
-                }`}>
-                  {msg.text}
-                  <div className="text-[10px] opacity-50 mt-1 text-right">{msg.time}</div>
-                </div>
-              )}
-            </motion.div>
-          ))}
+      <SuggestionChips
+        suggestions={suggestions}
+        loadingSuggestions={loadingSuggestions}
+        setInput={setInput}
+      />
 
-          {isTyping && (
-            <div className="flex justify-start">
-              <div className="bg-slate-800 border border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center">
-                <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                <span className="text-xs text-slate-400">Mengetik...</span>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} className="h-1" />
-        </div>
-      </div>
-
-      {/* input chat */}
-      <div className="flex-none w-full bg-transparent border-t border-white/5 p-4 pb-6 z-20">
-        <div className="flex items-end gap-2">
-          <div className="flex-1 bg-slate-900 border border-slate-800 rounded-[24px] flex items-end px-2 py-2">
-            <textarea
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                  e.target.style.height = 'auto';
-                }
-              }}
-              placeholder={`Cerita sini, ${userName}...`}
-              rows={1}
-              className="flex-1 bg-transparent text-white text-sm px-3 py-1 focus:outline-none resize-none max-h-[100px] scrollbar-hide"
-              style={{ height: 'auto' }}
-            />
-            <Mic className="w-5 h-5 text-slate-400 mx-2 mb-1" />
-          </div>
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isTyping}
-            className={`p-3 rounded-full transition-colors duration-700 ease-in-out ${input.trim() ? `${currentStyle.primary} text-white` : 'bg-slate-800 text-slate-600'}`}
-          >
-            <Send className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+      <ChatInput
+        input={input}
+        setInput={setInput}
+        handleSend={handleSend}
+        isTyping={isTyping}
+        userName={userName}
+        currentStyle={currentStyle}
+      />
 
     </motion.div>
   );
