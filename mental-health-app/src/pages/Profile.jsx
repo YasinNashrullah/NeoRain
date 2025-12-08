@@ -385,6 +385,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
                 <option value="" className="bg-slate-900">Pilih</option>
                 <option value="Laki-laki" className="bg-slate-900">Laki-laki</option>
                 <option value="Perempuan" className="bg-slate-900">Perempuan</option>
+                <option value="Femboy" className="bg-slate-900">Rafi</option>
               </select>
             </div>
             <div>

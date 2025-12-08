@@ -309,7 +309,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
         <div className="mt-6 pt-6 border-t border-purple-500/10">
           <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
             <img
-              src={userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`}
+              src={userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.name}`}
               alt="Profile"
               className="w-10 h-10 rounded-full bg-slate-800 border border-purple-500/20"
             />
