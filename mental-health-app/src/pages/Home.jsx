@@ -3,21 +3,22 @@ import { motion } from 'framer-motion';
 import {
   CloudRain, Sun, Moon, MapPin,
   Smile, Frown, Zap, Wind, Cloud,
-  ArrowRight, MessageCircle, Quote, Activity, Heart
+  ArrowRight, MessageCircle, Quote, Activity, Heart,
+  Flame, Music
 } from 'lucide-react';
 import { checkStreak } from '../utils/gamification';
 
 const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNavigate, lastAssessment }) => {
   const [timeGreeting, setTimeGreeting] = useState('Pagi');
-  const [weather, setWeather] = useState({ temp: 28, condition: 'Cerah', icon: Sun });
+  const [streak, setStreak] = useState(0);
   const [isPlayingRain, setIsPlayingRain] = useState(false);
   const [gratitudeText, setGratitudeText] = useState('');
 
-  const rainAudioRef = useRef(new Audio('/rain.mp3')); // Pastikan file rain.mp3 ada di folder public
+  const rainAudioRef = useRef(new Audio('/rain.mp3'));
 
   const displayMood = currentMood === 'default' ? 'calm' : currentMood;
 
-  // --- AUDIO LOGIC ---
+  // Audio logic
   useEffect(() => {
     rainAudioRef.current.loop = true;
     return () => {
@@ -34,7 +35,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     setIsPlayingRain(!isPlayingRain);
   };
 
-  // --- MOOD DATA ---
+  // Static mood data
   const moods = [
     { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-400', bg: 'bg-pink-500/20', border: 'border-pink-500/50' },
     { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50' },
@@ -43,40 +44,31 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/50' },
   ];
 
-  // --- TIME & WEATHER LOGIC ---
+  // Time and streak logic
   useEffect(() => {
     const updateTime = () => {
       const hours = new Date().getHours();
-      if (hours >= 5 && hours < 11) setTimeGreeting('Selamat Pagi');
-      else if (hours >= 11 && hours < 15) setTimeGreeting('Selamat Siang');
-      else if (hours >= 15 && hours < 18) setTimeGreeting('Selamat Sore');
-      else setTimeGreeting('Selamat Malam');
-
-      if (hours > 18 || hours < 6) setWeather({ temp: 24, condition: 'Cerah', icon: Moon });
-      else setWeather({ temp: 30, condition: 'Panas', icon: Sun });
+      if (hours >= 5 && hours < 11) setTimeGreeting('Good Morning');
+      else if (hours >= 11 && hours < 15) setTimeGreeting('Good Afternoon');
+      else if (hours >= 15 && hours < 18) setTimeGreeting('Good evening');
+      else setTimeGreeting('Good Night');
     };
-
     updateTime();
-    const interval = setInterval(updateTime, 60000);
-    return () => clearInterval(interval);
-  }, []);
 
-  // --- STREAK LOGIC ---
-  useEffect(() => {
-    const initHome = async () => {
-      if (userData?.uid) {
-        const lastLogin = localStorage.getItem('last_login') || new Date(Date.now() - 86400000).toISOString();
-        const currentStreak = parseInt(localStorage.getItem('streak') || '0');
-        const newStreak = checkStreak(lastLogin, currentStreak);
-        
-        localStorage.setItem('last_login', new Date().toISOString());
-        localStorage.setItem('streak', newStreak);
-      }
-    };
-    initHome();
+    // Load and check streak
+    const s = localStorage.getItem('streak') || 0;
+    setStreak(s);
+    if (userData?.uid) {
+      const lastLogin = localStorage.getItem('last_login') || new Date(Date.now() - 86400000).toISOString();
+      const currentStreak = parseInt(s);
+      const newStreak = checkStreak(lastLogin, currentStreak);
+      localStorage.setItem('last_login', new Date().toISOString());
+      localStorage.setItem('streak', newStreak);
+      if (newStreak !== currentStreak) setStreak(newStreak);
+    }
   }, [userData]);
 
-  // --- DYNAMIC CONTENT ---
+  // Dynamic content logic
   const isNegativeMood = ['angry', 'sad'].includes(displayMood);
   const recTitle = isNegativeMood ? "Butuh Teman Cerita?" : "Jaga Kesehatan Mentalmu";
   const recDesc = isNegativeMood
@@ -118,196 +110,184 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     return moodQuotes[Math.floor(Math.random() * moodQuotes.length)];
   }, [displayMood]);
 
+  // Animation variants
+  const containerVars = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  };
+  const itemVars = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="relative w-full h-full flex flex-col">
-
-      {/* Ambient Glow */}
-      <motion.div
-        animate={{
-          background: `radial-gradient(circle at 50% 0%, ${displayMood === 'happy' ? '#ec4899' :
-            displayMood === 'angry' ? '#ea580c' :
-              displayMood === 'manic' ? '#eab308' :
-                '#6366f1'
-            } 0%, transparent 70%)`
-        }}
-        className="absolute top-0 left-0 w-full h-[500px] opacity-20 blur-3xl pointer-events-none transition-colors duration-1000 z-0"
-      />
-
-      <div className="flex-1 overflow-y-auto pb-24 relative z-10 scrollbar-hide px-6">
-
-        {/* Header */}
-        <div className="pt-8 pb-6 flex justify-between items-start">
-          <div>
-            <p className="text-slate-400 text-xs mb-1">{timeGreeting},</p>
-            <h1 className="text-2xl font-bold text-white leading-none capitalize">{userData?.name || "Teman"}</h1>
-            {userData && (
-              <span className="text-[10px] text-indigo-400 bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-500/20 mt-2 inline-block">
-                {userData.role}
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col items-end">
-            <div className="flex items-center gap-2 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-              <weather.icon className="w-4 h-4 text-yellow-400" />
-              <span className="text-sm font-bold text-white">{weather.temp}°C</span>
-            </div>
-            <div className="flex items-center gap-1 mt-1 text-slate-500 text-[10px]">
-              <MapPin className="w-3 h-3" /> Yogyakarta
-            </div>
-          </div>
+    <motion.div 
+      initial="hidden" animate="visible" variants={containerVars}
+      className="w-full pb-32 px-4 md:px-6 pt-6"
+    >
+      
+      {/* Header section */}
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <p className="text-slate-400 text-sm font-medium mb-1">{timeGreeting},</p>
+          <h1 className="text-3xl md:text-4xl font-black text-white capitalize">
+            {userData?.name?.split(' ')[0] || "Teman"}
+          </h1>
+          {/* {userData?.role && (
+             <span className="text-[10px] text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 mt-1 inline-block">
+               {userData.role}
+             </span>
+          )} */}
         </div>
-
-        {/* Daily Quote (Banner) */}
-        <div className="mb-8">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 relative overflow-hidden">
-            <Quote className="absolute top-4 right-4 w-12 h-12 text-white/5 rotate-12" />
-            <p className="text-base text-slate-200 italic relative z-10 font-serif leading-relaxed">
-              "{selectedQuote}"
-            </p>
-            <p className="text-xs text-slate-500 mt-4 font-bold tracking-wider">— Neo</p>
-          </div>
+        
+        {/* Streak widget */}
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-md">
+           <div className="p-1.5 bg-orange-500/20 rounded-full">
+             <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
+           </div>
+           <div className="text-right">
+             <p className="text-white font-bold text-sm leading-none">{streak} Day</p>
+             <p className="text-[10px] text-slate-400 font-bold tracking-wider">Streak Login</p>
+           </div>
         </div>
+      </div>
 
-        {/* Mood Scanner */}
-        <div className="mb-8">
-          <div className="flex gap-3 overflow-x-auto py-6 scrollbar-hide">
-            {moods.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setCurrentMood(m.id)}
-                className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all duration-300 min-w-[80px] ${displayMood === m.id
-                  ? `bg-white/10 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] scale-105`
-                  : 'bg-transparent border-transparent opacity-50 hover:opacity-100'
-                  }`}
-              >
-                <m.icon className={`w-6 h-6 ${m.color}`} />
-                <span className="text-[10px] text-slate-300">{m.label}</span>
-              </button>
-            ))}
-          </div>
+      {/* Quote banner */}
+      <motion.div variants={itemVars} className="mb-8">
+        <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-white/10 rounded-3xl p-6 relative overflow-hidden shadow-lg">
+          <Quote className="absolute top-4 right-4 w-12 h-12 text-white/5 rotate-12" />
+          <p className="text-base md:text-lg text-slate-200 italic relative z-10 font-serif leading-relaxed">
+            "{selectedQuote}"
+          </p>
+          <p className="text-xs text-slate-500 mt-4 font-bold tracking-wider">— Neo</p>
         </div>
+      </motion.div>
 
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Main grid layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
 
-          {/* Left Column (Focus & Action) */}
-          <div className="flex flex-col gap-6">
-
-            {/* Recommendation Card */}
-            <motion.div
-              key={displayMood}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-3xl p-6 border border-white/10 group min-h-[220px] flex flex-col justify-between"
-            >
-              <div className="absolute inset-0 bg-white/5 backdrop-blur-xl"></div>
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-bold px-2 py-1 rounded text-white">
-                    AI RECOMMENDATION
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-white/50 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">{recTitle}</h3>
-                <p className="text-sm text-slate-300 mb-6 leading-relaxed">{recDesc}</p>
+        {/* Mood scanner card */}
+        <motion.div variants={itemVars} className="md:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6 relative overflow-hidden">
+           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {moods.map((m) => (
                 <button
-                  onClick={recAction}
-                  className="w-full py-3.5 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors shadow-lg shadow-white/10"
+                  key={m.id}
+                  onClick={() => setCurrentMood(m.id)}
+                  className={`flex-shrink-0 flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-300 min-w-[85px] ${
+                    displayMood === m.id 
+                    ? `bg-white/10 border-white/30 scale-105 shadow-lg shadow-white/5`
+                    : 'bg-white/5 border-transparent opacity-60 hover:opacity-100 hover:bg-white/10'
+                  }`}
                 >
-                  {recBtnText}
+                   <m.icon className={`w-8 h-8 ${m.color}`} />
+                   <span className="text-[10px] font-medium text-slate-300">{m.label}</span>
                 </button>
-              </div>
-            </motion.div>
+              ))}
+           </div>
+        </motion.div>
 
-            {/* Breathing Widget */}
-            <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-white/5 rounded-3xl p-6 flex items-center justify-between relative overflow-hidden">
-              <div className="relative z-10">
-                <h4 className="text-white font-bold mb-1">Tarik Napas</h4>
-                <p className="text-xs text-slate-400 max-w-[150px]">Ikuti lingkaran ini untuk menenangkan pikiranmu.</p>
+        {/* Main action card */}
+        <motion.div variants={itemVars} className="row-span-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6 flex flex-col justify-between relative overflow-hidden group">
+           <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 transition-colors duration-500 ${isNegativeMood ? 'bg-orange-500' : 'bg-green-500'}`}></div>
+           
+           <div className="relative z-10">
+              <div className="flex justify-between items-start mb-4">
+                 <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-bold px-2 py-1 rounded text-white">
+                    AI RECOMMENDATION
+                 </div>
+                 <ArrowRight className="w-5 h-5 text-white/50 group-hover:translate-x-1 transition-transform" />
               </div>
-              <div className="relative w-20 h-20 flex items-center justify-center">
-                <div className="absolute inset-0 bg-indigo-500/20 rounded-full animate-ping opacity-20"></div>
-                <div className="w-12 h-12 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)]"></div>
-              </div>
-            </div>
+              <h3 className="text-2xl font-bold text-white mb-2">{recTitle}</h3>
+              <p className="text-sm text-slate-300 leading-relaxed mb-6">
+                 {recDesc}
+              </p>
+           </div>
 
-          </div>
+           <button 
+             onClick={recAction}
+             className="relative z-10 w-full py-4 rounded-xl bg-white text-slate-950 font-bold text-sm hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group-hover:scale-[1.02]"
+           >
+             {recBtnText}
+           </button>
+        </motion.div>
 
-          {/* Right Column (Tools & Tracking) */}
-          <div className="flex flex-col gap-6">
-
-            {/* Gratitude Journal */}
-            <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Heart className="w-4 h-4 text-pink-500" />
-                <h4 className="text-white font-bold text-sm">Gratitude Journal</h4>
-              </div>
-              <input
-                type="text"
+        {/* Gratitude journal */}
+        <motion.div variants={itemVars} className="md:col-span-1 lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6">
+           <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 bg-pink-500/20 rounded-full text-pink-500"><Heart className="w-4 h-4" /></div>
+              <h4 className="text-white font-bold text-sm">Gratitude Journal</h4>
+           </div>
+           <div className="relative">
+              <input 
+                type="text" 
                 value={gratitudeText}
                 onChange={(e) => setGratitudeText(e.target.value)}
                 placeholder="Satu hal yang kamu syukuri hari ini..."
-                className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/50 transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:border-pink-500/50 focus:bg-white/10 transition-all"
               />
-            </div>
+           </div>
+        </motion.div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 gap-4">
-              <div
-                onClick={() => onNavigate('chat')}
-                className="bg-slate-900/50 p-4 rounded-2xl border border-white/5 flex flex-col gap-3 hover:bg-slate-800 transition-colors cursor-pointer group"
-              >
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
-                  <MessageCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-white font-medium text-sm">Cerita AI</h4>
-                  <p className="text-xs text-slate-500">Teman cerita 24/7</p>
-                </div>
+        {/* Quick tools */}
+        <div className="grid grid-cols-2 gap-4 md:gap-6">
+           <motion.div variants={itemVars} onClick={() => onNavigate('chat')} className="cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 bg-slate-900/60 border border-white/10 hover:bg-white/5 transition-all group">
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                 <MessageCircle className="w-5 h-5" />
               </div>
-              <div
-                onClick={toggleRain}
-                className={`p-4 rounded-2xl border border-white/5 flex flex-col gap-3 transition-colors cursor-pointer group ${isPlayingRain ? 'bg-blue-900/30 border-blue-500/30' : 'bg-slate-900/50 hover:bg-slate-800'}`}
-              >
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                  {isPlayingRain ? <span className="animate-pulse">❚❚</span> : <CloudRain className="w-5 h-5" />}
-                </div>
-                <div>
-                  <h4 className="text-white font-medium text-sm">Sleep Sound</h4>
-                  <p className="text-xs text-slate-500">{isPlayingRain ? 'Playing...' : 'Hujan & Petir'}</p>
-                </div>
+              <div>
+                 <h4 className="text-white font-medium text-sm">Cerita AI</h4>
+                 <p className="text-[10px] text-slate-500">Teman cerita 24/7</p>
               </div>
-            </div>
+           </motion.div>
 
-            {/* Last Check-in */}
-            {lastAssessment && (
-              <div className="bg-slate-900/50 border border-white/5 rounded-3xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-white text-sm font-bold">Terakhir Dicek</h4>
-                    <p className="text-xs text-slate-400">
-                      {new Date(lastAssessment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-500 block">Stress Level</span>
-                  <span className={`text-sm font-bold ${lastAssessment.stress_score > 14 ? 'text-red-400' : 'text-green-400'}`}>
-                    {lastAssessment.stress_score > 14 ? 'Tinggi' : 'Normal'}
-                  </span>
-                </div>
+           <motion.div variants={itemVars} onClick={toggleRain} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 border transition-all ${isPlayingRain ? 'bg-blue-600/20 border-blue-500/50' : 'bg-slate-900/60 border-white/10 hover:bg-white/5'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isPlayingRain ? 'bg-blue-500 text-white' : 'bg-blue-500/20 text-blue-400'}`}>
+                 {isPlayingRain ? <span className="animate-pulse">❚❚</span> : <CloudRain className="w-5 h-5" />}
               </div>
-            )}
-
-          </div>
+              <div>
+                 <h4 className="text-white font-medium text-sm">Sleep Sound</h4>
+                 <p className="text-[10px] text-slate-500">{isPlayingRain ? 'Playing...' : 'Hujan & Petir'}</p>
+              </div>
+           </motion.div>
         </div>
 
+        {/* Breathing widget */}
+        <motion.div variants={itemVars} className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-white/5 p-6 flex items-center justify-between">
+            <div className="relative z-10">
+               <h4 className="text-white font-bold mb-1">Tarik Napas</h4>
+               <p className="text-xs text-slate-400 max-w-[120px]">Ikuti lingkaran ini untuk menenangkan pikiranmu.</p>
+            </div>
+            <div className="relative w-16 h-16 flex items-center justify-center">
+               <div className="absolute inset-0 bg-indigo-500/20 rounded-full animate-ping opacity-20"></div>
+               <div className="w-10 h-10 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)]"></div>
+            </div>
+        </motion.div>
+
+        {/* Last statistics */}
+        {lastAssessment && (
+          <motion.div variants={itemVars} className="md:col-span-2 lg:col-span-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6 flex items-center justify-between group cursor-pointer hover:border-white/20 transition-colors" onClick={() => onNavigate('stats')}>
+             <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-green-500/20 flex items-center justify-center text-green-400">
+                   <Activity className="w-6 h-6" />
+                </div>
+                <div>
+                   <h4 className="text-white text-sm font-bold">Terakhir Dicek</h4>
+                   <p className="text-xs text-slate-400">
+                      {new Date(lastAssessment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                   </p>
+                </div>
+             </div>
+             <div className="text-right">
+                <span className="text-xs text-slate-500 block">Stress Level</span>
+                <span className={`text-sm font-bold ${lastAssessment.stress_score > 14 ? 'text-red-400' : 'text-green-400'}`}>
+                   {lastAssessment.stress_score > 14 ? 'Tinggi' : 'Normal'}
+                </span>
+             </div>
+          </motion.div>
+        )}
+
       </div>
-    </div>
+    </motion.div>
   );
 };
 
