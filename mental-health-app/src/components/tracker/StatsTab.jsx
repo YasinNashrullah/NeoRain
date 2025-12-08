@@ -27,7 +27,7 @@ const StatsTab = ({
                     <h3 className="text-lg font-bold text-white mb-1">Mood Stats</h3>
                     <p className="text-xs text-slate-400 mb-6">Select time range</p>
 
-                    <div className="bg-white/5 p-1 rounded-2xl flex gap-1 w-full">
+                    <div className="bg-white/5 justify-center p-1 rounded-2xl flex gap-1 w-full">
                         {['daily', 'weekly', 'monthly'].map(r => (
                             <button
                                 key={r}
