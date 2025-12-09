@@ -3,7 +3,7 @@ const BASE_URL = "http://127.0.0.1:8000/api";
 
 const headers = {
   "Content-Type": "application/json",
-  "Accept": "application/json", // PENTING: Memaksa Laravel return JSON, bukan HTML
+  Accept: "application/json", // PENTING: Memaksa Laravel return JSON, bukan HTML
 };
 
 export const api = {
@@ -17,7 +17,9 @@ export const api = {
       });
 
       if (!response.ok) {
-        console.warn(`API Warning (Sync User): ${response.status} ${response.statusText}`);
+        console.warn(
+          `API Warning (Sync User): ${response.status} ${response.statusText}`
+        );
         return null;
       }
 
@@ -48,7 +50,7 @@ export const api = {
     try {
       const response = await fetch(
         `${BASE_URL}/moods?firebase_uid=${firebaseUid}`,
-        { method: "GET", headers: headers } 
+        { method: "GET", headers: headers }
       );
       const result = await response.json();
       return result.data || [];
@@ -87,45 +89,36 @@ export const api = {
         body: JSON.stringify(chatData),
       });
 
+      // Cek error tanpa crash
       if (!response.ok) {
-        if (response.status === 404) return null;
+        if (response.status === 404) {
+          console.warn("API Warning: Endpoint /chats belum ada di Laravel.");
+          return null;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       return await response.json();
     } catch (error) {
+      // Jangan throw error agar chat tetap jalan di UI meski gagal simpan ke DB
       console.error("API Error (Save Chat):", error);
     }
   },
 
-  // 6. Ambil History Chat (dengan Pagination)
-  getChats: async (firebaseUid, page = 1, limit = 20) => {
+  // 6. Ambil History Chat (Support Pagination)
+  getChats: async (firebaseUid, page = 1) => {
     try {
-      // Menggunakan endpoint dengan pagination
       const response = await fetch(
-        `${BASE_URL}/chats?firebase_uid=${firebaseUid}&page=${page}&limit=${limit}`,
+        `${BASE_URL}/chats?firebase_uid=${firebaseUid}&page=${page}`,
         { method: "GET", headers: headers }
       );
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.warn("API Warning: Chat history endpoint not found (404). Backend update required.");
-          return { data: [], hasMore: false };
-        }
-        console.warn(`API Error (Get Chats): ${response.status} ${response.statusText}`);
-        return { data: [], hasMore: false };
-      }
+      if (!response.ok) return { data: [], hasMore: false };
 
       const result = await response.json();
-
-      // Handle format response lama (array langsung) vs baru (pagination object)
-      if (Array.isArray(result)) {
-        return { data: result, hasMore: false };
-      }
-
       return {
         data: result.data || [],
-        hasMore: result.meta ? result.meta.current_page < result.meta.last_page : false
+        hasMore: result.hasMore || false,
       };
     } catch (error) {
       console.error("API Error (Get Chats):", error);
@@ -184,7 +177,7 @@ export const api = {
         `${BASE_URL}/user/detail?firebase_uid=${firebaseUid}`,
         { method: "GET", headers: headers }
       );
-      
+
       if (!response.ok) return null;
       const result = await response.json();
       return result.data;
@@ -224,16 +217,16 @@ export const api = {
     try {
       const response = await fetch(`${BASE_URL}/user/photo`, {
         method: "POST",
-        headers: { 
-            "Accept": "application/json" 
-            // Jangan set Content-Type manual untuk FormData
-        }, 
+        headers: {
+          Accept: "application/json",
+          // Jangan set Content-Type manual untuk FormData
+        },
         body: formData,
       });
-      
+
       if (!response.ok) {
-         const errText = await response.text();
-         throw new Error(errText);
+        const errText = await response.text();
+        throw new Error(errText);
       }
 
       return await response.json();
@@ -244,7 +237,7 @@ export const api = {
   },
 
   // 13. Ambil Statistik Mood (Opsional/Future Use)
-  getMoodStatistics: async (firebaseUid, range = 'monthly') => {
+  getMoodStatistics: async (firebaseUid, range = "monthly") => {
     try {
       const response = await fetch(
         `${BASE_URL}/moods/stats?firebase_uid=${firebaseUid}&range=${range}`,
@@ -257,5 +250,5 @@ export const api = {
       console.warn("API Error (Get Stats):", error);
       return null;
     }
-  }
+  },
 };

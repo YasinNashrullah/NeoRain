@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { api } from '../utils/api';
 import '../App.css';
 
@@ -10,8 +9,8 @@ import MessageList from '../components/chat/MessageList';
 import SuggestionChips from '../components/chat/SuggestionChips';
 import ChatInput from '../components/chat/ChatInput';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(API_KEY);
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+const MODEL_NAME = "z-ai/glm-4.5-air:free";
 
 // Mood color mapping
 const moodColors = {
@@ -62,8 +61,6 @@ const moodColors = {
 const Chat = ({ onBack, userData, initialContext, messages, setMessages, currentMood, setCurrentMood }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  // Removed local messages state
-  // Removed local currentMood state
 
   // State Context
   const [activeContext, setActiveContext] = useState(initialContext || null);
@@ -80,30 +77,21 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const userName = userData?.name?.split(" ")[0] || "Teman"; // Ambil nama depan saja
+  const userName = userData?.name?.split(" ")[0] || "Teman";
 
   // Load History & Initial Messages
   useEffect(() => {
     const initData = async () => {
       if (userData?.uid) {
-        // 1. Load Assessment History
         const history = await api.getAssessmentHistory(userData.uid);
         setAssessmentHistory(history);
 
-        // 2. Load Chat History (Page 1)
         if (messages.length === 0) {
           const { data, hasMore: more } = await api.getChats(userData.uid, 1);
           if (data.length > 0) {
-            // Backend usually returns newest first or last? 
-            // Assuming backend returns [newest, ..., oldest] for pagination efficiency
-            // But frontend needs [oldest, ..., newest]
-            // Let's reverse if needed. 
-            // If backend returns standard paginate [msg1, msg2] where msg1 is older?
-            // Usually chat APIs return [newest...oldest].
-            // Let's assume we need to reverse them to show chronologically.
             setMessages(data.reverse());
             setHasMore(more);
-            setPage(2); // Next page is 2
+            setPage(2);
           }
         }
       }
@@ -131,57 +119,58 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
   };
 
-  // Generate Smart Suggestions
+  // Generate Smart Suggestions (OpenRouter Version)
   useEffect(() => {
     const generateSuggestions = async () => {
-      // Avoid re-generating if typing or no API key
-      if (!import.meta.env.VITE_GEMINI_API_KEY) return;
+      if (!OPENROUTER_API_KEY) return;
 
       const lastMsg = messages[messages.length - 1];
       const isAiLast = lastMsg?.sender === 'ai';
 
-      // If AI just replied, generate relevant follow-ups
       if (isAiLast) {
         setLoadingSuggestions(true);
         try {
-          const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+          const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": window.location.href,
+              "X-Title": "NeoRain"
+            },
+            body: JSON.stringify({
+              model: MODEL_NAME,
+              messages: [
+                {
+                  role: "system",
+                  content: `Context: User is chatting with an AI therapist. AI just said: "${lastMsg.text}". Generate 3 short, natural, deep/reflective Indonesian replies (max 6 words) for the USER to say next. Tone: Vulnerable, honest, or curious. Constraint: NO EMOJIS. Plain text only. Output ONLY a JSON array of strings. Example: ["Aku merasa sedikit lega", "Tapi sulit melupakannya", "Apa saranmu?"].`
+                }
+              ],
+              temperature: 0.7
+            })
+          });
 
-          const prompt = `
-            Context: User is chatting with an AI therapist.
-            AI just said: "${lastMsg.text}"
-            
-            Generate 3 short, natural, deep/reflective Indonesian replies (max 6 words) for the USER to say next.
-            Tone: Vulnerable, honest, or curious.
-            Constraint: NO EMOJIS. Plain text only.
-            Example: ["Aku merasa sedikit lega", "Tapi sulit melupakannya", "Apa saranmu?"].
-            Output ONLY a JSON array of strings.
-          `;
-
-          const result = await model.generateContent(prompt);
-          const response = await result.response;
-          const text = response.text().replace(/```json|```/g, '').trim();
-
+          const data = await response.json();
+          const text = data.choices[0].message.content.replace(/```json|```/g, '').trim();
+          
           const aiSuggestions = JSON.parse(text);
           if (Array.isArray(aiSuggestions) && aiSuggestions.length > 0) {
             setSuggestions(aiSuggestions);
           }
         } catch (error) {
-          console.error("Failed to generate follow-up suggestions", error);
+          console.error("Failed to generate suggestions", error);
         } finally {
           setLoadingSuggestions(false);
         }
-        return; // Exit after handling AI response
+        return;
       }
 
-      // If no messages or last was user (waiting for AI), show defaults/context
+      // Default suggestions logic
       if (messages.length === 0 || lastMsg?.sender === 'user') {
         if (suggestions.length > 0 && lastMsg?.sender === 'user') return;
       }
 
       setLoadingSuggestions(true);
-
-      // 1. Default Suggestions (Deep & Reflective - No Emojis)
       let defaultSuggestions = [
         "Rasanya berat sekali hari ini",
         "Aku merasa sendirian di keramaian",
@@ -192,11 +181,9 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         "Apa arti dari semua ini?"
       ];
 
-      // 2. Context-based Suggestions (Rule-based Fallback)
       if (activeContext) {
         const { stress_score, anxiety_score, depression_score } = activeContext;
-        defaultSuggestions = []; // Reset defaults
-
+        defaultSuggestions = [];
         if (stress_score > 14) defaultSuggestions.push("Kenapa dadaku terasa sesak terus?");
         if (anxiety_score > 7) defaultSuggestions.push("Bagaimana menghentikan rasa takut ini?");
         if (depression_score > 9) defaultSuggestions.push("Aku merasa hampa dan kosong");
@@ -205,38 +192,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         defaultSuggestions.push("Apakah ini akan berlalu?");
       }
 
-      setSuggestions(defaultSuggestions); // Show immediate fallback
-
-      // 3. AI-based Suggestions (Personalized Context)
-      if (activeContext && import.meta.env.VITE_GEMINI_API_KEY) {
-        try {
-          const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-          const prompt = `
-            Based on this mental health data:
-            Depression: ${activeContext.depression_score}, Anxiety: ${activeContext.anxiety_score}, Stress: ${activeContext.stress_score}.
-            Summary: ${activeContext.ai_analysis?.summary || '-'}.
-            
-            Generate 6 deep, emotional, and reflective Indonesian conversation starters (max 8 words) for the user to say to their AI therapist.
-            Tone: Vulnerable, seeking understanding, heart-to-heart.
-            Constraint: NO EMOJIS. Plain text only.
-            Output ONLY a JSON array of strings.
-          `;
-
-          const result = await model.generateContent(prompt);
-          const response = await result.response;
-          const text = response.text().replace(/```json|```/g, '').trim();
-
-          const aiSuggestions = JSON.parse(text);
-          if (Array.isArray(aiSuggestions) && aiSuggestions.length > 0) {
-            setSuggestions(aiSuggestions);
-          }
-        } catch (error) {
-          console.error("Failed to generate AI suggestions", error);
-        }
-      }
-
+      setSuggestions(defaultSuggestions);
       setLoadingSuggestions(false);
     };
 
@@ -244,7 +200,6 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   }, [activeContext, messages]);
 
   useEffect(() => {
-    // Only set initial message if history is empty AND we are not loading
     if (messages.length > 0 || isLoadingMore) return;
 
     if (initialContext) {
@@ -266,7 +221,6 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
   }, [initialContext, userName]);
 
-  // Handle konteks
   const handleContextChange = (context) => {
     setActiveContext(context);
     setShowHistoryMenu(false);
@@ -296,6 +250,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     scrollToBottom();
   }, [messages, isTyping]);
 
+  // --- HANDLE SEND (OPENROUTER VERSION) ---
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -310,23 +265,21 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     setInput('');
     setIsTyping(true);
 
-    // Save User Message
     if (userData?.uid) {
       api.saveChat({ firebase_uid: userData.uid, message: userMsg.text, sender: 'user' }).catch(err => { });
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+      if (!OPENROUTER_API_KEY) throw new Error("API Key OpenRouter missing");
 
-      // sistem prompt
+      // 1. System Prompt
       let systemInstruction = `
-        SYSTEM: Kamu adalah NeoRain, teman curhat mahasiswa.
+        Kamu adalah NeoRain, teman curhat mahasiswa.
         Nama User: ${userName}.
         Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lo-gue". Panggil user dengan nama "${userName}" sesekali agar akrab.
-        Tugas: Analisis emosi user. Di AKHIR response, WAJIB sertakan tag mood: ||MOOD:happy||, ||MOOD:sad||, dll.
+        Tugas: Analisis emosi user. Di AKHIR response, WAJIB sertakan tag mood: ||MOOD:happy||, ||MOOD:sad||, ||MOOD:angry||, ||MOOD:manic||, atau ||MOOD:calm||.
       `;
 
-      // Inject Data Analisis jika ada
       if (activeContext) {
         const aiReport = typeof activeContext.ai_analysis === 'string'
           ? JSON.parse(activeContext.ai_analysis)
@@ -346,24 +299,44 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         `;
       }
 
+      // 2. History Messages (OpenAI Format: user/assistant)
       const historyForAI = messages
         .filter(m => m.sender !== 'system')
-        .slice(-5)
+        .slice(-10)
         .map(msg => ({
-          role: msg.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.text }]
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
         }));
 
-      const chat = model.startChat({
-        history: [
-          { role: "user", parts: [{ text: systemInstruction }] },
-          ...historyForAI
-        ],
+      const apiMessages = [
+        { role: "system", content: systemInstruction },
+        ...historyForAI,
+        { role: "user", content: userMsg.text }
+      ];
+
+      // 3. Fetch OpenRouter
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": window.location.href,
+          "X-Title": "NeoRain"
+        },
+        body: JSON.stringify({
+          model: MODEL_NAME,
+          messages: apiMessages,
+          temperature: 0.7,
+          max_tokens: 500
+        })
       });
 
-      const result = await chat.sendMessage(input);
-      const response = await result.response;
-      let text = response.text();
+      if (!response.ok) {
+        throw new Error(`OpenRouter API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let text = data.choices[0].message.content;
 
       // Extract Mood
       const moodMatch = text.match(/\|\|MOOD:(\w+)\|\|/);
@@ -387,7 +360,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { id: Date.now(), text: "Maaf, ada gangguan koneksi.", sender: 'ai', time: 'Now' }]);
+      setMessages(prev => [...prev, { id: Date.now(), text: "Maaf, ada gangguan koneksi ke otak AI.", sender: 'ai', time: 'Now' }]);
     } finally {
       setIsTyping(false);
     }
@@ -401,7 +374,6 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
       animate={{ background: currentStyle.bgGradient }}
       transition={{ duration: 1, ease: "easeInOut" }}
     >
-      {/* Background Bubbles */}
       <div className="chat-bubbles-container">
         <div className="chat-bubble chat-bubble-1" style={{ background: currentStyle.bubble1 }}></div>
         <div className="chat-bubble chat-bubble-2" style={{ background: currentStyle.bubble2 }}></div>

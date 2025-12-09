@@ -130,7 +130,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
       <div className="flex justify-between items-end mb-8">
         <div>
           <p className="text-slate-400 text-sm font-medium mb-1">{timeGreeting},</p>
-          <h1 className="text-3xl md:text-4xl font-black text-white capitalize">
+          <h1 className="text-2xl md:text-4xl font-black text-white capitalize">
             {userData?.name?.split(' ')[0] || "Teman"}
           </h1>
           {/* {userData?.role && (

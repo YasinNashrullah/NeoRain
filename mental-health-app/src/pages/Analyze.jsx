@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, CheckCircle, AlertCircle, BrainCircuit } from 'lucide-react';
 import { api } from '../utils/api';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// --- KONFIGURASI OPENROUTER ---
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+const MODEL_NAME = "z-ai/glm-4.5-air:free";
 
-// pertanyaan DASS 21
+// --- DATA PERTANYAAN (DASS-21) ---
 const questions = [
   { id: 1, type: 'S', text: "Saya merasa susah untuk beristirahat" },
   { id: 2, type: 'A', text: "Saya merasa mulut saya kering" },
@@ -39,7 +40,7 @@ const options = [
 ];
 
 const Analyze = ({ userData, onFinish }) => {
-  const [step, setStep] = useState('intro');
+  const [step, setStep] = useState('intro'); // intro, quiz, processing
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
 
@@ -52,10 +53,11 @@ const Analyze = ({ userData, onFinish }) => {
     }
   };
 
+  // --- FUNGSI UTAMA: HITUNG SKOR & PANGGIL AI ---
   const finishQuiz = async () => {
     setStep('processing');
     
-    // Hitung Skor manual
+    // 1. Hitung Skor Manual (DASS-21)
     let d = 0, a = 0, s = 0;
     questions.forEach(q => {
       const val = answers[q.id] || 0;
@@ -64,17 +66,14 @@ const Analyze = ({ userData, onFinish }) => {
       if (q.type === 'S') s += val;
     });
     
-    // Skor DASS-21 dikali 2 = DASS-42
+    // Skor DASS-21 dikali 2 untuk menyamai DASS-42
     const scores = { depression: d * 2, anxiety: a * 2, stress: s * 2 };
 
     try {
-      if (!API_KEY) {
-        throw new Error("API Key Gemini belum dipasang di .env");
+      if (!OPENROUTER_API_KEY) {
+        throw new Error("API Key OpenRouter belum dipasang di .env");
       }
 
-      const genAI = new GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
       const prompt = `
         Bertindaklah sebagai Psikolog Klinis.
         User memiliki skor DASS-21:
@@ -95,18 +94,42 @@ const Analyze = ({ userData, onFinish }) => {
         Gunakan Bahasa Indonesia yang santai tapi profesional.
       `;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      let text = response.text();
+      // 2. Request ke OpenRouter
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": window.location.href,
+          "X-Title": "NeoRain"
+        },
+        body: JSON.stringify({
+          model: MODEL_NAME,
+          messages: [
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenRouter API Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let text = data.choices[0].message.content;
       
       console.log("Raw AI Response:", text); 
 
+      // 3. Bersihkan Format JSON
       text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
       let aiAnalysis;
       try {
         aiAnalysis = JSON.parse(text);
       } catch (e) {
+        console.error("JSON Parse Error:", e);
+        // Fallback jika AI gagal generate JSON valid
         aiAnalysis = {
           summary: "Analisis selesai. Skor kamu telah direkam.",
           factors: "Tidak dapat memuat detail faktor saat ini.",
@@ -115,19 +138,18 @@ const Analyze = ({ userData, onFinish }) => {
         };
       }
 
-      // Simpan ke Database Laravel
+      // 4. Simpan ke Database Laravel
       const payload = {
         firebase_uid: userData?.uid,
         depression_score: scores.depression,
         anxiety_score: scores.anxiety,
         stress_score: scores.stress,
-        ai_analysis: aiAnalysis
+        ai_analysis: aiAnalysis // Kirim object JSON
       };
-
 
       await api.saveAssessment(payload);
       
-      // Selesai & Pindah Halaman
+      // 5. Selesai & Pindah Halaman
       setTimeout(() => {
         onFinish(); 
       }, 1000);
@@ -135,7 +157,7 @@ const Analyze = ({ userData, onFinish }) => {
     } catch (error) {
       console.error("CRITICAL ERROR:", error);
       alert(`Gagal memproses: ${error.message}. Cek Console untuk detail.`);
-      setStep('intro');
+      setStep('intro'); // Reset ke awal agar user bisa coba lagi
     }
   };
 
@@ -147,7 +169,7 @@ const Analyze = ({ userData, onFinish }) => {
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
         
         <AnimatePresence mode='wait'>
-          {/* Intro */}
+          {/* 1. INTRO SCREEN */}
           {step === 'intro' && (
             <motion.div 
               key="intro"
@@ -172,7 +194,7 @@ const Analyze = ({ userData, onFinish }) => {
             </motion.div>
           )}
 
-          {/* Quiz screen */}
+          {/* 2. QUIZ SCREEN */}
           {step === 'quiz' && (
             <motion.div 
               key="quiz"
@@ -220,7 +242,7 @@ const Analyze = ({ userData, onFinish }) => {
             </motion.div>
           )}
 
-          {/* proses ai */}
+          {/* 3. PROCESSING SCREEN */}
           {step === 'processing' && (
             <motion.div 
               key="processing"
