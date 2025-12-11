@@ -141,12 +141,12 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         </div>
 
         {/* Streak widget */}
-        <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-4 rounded-full backdrop-blur-md">
+        <div className="flex items-center gap-3 bg-white/5 border border-white/10 md:px-6 md:py-4 py-2 px-4 rounded-full backdrop-blur-md">
           <div className="p-1.5 bg-orange-500/20 rounded-full">
-            <Flame className="w-6 h-6 text-orange-500 animate-pulse" />
+            <Flame className="md:w-6 md:h-6 w-5 h-5 text-orange-500 animate-pulse" />
           </div>
           <div className="text-right">
-            <p className="text-white font-bold text-sm leading-none">{streak} Day</p>
+            <p className="text-white font-bold mb-1 xl:mb-1.5 text-sm leading-none">{streak} Day</p>
             <p className="text-[10px] text-slate-400 font-bold tracking-wider">Streak Login</p>
           </div>
         </div>
