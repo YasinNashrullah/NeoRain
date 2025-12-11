@@ -11,7 +11,6 @@ import Tracker from './pages/Tracker';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Register from './pages/Register';
 import Analyze from './pages/Analyze';
 import LandingPage from './pages/LandingPage';
 

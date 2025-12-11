@@ -8,6 +8,59 @@ import {
 } from 'lucide-react';
 import { checkStreak } from '../utils/gamification';
 
+// --- Static Data & Constants ---
+// Moved outside to prevent re-creation on every render
+const MOODS = [
+  { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-400', bg: 'bg-pink-500/20', border: 'border-pink-500/50' },
+  { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50' },
+  { id: 'manic', label: 'Manic', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50' },
+  { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
+  { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/50' },
+];
+
+const QUOTES_DATA = {
+  happy: [
+    "Nikmati bahagiamu, tapi jangan lupa simpan sedikit cahayanya untuk hari yang mendung.",
+    "Senyummu hari ini adalah bukti bahwa kamu pernah melewati badai dan bertahan.",
+    "Kebahagiaan bukan tujuan, tapi cara kita menjalani perjalanan ini."
+  ],
+  calm: [
+    "Di dalam ketenangan, kamu akan menemukan jawaban yang selama ini bising sembunyikan.",
+    "Bernapaslah. Kamu aman. Kamu cukup. Kamu berharga.",
+    "Kadang, hal paling produktif yang bisa kamu lakukan adalah beristirahat dan memulihkan diri."
+  ],
+  sad: [
+    "Tidak apa-apa untuk tidak baik-baik saja. Hujan pun perlu turun agar bunga bisa mekar.",
+    "Menangislah jika perlu. Air mata adalah cara hatimu berbicara saat bibir tak sanggup menjelaskan.",
+    "Luka ini nyata, tapi begitu juga kekuatanmu untuk sembuh. Pelan-pelan saja."
+  ],
+  angry: [
+    "Di balik amarahmu, mungkin ada lelah yang minta dipeluk. Istirahatlah sejenak.",
+    "Api amarah bisa membakar hutan, atau menghangatkan rumah. Pilih bagaimana kamu menyalurkannya.",
+    "Tarik napas dalam. Jangan biarkan emosi sesaat merusak perjalanan panjangmu."
+  ],
+  manic: [
+    "Pelan-pelan. Kamu tidak harus menyelesaikan dunia hari ini.",
+    "Satu langkah kecil lebih berharga daripada seribu langkah dalam pikiran yang tak berujung.",
+    "Pijakkan kakimu ke bumi. Rasakan napasmu. Kamu ada di sini, sekarang."
+  ]
+};
+
+// --- Shared CSS Classes ---
+// Reusing these strings reduces bundle size and keeps JSX cleaner
+const CARD_BASE = "bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6 relative overflow-hidden";
+const HOVER_CARD = "cursor-pointer transition-all hover:bg-white/5";
+
+const CONTAINER_VARS = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+const ITEM_VARS = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
+
 const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNavigate, lastAssessment }) => {
   const [timeGreeting, setTimeGreeting] = useState('Pagi');
   const [streak, setStreak] = useState(0);
@@ -34,15 +87,6 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     }
     setIsPlayingRain(!isPlayingRain);
   };
-
-  // Static mood data
-  const moods = [
-    { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-400', bg: 'bg-pink-500/20', border: 'border-pink-500/50' },
-    { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50' },
-    { id: 'manic', label: 'Manic', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50' },
-    { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/50' },
-    { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/50' },
-  ];
 
   // Time and streak logic
   useEffect(() => {
@@ -77,52 +121,14 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
   const recBtnText = isNegativeMood ? "Cerita ke AI" : "Mulai Analisis";
   const recAction = isNegativeMood ? () => onNavigate('chat') : onStartAnalysis;
 
-  const quotesData = {
-    happy: [
-      "Nikmati bahagiamu, tapi jangan lupa simpan sedikit cahayanya untuk hari yang mendung.",
-      "Senyummu hari ini adalah bukti bahwa kamu pernah melewati badai dan bertahan.",
-      "Kebahagiaan bukan tujuan, tapi cara kita menjalani perjalanan ini."
-    ],
-    calm: [
-      "Di dalam ketenangan, kamu akan menemukan jawaban yang selama ini bising sembunyikan.",
-      "Bernapaslah. Kamu aman. Kamu cukup. Kamu berharga.",
-      "Kadang, hal paling produktif yang bisa kamu lakukan adalah beristirahat dan memulihkan diri."
-    ],
-    sad: [
-      "Tidak apa-apa untuk tidak baik-baik saja. Hujan pun perlu turun agar bunga bisa mekar.",
-      "Menangislah jika perlu. Air mata adalah cara hatimu berbicara saat bibir tak sanggup menjelaskan.",
-      "Luka ini nyata, tapi begitu juga kekuatanmu untuk sembuh. Pelan-pelan saja."
-    ],
-    angry: [
-      "Di balik amarahmu, mungkin ada lelah yang minta dipeluk. Istirahatlah sejenak.",
-      "Api amarah bisa membakar hutan, atau menghangatkan rumah. Pilih bagaimana kamu menyalurkannya.",
-      "Tarik napas dalam. Jangan biarkan emosi sesaat merusak perjalanan panjangmu."
-    ],
-    manic: [
-      "Pelan-pelan. Kamu tidak harus menyelesaikan dunia hari ini.",
-      "Satu langkah kecil lebih berharga daripada seribu langkah dalam pikiran yang tak berujung.",
-      "Pijakkan kakimu ke bumi. Rasakan napasmu. Kamu ada di sini, sekarang."
-    ]
-  };
-
   const selectedQuote = useMemo(() => {
-    const moodQuotes = quotesData[displayMood] || quotesData.calm;
+    const moodQuotes = QUOTES_DATA[displayMood] || QUOTES_DATA.calm;
     return moodQuotes[Math.floor(Math.random() * moodQuotes.length)];
   }, [displayMood]);
 
-  // Animation variants
-  const containerVars = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-  const itemVars = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
     <motion.div
-      initial="hidden" animate="visible" variants={containerVars}
+      initial="hidden" animate="visible" variants={CONTAINER_VARS}
       className="w-full pb-32 px-4 md:px-6 pt-6"
     >
 
@@ -133,11 +139,6 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           <h1 className="text-2xl md:text-4xl font-black text-white capitalize">
             {userData?.name?.split(' ')[0] || "Teman"}
           </h1>
-          {/* {userData?.role && (
-             <span className="text-[10px] text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 mt-1 inline-block">
-               {userData.role}
-             </span>
-          )} */}
         </div>
 
         {/* Streak widget */}
@@ -153,7 +154,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
       </div>
 
       {/* Quote banner */}
-      <motion.div variants={itemVars} className="mb-8">
+      <motion.div variants={ITEM_VARS} className="mb-8">
         <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-white/10 rounded-3xl p-6 relative overflow-hidden shadow-lg">
           <Quote className="absolute top-4 right-4 w-12 h-12 text-white/5 rotate-12" />
           <p className="text-base md:text-lg text-slate-200 italic relative z-10 font-serif leading-relaxed">
@@ -166,9 +167,9 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
       {/* Main grid layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Mood scanner card */}
-        <motion.div variants={itemVars} className="md:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6 relative overflow-hidden">
+        <motion.div variants={ITEM_VARS} className={`md:col-span-2 ${CARD_BASE}`}>
           <div className="flex items-center justify-between w-full overflow-x-auto pb-2 scrollbar-hide gap-2">
-            {moods.map((m) => (
+            {MOODS.map((m) => (
               <button
                 key={m.id}
                 onClick={() => setCurrentMood(m.id)}
@@ -189,8 +190,8 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           </div>
         </motion.div>
 
-        {/* Main action card */}
-        <motion.div variants={itemVars} className="row-span-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6 flex flex-col justify-between relative overflow-hidden group">
+        {/* Main action card */}x
+        <motion.div variants={ITEM_VARS} className={`row-span-2 ${CARD_BASE} group flex flex-col justify-between`}>
           <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 transition-colors duration-500 ${isNegativeMood ? 'bg-orange-500' : 'bg-green-500'}`}></div>
 
           <div className="relative z-10">
@@ -215,7 +216,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         </motion.div>
 
         {/* Gratitude journal */}
-        <motion.div variants={itemVars} className="md:col-span-1 lg:col-span-2 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6">
+        <motion.div variants={ITEM_VARS} className={`md:col-span-1 lg:col-span-2 ${CARD_BASE}`}>
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-pink-500/20 rounded-full text-pink-500"><Heart className="w-4 h-4" /></div>
             <h4 className="text-white font-bold text-sm">Gratitude Journal</h4>
@@ -233,7 +234,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
 
         {/* Quick tools */}
         <div className="grid grid-cols-2 gap-4 md:gap-6">
-          <motion.div variants={itemVars} onClick={() => onNavigate('chat')} className="cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 bg-slate-900/60 border border-white/10 hover:bg-white/5 transition-all group">
+          <motion.div variants={ITEM_VARS} onClick={() => onNavigate('chat')} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 bg-slate-900/60 border border-white/10 hover:bg-white/5 transition-all group`}>
             <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
               <MessageCircle className="w-5 h-5" />
             </div>
@@ -243,7 +244,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
             </div>
           </motion.div>
 
-          <motion.div variants={itemVars} onClick={toggleRain} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 border transition-all ${isPlayingRain ? 'bg-blue-600/20 border-blue-500/50' : 'bg-slate-900/60 border-white/10 hover:bg-white/5'}`}>
+          <motion.div variants={ITEM_VARS} onClick={toggleRain} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 border transition-all ${isPlayingRain ? 'bg-blue-600/20 border-blue-500/50' : 'bg-slate-900/60 border-white/10 hover:bg-white/5'}`}>
             <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isPlayingRain ? 'bg-blue-500 text-white' : 'bg-blue-500/20 text-blue-400'}`}>
               {isPlayingRain ? <span className="animate-pulse">❚❚</span> : <CloudRain className="w-5 h-5" />}
             </div>
@@ -255,7 +256,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         </div>
 
         {/* Breathing widget */}
-        <motion.div variants={itemVars} className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-white/5 p-6 flex items-center justify-between">
+        <motion.div variants={ITEM_VARS} className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-white/5 p-6 flex items-center justify-between">
           <div className="relative z-10">
             <h4 className="text-white font-bold mb-1">Tarik Napas</h4>
             <p className="text-xs text-slate-400 max-w-[120px]">Ikuti lingkaran ini untuk menenangkan pikiranmu.</p>
@@ -268,7 +269,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
 
         {/* Last statistics */}
         {lastAssessment && (
-          <motion.div variants={itemVars} className="md:col-span-2 lg:col-span-1 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[30px] p-6 flex items-center justify-between group cursor-pointer hover:border-white/20 transition-colors" onClick={() => onNavigate('stats')}>
+          <motion.div variants={ITEM_VARS} className={`md:col-span-2 lg:col-span-1 ${CARD_BASE} flex items-center justify-between ${HOVER_CARD} hover:border-white/20`} onClick={() => onNavigate('stats')}>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-green-500/20 flex items-center justify-center text-green-400">
                 <Activity className="w-6 h-6" />
