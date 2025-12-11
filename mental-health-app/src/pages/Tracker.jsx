@@ -7,9 +7,10 @@ import { api } from '../utils/api';
 import DailyTab from '../components/tracker/DailyTab';
 import WeeklyTab from '../components/tracker/WeeklyTab';
 import StatsTab from '../components/tracker/StatsTab';
+import AnalysisTab from '../components/tracker/AnalysisTab';
 
-const Tracker = ({ userData, onNavigate }) => {
-  const [activeTab, setActiveTab] = useState('daily');
+const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
+  const [activeTab, setActiveTab] = useState(initialTab || 'daily');
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -302,7 +303,7 @@ const Tracker = ({ userData, onNavigate }) => {
       {/* Header */}
       <div className="md:px-9 px-6 pt-8 pb-4 relative z-10 flex-none">
         <div className="w-full mx-auto bg-white/5 p-1.5 rounded-2xl flex gap-2 relative border border-white/10 backdrop-blur-md shadow-xl">
-          {['daily', 'weekly', 'stats'].map((tab) => (
+          {['daily', 'weekly', 'stats', 'analysis'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -316,7 +317,7 @@ const Tracker = ({ userData, onNavigate }) => {
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
-              <span className="relative z-10 capitalize">{tab === 'daily' ? 'Daily' : tab === 'weekly' ? 'Weekly' : 'Statistics'}</span>
+              <span className="relative z-10 capitalize">{tab === 'daily' ? 'Daily' : tab === 'weekly' ? 'Weekly' : tab === 'stats' ? 'Statistics' : 'AI Analysis'}</span>
             </button>
           ))}
         </div>
@@ -367,6 +368,15 @@ const Tracker = ({ userData, onNavigate }) => {
                 statsData={statsData}
                 onNavigate={onNavigate}
                 getMoodConfig={getMoodConfig}
+              />
+            )}
+
+            {/* Analysis Tab */}
+            {activeTab === 'analysis' && (
+              <AnalysisTab
+                userData={userData}
+                onChatRequest={onChatRequest}
+                onNavigate={onNavigate}
               />
             )}
 
