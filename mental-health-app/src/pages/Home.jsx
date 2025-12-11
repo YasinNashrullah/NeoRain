@@ -190,7 +190,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           </div>
         </motion.div>
 
-        {/* Main action card */}x
+        {/* Main action card */}
         <motion.div variants={ITEM_VARS} className={`row-span-2 ${CARD_BASE} group flex flex-col justify-between`}>
           <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 transition-colors duration-500 ${isNegativeMood ? 'bg-orange-500' : 'bg-green-500'}`}></div>
 
