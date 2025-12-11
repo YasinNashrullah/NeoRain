@@ -13,7 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Statistics from './pages/Statistics';
 import Analyze from './pages/Analyze';
-import LandingPage from './pages/LandingPage'; 
+import LandingPage from './pages/LandingPage';
 
 // Components
 import BottomNav from './components/BottomNav';
@@ -25,10 +25,10 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // State Navigasi Auth
-  const [authView, setAuthView] = useState('landing'); 
-  
+  const [authView, setAuthView] = useState('landing');
+
   const [activeTab, setActiveTab] = useState('home');
   const [chatContext, setChatContext] = useState(null);
   const [lastAssessment, setLastAssessment] = useState(null);
@@ -76,7 +76,7 @@ const App = () => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        
+
         const userDataObj = {
           uid: currentUser.uid,
           email: currentUser.email,
@@ -94,12 +94,12 @@ const App = () => {
 
         // Ambil Data Lengkap
         await refreshUserData(currentUser.uid);
-        
+
         // Ambil Assessment Terakhir
         try {
           const history = await api.getAssessmentHistory(currentUser.uid);
           if (history && history.length > 0) {
-            setLastAssessment(history[0]); 
+            setLastAssessment(history[0]);
           }
         } catch (e) {
           console.error("Failed to fetch history", e);
@@ -122,21 +122,21 @@ const App = () => {
 
   const handleAuthSuccess = (data) => setUserData(data);
   const handleOnboardingFinish = (surveyData) => setUserData((prev) => ({ ...prev, ...surveyData }));
-  
+
   const handleLogout = async () => {
     await signOut(auth);
     setUser(null);
     setUserData(null);
     setChatContext(null);
-    
+
     // Reset Persistence (PENTING AGAR DATA TIDAK BOCOR KE USER LAIN)
     setMessages([]);
-    setCurrentMood('default'); 
+    setCurrentMood('default');
     localStorage.removeItem('chatHistory');
     localStorage.removeItem('currentMood');
-    
+
     setActiveTab('home');
-    setAuthView('landing'); 
+    setAuthView('landing');
   };
 
   const handleAnalyzeFinish = () => {
@@ -158,9 +158,9 @@ const App = () => {
   if (!user) {
     if (authView === 'landing') {
       return (
-        <LandingPage 
-          onLogin={() => setAuthView('login')} 
-          onRegister={() => setAuthView('register')} 
+        <LandingPage
+          onLogin={() => setAuthView('login')}
+          onRegister={() => setAuthView('register')}
         />
       );
     }
@@ -169,14 +169,14 @@ const App = () => {
       <div className="fixed inset-0 w-full h-full bg-black flex justify-center items-center font-sans p-4 overflow-y-auto">
         <div className="w-full h-full sm:h-auto bg-slate-950 relative flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
           {authView === 'login' ? (
-            <Login 
-              onLoginSuccess={handleAuthSuccess} 
-              onSwitchToRegister={() => setAuthView('register')} 
+            <Login
+              onLoginSuccess={handleAuthSuccess}
+              onSwitchToRegister={() => setAuthView('register')}
             />
           ) : (
-            <Register 
-              onRegisterSuccess={handleAuthSuccess} 
-              onSwitchToLogin={() => setAuthView('login')} 
+            <Register
+              onRegisterSuccess={handleAuthSuccess}
+              onSwitchToLogin={() => setAuthView('login')}
             />
           )}
           {/* Tombol Back ke Landing */}
@@ -191,71 +191,71 @@ const App = () => {
 
   return (
     <div className="fixed inset-0 w-full h-full bg-black font-sans flex overflow-hidden">
-      
+
       {/* Background Blobs */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[150px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[150px] pointer-events-none"></div>
 
       {!hasOnboarded ? (
         <div className="w-full h-full flex items-center justify-center p-4">
-           <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
-              <Onboarding onFinish={handleOnboardingFinish} />
-           </div>
+          <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
+            <Onboarding onFinish={handleOnboardingFinish} />
+          </div>
         </div>
       ) : (
         <>
-          <Sidebar 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-            onLogout={handleLogout} 
-            userData={userData} 
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onLogout={handleLogout}
+            userData={userData}
           />
 
           <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
-            
+
             {/* Mobile Chat Overlay */}
             {activeTab === 'chat' && (
               <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
-                 <Chat 
-                    onBack={() => setActiveTab('home')} 
-                    userData={userData}
-                    initialContext={chatContext}
-                    messages={messages}
-                    setMessages={setMessages}
-                    currentMood={currentMood}
-                    setCurrentMood={setCurrentMood}
-                 />
+                <Chat
+                  onBack={() => setActiveTab('home')}
+                  userData={userData}
+                  initialContext={chatContext}
+                  messages={messages}
+                  setMessages={setMessages}
+                  currentMood={currentMood}
+                  setCurrentMood={setCurrentMood}
+                />
               </div>
             )}
 
             {/* Desktop Container */}
             <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
               <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/50 md:backdrop-blur-sm md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
-                
+
                 {/* KONTEN */}
                 {activeTab === 'chat' ? (
                   <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
-                     <Chat 
-                        onBack={() => setActiveTab('home')} 
-                        userData={userData}
-                        initialContext={chatContext}
-                        messages={messages}
-                        setMessages={setMessages}
-                        currentMood={currentMood}
-                        setCurrentMood={setCurrentMood}
-                     />
+                    <Chat
+                      onBack={() => setActiveTab('home')}
+                      userData={userData}
+                      initialContext={chatContext}
+                      messages={messages}
+                      setMessages={setMessages}
+                      currentMood={currentMood}
+                      setCurrentMood={setCurrentMood}
+                    />
                   </div>
                 ) : (
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
-                    <div className="w-full h-full mx-auto"> 
-                      
+                    <div className="w-full h-full mx-auto">
+
                       {activeTab === 'analyze' && (
                         <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
                       )}
 
                       {activeTab === 'home' && (
-                        <Home 
-                          userData={userData} 
+                        <Home
+                          userData={userData}
                           currentMood={currentMood}
                           setCurrentMood={setCurrentMood}
                           onStartAnalysis={handleStartAnalysis}
@@ -263,27 +263,28 @@ const App = () => {
                           lastAssessment={lastAssessment}
                         />
                       )}
-                      
+
                       {activeTab === 'tracker' && (
-                        <Tracker 
-                          userData={userData} 
-                          // Opsional: Jika ingin Tracker mengubah tema global, uncomment ini
-                          // onMoodChange={setCurrentMood} 
+                        <Tracker
+                          userData={userData}
+                        // Opsional: Jika ingin Tracker mengubah tema global, uncomment ini
+                        // onMoodChange={setCurrentMood} 
                         />
                       )}
-                      
+
                       {activeTab === 'stats' && (
-                        <Statistics 
-                            userData={userData} 
-                            onChatRequest={handleChatWithContext} 
+                        <Statistics
+                          userData={userData}
+                          onChatRequest={handleChatWithContext}
+                          onNavigate={setActiveTab}
                         />
                       )}
-                      
+
                       {activeTab === 'profile' && (
-                        <Profile 
-                          userData={userData} 
-                          onLogout={handleLogout} 
-                          onUpdateProfile={() => refreshUserData(user.uid)} 
+                        <Profile
+                          userData={userData}
+                          onLogout={handleLogout}
+                          onUpdateProfile={() => refreshUserData(user.uid)}
                         />
                       )}
 
