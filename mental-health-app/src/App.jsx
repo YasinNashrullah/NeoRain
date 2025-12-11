@@ -11,7 +11,7 @@ import Tracker from './pages/Tracker';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Statistics from './pages/Statistics';
+import Register from './pages/Register';
 import Analyze from './pages/Analyze';
 import LandingPage from './pages/LandingPage';
 
@@ -32,6 +32,7 @@ const App = () => {
   const [activeTab, setActiveTab] = useState('home');
   const [chatContext, setChatContext] = useState(null);
   const [lastAssessment, setLastAssessment] = useState(null);
+  const [trackerInitialTab, setTrackerInitialTab] = useState(null);
 
   // Mood Persistence (Global State untuk Tema)
   const [currentMood, setCurrentMood] = useState(() => {
@@ -140,7 +141,8 @@ const App = () => {
   };
 
   const handleAnalyzeFinish = () => {
-    setActiveTab('stats');
+    setTrackerInitialTab('analysis');
+    setActiveTab('tracker');
   };
 
   const handleChatWithContext = (assessmentData) => {
@@ -267,14 +269,7 @@ const App = () => {
                       {activeTab === 'tracker' && (
                         <Tracker
                           userData={userData}
-                        // Opsional: Jika ingin Tracker mengubah tema global, uncomment ini
-                        // onMoodChange={setCurrentMood} 
-                        />
-                      )}
-
-                      {activeTab === 'stats' && (
-                        <Statistics
-                          userData={userData}
+                          initialTab={trackerInitialTab}
                           onChatRequest={handleChatWithContext}
                           onNavigate={setActiveTab}
                         />

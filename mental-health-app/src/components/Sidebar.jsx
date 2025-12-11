@@ -10,7 +10,6 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
   const menuItems = [
     { id: 'home', label: 'Dashboard', icon: Home },
     { id: 'tracker', label: 'Mood Tracker', icon: Heart },
-    { id: 'stats', label: 'Statistics', icon: BarChart2 },
     { id: 'chat', label: 'Chat AI', icon: MessageCircle },
     { id: 'profile', label: 'Profiles', icon: User },
   ];
