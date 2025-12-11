@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Analyze from './pages/Analyze';
+import ActionPlan from './pages/ActionPlan';
 import LandingPage from './pages/LandingPage';
 
 // Components
@@ -270,6 +271,13 @@ const App = () => {
                           userData={userData}
                           initialTab={trackerInitialTab}
                           onChatRequest={handleChatWithContext}
+                          onNavigate={setActiveTab}
+                        />
+                      )}
+
+                      {activeTab === 'action-plan' && (
+                        <ActionPlan
+                          userData={userData}
                           onNavigate={setActiveTab}
                         />
                       )}

@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
   Home, BarChart2, User, MessageCircle,
-  Heart, LogOut, BrainCircuit, Sparkles, Zap
+  Heart, LogOut, BrainCircuit, Sparkles, Zap, Target
 } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
@@ -10,6 +11,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
   const menuItems = [
     { id: 'home', label: 'Dashboard', icon: Home },
     { id: 'tracker', label: 'Mood Tracker', icon: Heart },
+    { id: 'action-plan', label: 'Action Plan', icon: Target },
     { id: 'chat', label: 'Chat AI', icon: MessageCircle },
     { id: 'profile', label: 'Profiles', icon: User },
   ];
@@ -215,7 +217,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                       repeat: Infinity,
                       delay: i * 0.3,
                     }}
-                    style={{ left: `${30 + i * 20}%`, top: "50%" }}
+                    style={{ left: `${30 + i * 20}% `, top: "50%" }}
                   />
                 ))}
               </>
@@ -319,11 +321,11 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
             <button onClick={onLogout} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 hover:text-red-400 transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
-          </div>
-        </div>
+          </div >
+        </div >
 
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
