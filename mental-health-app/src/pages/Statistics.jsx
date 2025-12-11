@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { api } from '../utils/api';
 
-const Statistics = ({ userData, onChatRequest }) => {
+const Statistics = ({ userData, onChatRequest, onNavigate }) => {
     const [allHistory, setAllHistory] = useState([]);
     const [selectedAssessment, setSelectedAssessment] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -116,6 +116,38 @@ const Statistics = ({ userData, onChatRequest }) => {
             <div className="flex flex-col items-center justify-center h-full min-h-[80vh] text-white">
                 <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
                 <p className="text-slate-400 animate-pulse">Memuat data statistik...</p>
+            </div>
+        );
+
+    if (!loading && allHistory.length === 0)
+        return (
+            <div className="w-full h-full bg-slate-950 text-white flex flex-col items-center justify-center p-6">
+                <div className="max-w-md w-full bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-2xl text-center relative overflow-hidden">
+                    {/* Background Effects */}
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>
+
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mb-6 border border-indigo-500/20">
+                            <BrainCircuit className="w-10 h-10 text-indigo-400" />
+                        </div>
+
+                        <h2 className="text-2xl font-bold text-white mb-3">Belum Ada Data Analisis</h2>
+                        <p className="text-slate-400 mb-8 leading-relaxed">
+                            Kamu belum melakukan analisis kesehatan mental. Yuk, mulai analisis sekarang untuk mengetahui kondisi kesehatan mentalmu!
+                        </p>
+
+                        <button
+                            onClick={() => onNavigate('analyze')}
+                            className="group relative inline-flex items-center justify-center gap-2 px-8 py-3.5 font-bold text-white transition-all duration-300 bg-indigo-600 rounded-full hover:bg-indigo-500 hover:scale-105 shadow-lg shadow-indigo-500/30 overflow-hidden w-full"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <span className="relative flex items-center gap-2">
+                                <Zap className="w-5 h-5" />
+                                Mulai Analisis AI
+                            </span>
+                        </button>
+                    </div>
+                </div>
             </div>
         );
 
