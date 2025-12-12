@@ -9,8 +9,7 @@ import MessageList from '../components/chat/MessageList';
 import SuggestionChips from '../components/chat/SuggestionChips';
 import ChatInput from '../components/chat/ChatInput';
 
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-const MODEL_NAME = "z-ai/glm-4.5-air:free";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // Mood color mapping
 const moodColors = {
@@ -197,7 +196,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // --- HANDLE SEND (OPTIMIZED SINGLE PASS) ---
+  // --- HANDLE SEND (GEMINI NATIVE) ---
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -217,10 +216,10 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
 
     try {
-      if (!OPENROUTER_API_KEY) throw new Error("API Key OpenRouter missing");
+      if (!GEMINI_API_KEY) throw new Error("API Key (VITE_GEMINI_API_KEY) missing. Please check .env");
 
-      // 1. System Prompt (JSON ENFORCED)
-      let systemInstruction = `
+      // 1. System Prompt
+      let systemInstructionText = `
         Kamu adalah NeoRain, teman curhat mahasiswa.
         Nama User: ${userName}.
         Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lu-gua". Panggil user dengan nama "${userName}" sesekali agar akrab.
@@ -230,12 +229,10 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         2. Analisis mood user.
         3. Berikan 3 saran balasan singkat untuk user (Smart Reply).
 
-        FORMAT RESPON WAJIB JSON (Jangan gunakan markdown block):
-        {
-          "reply": "Isi balasan kamu ke user di sini...",
-          "mood": "happy|sad|angry|manic|calm",
-          "suggestions": ["Saran 1", "Saran 2", "Saran 3"]
-        }
+        ATURAN PENTING:
+        - JAWABAN "REPLY" HARUS SINGKAT (MAKSIMAL 2000 KATA) AGAR TIDAK TERPOTONG.
+        - JANGAN GUNAKAN MARKDOWN FORMATTING (BOLS/ITALIC) DI DALAM STRING JSON.
+        HASILKAN RESPON DALAM FORMAT JSON MURNI SESUAI SKEMA YANG DITETAPKAN. JANGAN TAMBAHKAN TEKS APAPUN DI LUAR JSON.
       `;
 
       if (activeContext) {
@@ -243,7 +240,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
           ? JSON.parse(activeContext.ai_analysis)
           : activeContext.ai_analysis;
 
-        systemInstruction += `
+        systemInstructionText += `
         \n[DATA KESEHATAN MENTAL USER]
         Tanggal: ${new Date(activeContext.created_at).toLocaleDateString()}
         Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_score}, Stres ${activeContext.stress_score}.
@@ -252,65 +249,112 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         `;
       }
 
-      // 2. History Messages (OPTIMIZED: Last 5 Messages)
+      // 2. Map History to Gemini Format
+      // Gemini "contents" array: each item is { role: "user" | "model", parts: [{ text: "..." }] }
       const historyForAI = messages
         .filter(m => m.sender !== 'system')
-        .slice(-5) // Reduced from 10 to 5 to save tokens
+        .slice(-6)
         .map(msg => ({
-          role: msg.sender === 'user' ? 'user' : 'assistant',
-          content: msg.text
+          role: msg.sender === 'user' ? 'user' : 'model',
+          parts: [{ text: msg.text }]
         }));
 
-      const apiMessages = [
-        { role: "system", content: systemInstruction },
+      // Add current message
+      const chatContents = [
         ...historyForAI,
-        { role: "user", content: userMsg.text }
+        { role: "user", parts: [{ text: userMsg.text }] }
       ];
 
-      // 3. Fetch OpenRouter
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      // 3. Fetch Gemini API
+      // Using gemini-2.5-flash as per user request (despite experimental nature)
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": window.location.href,
-          "X-Title": "NeoRain"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: MODEL_NAME,
-          messages: apiMessages,
-          temperature: 0.7,
-          max_tokens: 600, // Slightly increased to accommodate JSON
-          response_format: { type: "json_object" } // Safe guard for models that support it
+          contents: chatContents,
+          systemInstruction: {
+            parts: [{ text: systemInstructionText }]
+          },
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1000, // Reduced to safe limit as requested
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                reply: { type: "string" },
+                mood: { type: "string", enum: ["happy", "sad", "angry", "manic", "calm"] },
+                suggestions: { type: "array", items: { type: "string" } }
+              },
+              required: ["reply", "mood", "suggestions"]
+            }
+          }
         })
       });
 
       if (!response.ok) {
-        throw new Error(`OpenRouter API Error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Gemini API Error ${response.status}: ${JSON.stringify(errorData)}`);
       }
 
       const data = await response.json();
-      let rawContent = data.choices[0].message.content;
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error("Invalid Gemini Response Structure");
+      }
 
-      // Clean up & Parse
-      rawContent = rawContent.replace(/```json|```/g, '').trim();
+      const rawContent = data.candidates[0].content.parts[0].text;
+      console.log("Raw Gemini Response:", rawContent);
 
-      let parsedResponse;
+      let parsedResponse = null;
       try {
         parsedResponse = JSON.parse(rawContent);
       } catch (e) {
-        console.warn("JSON Parse Failed, fallback to raw text", e);
-        // Fallback attempts
-        const moodMatch = rawContent.match(/mood":\s*"(\w+)"/i);
+        console.warn("JSON Parse Failed, attempting partial regex recovery:", e);
+      }
+
+      // Fallback & Partial Recovery Strategy
+      if (!parsedResponse) {
+        try {
+          // Attempt to extract fields even if JSON is broken/truncated
+          const replyMatch = rawContent.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)/); // Capture start of string
+          const moodMatch = rawContent.match(/"mood"\s*:\s*"(\w+)"/);
+
+          let recoveredReply = "";
+          if (replyMatch) {
+            // If we captured something, check if it has an end quote. If not, it's truncated.
+            let captured = replyMatch[1];
+            if (!captured.endsWith('"')) {
+              recoveredReply = captured + "... (terpotong)";
+            } else {
+              try { recoveredReply = JSON.parse(`"${captured}"`); } catch (e) { recoveredReply = captured; }
+            }
+          }
+
+          if (recoveredReply) {
+            parsedResponse = {
+              reply: recoveredReply,
+              mood: moodMatch ? moodMatch[1] : 'default',
+              suggestions: [] // Likely lost if truncated
+            };
+          }
+        } catch (e) {
+          console.error("Recovery failed:", e);
+        }
+      }
+
+      // Final Fallback
+      if (!parsedResponse) {
         parsedResponse = {
-          reply: rawContent,
-          mood: moodMatch ? moodMatch[1] : 'default',
+          reply: "Maaf, sinyal hatiku agak putus-putus. Boleh ulang lagi?",
+          mood: "default",
           suggestions: []
         };
       }
 
-      // Update UI with Parsed Data
-      if (parsedResponse.mood && moodColors[parsedResponse.mood.toLowerCase()]) {
+      // Update UI
+      if (parsedResponse.mood && typeof parsedResponse.mood === 'string' && moodColors[parsedResponse.mood.toLowerCase()]) {
         setCurrentMood(parsedResponse.mood.toLowerCase());
       }
 
@@ -320,21 +364,21 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
       const aiMsg = {
         id: Date.now() + 1,
-        text: parsedResponse.reply || "Maaf, aku tidak mengerti.",
+        text: parsedResponse.reply || "...",
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       setMessages(prev => [...prev, aiMsg]);
 
+      // Save to API
       if (userData?.uid) {
-        // Save only the text reply to DB
         api.saveChat({ firebase_uid: userData.uid, message: aiMsg.text, sender: 'ai' }).catch(err => { });
       }
 
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { id: Date.now(), text: "Maaf, ada gangguan koneksi ke otak AI.", sender: 'ai', time: 'Now' }]);
+      setMessages(prev => [...prev, { id: Date.now(), text: `Maaf, ada gangguan koneksi. (${error.message})`, sender: 'ai', time: 'Now' }]);
     } finally {
       setIsTyping(false);
     }

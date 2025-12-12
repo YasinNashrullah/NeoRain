@@ -49,7 +49,7 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                             <div className="w-full flex justify-center my-2">
                                 <span className="text-[10px] bg-white/10 text-slate-300 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5 flex items-center gap-2">
                                     <Sparkles className="w-3 h-3 text-yellow-400" />
-                                    {msg.text}
+                                    {typeof msg.text === 'string' ? msg.text.replace(/\\n/g, '\n') : msg.text}
                                 </span>
                             </div>
                         ) : (
@@ -57,7 +57,7 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                                 ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
                                 : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5 text-left'
                                 }`}>
-                                {msg.text}
+                                {typeof msg.text === 'string' ? msg.text.replace(/\\n/g, '\n') : msg.text}
                                 <div className="text-[10px] opacity-50 mt-1 text-right">{msg.time}</div>
                             </div>
                         )}
