@@ -119,85 +119,32 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
   };
 
-  // Generate Smart Suggestions (OpenRouter Version)
+  // Generate Smart Suggestions (Optimized: Fallback Only)
   useEffect(() => {
-    const generateSuggestions = async () => {
-      if (!OPENROUTER_API_KEY) return;
+    // NOTE: API call moved to handleSend within the main prompt (Single Pass)
+    // This reduces token usage by ~50%
 
-      const lastMsg = messages[messages.length - 1];
-      const isAiLast = lastMsg?.sender === 'ai';
-
-      if (isAiLast) {
-        setLoadingSuggestions(true);
-        try {
-          const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-              "Content-Type": "application/json",
-              "HTTP-Referer": window.location.href,
-              "X-Title": "NeoRain"
-            },
-            body: JSON.stringify({
-              model: MODEL_NAME,
-              messages: [
-                {
-                  role: "system",
-                  content: `Context: User is chatting with an AI therapist. AI just said: "${lastMsg.text}". Generate 3 short, natural, deep/reflective Indonesian replies (max 6 words) for the USER to say next. Tone: Vulnerable, honest, or curious. Constraint: NO EMOJIS. Plain text only. Output ONLY a JSON array of strings. Example: ["Aku merasa sedikit lega", "Tapi sulit melupakannya", "Apa saranmu?"].`
-                }
-              ],
-              temperature: 0.7
-            })
-          });
-
-          const data = await response.json();
-          const text = data.choices[0].message.content.replace(/```json|```/g, '').trim();
-          
-          const aiSuggestions = JSON.parse(text);
-          if (Array.isArray(aiSuggestions) && aiSuggestions.length > 0) {
-            setSuggestions(aiSuggestions);
-          }
-        } catch (error) {
-          console.error("Failed to generate suggestions", error);
-        } finally {
-          setLoadingSuggestions(false);
-        }
-        return;
-      }
-
-      // Default suggestions logic
-      if (messages.length === 0 || lastMsg?.sender === 'user') {
-        if (suggestions.length > 0 && lastMsg?.sender === 'user') return;
-      }
-
-      setLoadingSuggestions(true);
-      let defaultSuggestions = [
-        "Rasanya berat sekali hari ini",
-        "Aku merasa sendirian di keramaian",
-        "Bagaimana cara berdamai dengan diri sendiri?",
-        "Aku butuh seseorang yang mengerti",
-        "Pikiranku tidak bisa diam",
-        "Aku lelah berpura-pura kuat",
-        "Apa arti dari semua ini?"
-      ];
-
+    // Initial/Default suggestions only
+    if (messages.length === 0) {
       if (activeContext) {
         const { stress_score, anxiety_score, depression_score } = activeContext;
-        defaultSuggestions = [];
+        let defaultSuggestions = [];
         if (stress_score > 14) defaultSuggestions.push("Kenapa dadaku terasa sesak terus?");
         if (anxiety_score > 7) defaultSuggestions.push("Bagaimana menghentikan rasa takut ini?");
         if (depression_score > 9) defaultSuggestions.push("Aku merasa hampa dan kosong");
         defaultSuggestions.push("Jelaskan apa yang terjadi padaku");
         defaultSuggestions.push("Aku ingin merasa lebih baik");
-        defaultSuggestions.push("Apakah ini akan berlalu?");
+        setSuggestions(defaultSuggestions);
+      } else {
+        setSuggestions([
+          "Rasanya berat sekali hari ini",
+          "Aku merasa sendirian",
+          "Bagaimana cara berdamai dengan diri sendiri?",
+          "Aku lelah berpura-pura kuat"
+        ]);
       }
-
-      setSuggestions(defaultSuggestions);
-      setLoadingSuggestions(false);
-    };
-
-    generateSuggestions();
-  }, [activeContext, messages]);
+    }
+  }, [activeContext, messages.length]);
 
   useEffect(() => {
     if (messages.length > 0 || isLoadingMore) return;
@@ -250,7 +197,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // --- HANDLE SEND (OPENROUTER VERSION) ---
+  // --- HANDLE SEND (OPTIMIZED SINGLE PASS) ---
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -272,12 +219,23 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     try {
       if (!OPENROUTER_API_KEY) throw new Error("API Key OpenRouter missing");
 
-      // 1. System Prompt
+      // 1. System Prompt (JSON ENFORCED)
       let systemInstruction = `
         Kamu adalah NeoRain, teman curhat mahasiswa.
         Nama User: ${userName}.
-        Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lo-gue". Panggil user dengan nama "${userName}" sesekali agar akrab.
-        Tugas: Analisis emosi user. Di AKHIR response, WAJIB sertakan tag mood: ||MOOD:happy||, ||MOOD:sad||, ||MOOD:angry||, ||MOOD:manic||, atau ||MOOD:calm||.
+        Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lu-gua". Panggil user dengan nama "${userName}" sesekali agar akrab.
+        
+        TUGAS UTAMA:
+        1. Jawab curhatan user dengan empati.
+        2. Analisis mood user.
+        3. Berikan 3 saran balasan singkat untuk user (Smart Reply).
+
+        FORMAT RESPON WAJIB JSON (Jangan gunakan markdown block):
+        {
+          "reply": "Isi balasan kamu ke user di sini...",
+          "mood": "happy|sad|angry|manic|calm",
+          "suggestions": ["Saran 1", "Saran 2", "Saran 3"]
+        }
       `;
 
       if (activeContext) {
@@ -286,23 +244,18 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
           : activeContext.ai_analysis;
 
         systemInstruction += `
-        \n[DATA KESEHATAN MENTAL USER SAAT INI]
-        Tanggal Tes: ${new Date(activeContext.created_at).toLocaleDateString()}
-        Skor DASS-21: 
-        - Depresi: ${activeContext.depression_score} (Skala 0-42)
-        - Kecemasan: ${activeContext.anxiety_score} (Skala 0-42)
-        - Stres: ${activeContext.stress_score} (Skala 0-42)
-        
-        Ringkasan AI Sebelumnya: "${aiReport?.summary || '-'}"
-        
-        INSTRUKSI KHUSUS: User bertanya dalam konteks hasil tes ini. Berikan jawaban yang relevan dengan skor tersebut. Validasi perasaan mereka berdasarkan data ini.
+        \n[DATA KESEHATAN MENTAL USER]
+        Tanggal: ${new Date(activeContext.created_at).toLocaleDateString()}
+        Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_score}, Stres ${activeContext.stress_score}.
+        Summary AI: "${aiReport?.summary || '-'}"
+        User bertanya terkait hasil ini.
         `;
       }
 
-      // 2. History Messages (OpenAI Format: user/assistant)
+      // 2. History Messages (OPTIMIZED: Last 5 Messages)
       const historyForAI = messages
         .filter(m => m.sender !== 'system')
-        .slice(-10)
+        .slice(-5) // Reduced from 10 to 5 to save tokens
         .map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'assistant',
           content: msg.text
@@ -327,7 +280,8 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
           model: MODEL_NAME,
           messages: apiMessages,
           temperature: 0.7,
-          max_tokens: 500
+          max_tokens: 600, // Slightly increased to accommodate JSON
+          response_format: { type: "json_object" } // Safe guard for models that support it
         })
       });
 
@@ -336,25 +290,45 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
       }
 
       const data = await response.json();
-      let text = data.choices[0].message.content;
+      let rawContent = data.choices[0].message.content;
 
-      // Extract Mood
-      const moodMatch = text.match(/\|\|MOOD:(\w+)\|\|/);
-      if (moodMatch && moodMatch[1]) {
-        const detectedMood = moodMatch[1].toLowerCase();
-        if (moodColors[detectedMood]) setCurrentMood(detectedMood);
-        text = text.replace(/\|\|MOOD:\w+\|\|/, '').trim();
+      // Clean up & Parse
+      rawContent = rawContent.replace(/```json|```/g, '').trim();
+
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(rawContent);
+      } catch (e) {
+        console.warn("JSON Parse Failed, fallback to raw text", e);
+        // Fallback attempts
+        const moodMatch = rawContent.match(/mood":\s*"(\w+)"/i);
+        parsedResponse = {
+          reply: rawContent,
+          mood: moodMatch ? moodMatch[1] : 'default',
+          suggestions: []
+        };
+      }
+
+      // Update UI with Parsed Data
+      if (parsedResponse.mood && moodColors[parsedResponse.mood.toLowerCase()]) {
+        setCurrentMood(parsedResponse.mood.toLowerCase());
+      }
+
+      if (Array.isArray(parsedResponse.suggestions) && parsedResponse.suggestions.length > 0) {
+        setSuggestions(parsedResponse.suggestions);
       }
 
       const aiMsg = {
         id: Date.now() + 1,
-        text: text,
+        text: parsedResponse.reply || "Maaf, aku tidak mengerti.",
         sender: 'ai',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
+
       setMessages(prev => [...prev, aiMsg]);
 
       if (userData?.uid) {
+        // Save only the text reply to DB
         api.saveChat({ firebase_uid: userData.uid, message: aiMsg.text, sender: 'ai' }).catch(err => { });
       }
 
