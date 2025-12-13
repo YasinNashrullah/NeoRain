@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, CheckCircle, AlertCircle, BrainCircuit } from 'lucide-react';
 import { api } from '../utils/api';
+import { config } from '../utils/config';
 
 // --- KONFIGURASI OPENROUTER ---
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
-const MODEL_NAME = "z-ai/glm-4.5-air:free";
+// --- KONFIGURASI GEMINI ---
+// API Key diambil langsung di dalam fungsi finishQuiz untuk memastikan re-render jika .env berubah
+// const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // --- DATA PERTANYAAN (DASS-21) ---
 const questions = [
@@ -56,7 +58,7 @@ const Analyze = ({ userData, onFinish }) => {
   // --- FUNGSI UTAMA: HITUNG SKOR & PANGGIL AI ---
   const finishQuiz = async () => {
     setStep('processing');
-    
+
     // 1. Hitung Skor Manual (DASS-21)
     let d = 0, a = 0, s = 0;
     questions.forEach(q => {
@@ -65,13 +67,15 @@ const Analyze = ({ userData, onFinish }) => {
       if (q.type === 'A') a += val;
       if (q.type === 'S') s += val;
     });
-    
+
     // Skor DASS-21 dikali 2 untuk menyamai DASS-42
     const scores = { depression: d * 2, anxiety: a * 2, stress: s * 2 };
 
     try {
-      if (!OPENROUTER_API_KEY) {
-        throw new Error("API Key OpenRouter belum dipasang di .env");
+      const { apiKey, baseUrl, model } = config.gemini;
+
+      if (!apiKey) {
+        throw new Error("API Key (VITE_GEMINI_API_KEY) missing. Please add it to .env");
       }
 
       const prompt = `
@@ -82,7 +86,6 @@ const Analyze = ({ userData, onFinish }) => {
         - Stres: ${scores.stress}
         
         Tugas: Berikan analisis dalam format JSON murni.
-        JANGAN gunakan markdown code block (seperti \`\`\`json). Langsung kurung kurawal { ... }.
         
         Format JSON wajib seperti ini:
         {
@@ -94,42 +97,43 @@ const Analyze = ({ userData, onFinish }) => {
         Gunakan Bahasa Indonesia yang santai tapi profesional.
       `;
 
-      // 2. Request ke OpenRouter
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      // 2. Request ke Google Gemini API
+      const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": window.location.href,
-          "X-Title": "NeoRain"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: MODEL_NAME,
-          messages: [
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.7
+          contents: [{
+            parts: [{ text: prompt }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2000,
+            responseMimeType: "application/json"
+          }
         })
       });
 
       if (!response.ok) {
-        throw new Error(`OpenRouter API Error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Gemini API Error ${response.status}: ${JSON.stringify(errorData)}`);
       }
 
       const data = await response.json();
-      let text = data.choices[0].message.content;
-      
-      console.log("Raw AI Response:", text); 
+      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+        throw new Error("Invalid Gemini Response Structure");
+      }
 
-      // 3. Bersihkan Format JSON
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const rawText = data.candidates[0].content.parts[0].text;
+      console.log("Raw AI Response:", rawText);
 
       let aiAnalysis;
       try {
-        aiAnalysis = JSON.parse(text);
+        aiAnalysis = JSON.parse(rawText);
       } catch (e) {
         console.error("JSON Parse Error:", e);
-        // Fallback jika AI gagal generate JSON valid
+        // Fallback (Rare with Native JSON)
         aiAnalysis = {
           summary: "Analisis selesai. Skor kamu telah direkam.",
           factors: "Tidak dapat memuat detail faktor saat ini.",
@@ -148,10 +152,10 @@ const Analyze = ({ userData, onFinish }) => {
       };
 
       await api.saveAssessment(payload);
-      
+
       // 5. Selesai & Pindah Halaman
       setTimeout(() => {
-        onFinish(); 
+        onFinish();
       }, 1000);
 
     } catch (error) {
@@ -164,14 +168,14 @@ const Analyze = ({ userData, onFinish }) => {
   return (
     <div className="w-full h-full bg-slate-950 text-white flex flex-col relative overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none"></div>
-      
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
+
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-        
+
         <AnimatePresence mode='wait'>
           {/* 1. INTRO SCREEN */}
           {step === 'intro' && (
-            <motion.div 
+            <motion.div
               key="intro"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -185,7 +189,7 @@ const Analyze = ({ userData, onFinish }) => {
               <p className="text-slate-400 mb-8 leading-relaxed">
                 Kuesioner ini menggunakan metode <strong>DASS-21</strong> dibantu <strong>AI</strong> untuk memberikan saran yang personal.
               </p>
-              <button 
+              <button
                 onClick={() => setStep('quiz')}
                 className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2 mx-auto"
               >
@@ -196,7 +200,7 @@ const Analyze = ({ userData, onFinish }) => {
 
           {/* 2. QUIZ SCREEN */}
           {step === 'quiz' && (
-            <motion.div 
+            <motion.div
               key="quiz"
               className="w-full max-w-xl"
               initial={{ opacity: 0 }}
@@ -209,7 +213,7 @@ const Analyze = ({ userData, onFinish }) => {
                   <span>dari {questions.length}</span>
                 </div>
                 <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <motion.div 
+                  <motion.div
                     className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
                     animate={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
                   />
@@ -244,7 +248,7 @@ const Analyze = ({ userData, onFinish }) => {
 
           {/* 3. PROCESSING SCREEN */}
           {step === 'processing' && (
-            <motion.div 
+            <motion.div
               key="processing"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

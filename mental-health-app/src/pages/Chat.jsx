@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { api } from '../utils/api';
+import { config } from '../utils/config';
 import '../App.css';
 
 // Sub-components
@@ -8,8 +9,6 @@ import ChatHeader from '../components/chat/ChatHeader';
 import MessageList from '../components/chat/MessageList';
 import SuggestionChips from '../components/chat/SuggestionChips';
 import ChatInput from '../components/chat/ChatInput';
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // Mood color mapping
 const moodColors = {
@@ -118,12 +117,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
   };
 
-  // Generate Smart Suggestions (Optimized: Fallback Only)
   useEffect(() => {
-    // NOTE: API call moved to handleSend within the main prompt (Single Pass)
-    // This reduces token usage by ~50%
-
-    // Initial/Default suggestions only
     if (messages.length === 0) {
       if (activeContext) {
         const { stress_score, anxiety_score, depression_score } = activeContext;
@@ -216,7 +210,8 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
 
     try {
-      if (!GEMINI_API_KEY) throw new Error("API Key (VITE_GEMINI_API_KEY) missing. Please check .env");
+      const { apiKey, baseUrl, model } = config.gemini;
+      if (!apiKey) throw new Error("API Key (VITE_GEMINI_API_KEY) missing. Please check .env");
 
       // 1. System Prompt
       let systemInstructionText = `
@@ -267,7 +262,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
       // 3. Fetch Gemini API
       // Using gemini-2.5-flash as per user request (despite experimental nature)
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
