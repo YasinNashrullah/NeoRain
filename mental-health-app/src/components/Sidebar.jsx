@@ -1,60 +1,73 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Home, BarChart2, User, MessageCircle,
   Heart, LogOut, BrainCircuit, Sparkles, Zap, Target
 } from 'lucide-react';
 
+// data statis
+const menuItems = [
+  { id: 'home', label: 'Dashboard', icon: Home },
+  { id: 'tracker', label: 'Mood Tracker', icon: Heart },
+  { id: 'action-plan', label: 'Action Plan', icon: Target },
+  { id: 'chat', label: 'Chat AI', icon: MessageCircle },
+  { id: 'profile', label: 'Profiles', icon: User },
+];
+
+const springTransition = {
+  type: "spring",
+  stiffness: 400,
+  damping: 30
+};
+
+// background animasi
+const BackgroundBlobs = React.memo(() => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+    <motion.div
+      className="absolute top-10 -left-10 w-64 h-64 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-full blur-3xl transform-gpu"
+      animate={{
+        scale: [1, 1.2, 1],
+        x: [0, 20, 0],
+        y: [0, -20, 0],
+      }}
+      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      style={{ willChange: "transform" }}
+    />
+    <motion.div
+      className="absolute bottom-20 -right-10 w-56 h-56 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-full blur-3xl transform-gpu"
+      animate={{
+        scale: [1, 1.3, 1],
+        x: [0, -30, 0],
+        y: [0, 20, 0],
+      }}
+      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+      style={{ willChange: "transform" }}
+    />
+    <motion.div
+      className="absolute top-1/2 left-1/2 w-40 h-40 bg-gradient-to-br from-pink-600/10 to-purple-600/10 rounded-full blur-2xl transform-gpu"
+      animate={{
+        scale: [1, 1.5, 1],
+        rotate: [0, 180, 360],
+      }}
+      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+      style={{ willChange: "transform" }}
+    />
+  </div>
+));
+
+// component utama
 const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
 
-  const menuItems = [
-    { id: 'home', label: 'Dashboard', icon: Home },
-    { id: 'tracker', label: 'Mood Tracker', icon: Heart },
-    { id: 'action-plan', label: 'Action Plan', icon: Target },
-    { id: 'chat', label: 'Chat AI', icon: MessageCircle },
-    { id: 'profile', label: 'Profiles', icon: User },
-  ];
-
-  // Konfigurasi animasi transisi 
-  const springTransition = {
-    type: "spring",
-    stiffness: 400,
-    damping: 30
-  };
+  // Memoize URL gambar agar tidak dihitung ulang tiap render
+  const profileImage = useMemo(() => {
+    return userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.name || 'User'}`;
+  }, [userData?.photo_url, userData?.name]);
 
   return (
     <div className="hidden md:flex flex-col w-72 h-screen bg-[#0a0a12] relative overflow-hidden">
 
-      {/* Animated Blob Backgrounds */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-10 -left-10 w-64 h-64 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 20, 0],
-            y: [0, -20, 0],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-20 -right-10 w-56 h-56 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, -30, 0],
-            y: [0, 20, 0],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-40 h-40 bg-gradient-to-br from-pink-600/10 to-purple-600/10 rounded-full blur-2xl"
-          animate={{
-            scale: [1, 1.5, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-        />
-      </div>
+      {/* Render Background Terpisah */}
+      <BackgroundBlobs />
 
       {/* Container */}
       <div className="relative z-10 flex flex-col h-full px-5 py-6">
@@ -68,9 +81,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
         >
           <div className="flex items-center gap-3">
             <motion.div
-              className="relative w-12 h-12 flex items-center justify-center"
+              className="relative w-12 h-12 flex items-center justify-center transform-gpu"
               whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 400 }}
+              transition={springTransition}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 rounded-3xl blur-lg opacity-70 animate-pulse"></div>
               <div className="relative w-full h-full bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900 rounded-3xl flex items-center justify-center shadow-2xl border border-purple-500/20">
@@ -86,7 +99,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
           </div>
         </motion.div>
 
-        {/* Analysis AI */}
+        {/* Analysis AI Button */}
         <motion.div
           className="mb-6 relative"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -95,14 +108,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
         >
           <motion.button
             onClick={() => setActiveTab('analyze')}
-            className="rounded-[1.5rem] relative w-full group overflow-visible outline-none"
+            className="rounded-[1.5rem] relative w-full group overflow-visible outline-none transform-gpu"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            transition={{ ...springTransition, damping: 17 }}
           >
             {activeTab === 'analyze' && (
               <>
-                {/* Active Border Glow (Shared Transition) */}
                 <motion.div
                   layoutId="activeNavBorder"
                   className="absolute -inset-1 rounded-[2rem] opacity-60 blur-sm z-0"
@@ -112,7 +124,6 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                   }}
                   transition={{ duration: 0.6, type: "spring", stiffness: 300, damping: 30 }}
                 />
-                {/* Active Background */}
                 <motion.div
                   layoutId="activeNav"
                   className="absolute inset-0 bg-[#1e1b4b]/80 rounded-[1.5rem] border border-purple-500/50 z-0"
@@ -121,19 +132,11 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
               </>
             )}
 
-            {/* Animated Glow Blob */}
-            <motion.div
-              className="absolute -inset-3 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 opacity-50 blur-2xl group-hover:opacity-80 transition-opacity duration-500"
-              animate={{
-                borderRadius: ["60% 40% 30% 70%/60% 30% 70% 40%", "40% 60% 70% 30%/40% 70% 30% 60%", "60% 40% 30% 70%/60% 30% 70% 40%"],
-              }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-              style={{ borderRadius: "60% 40% 30% 70%/60% 30% 70% 40%" }}
-            />
+            {/* Static CSS for blur instead of animating heavily */}
+            <div className="absolute -inset-3 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 opacity-50 blur-2xl group-hover:opacity-80 transition-opacity duration-500 rounded-[2rem]" />
 
-            {/* Main Card with Organic Shape */}
             <motion.div
-              className={`relative bg-gradient-to-br from-slate-900/90 via-purple-900/20 to-slate-900/90 backdrop-blur-xl shadow-2xl overflow-hidden ${activeTab === 'analyze'
+              className={`relative bg-gradient-to-br from-slate-900/90 via-purple-900/20 to-slate-900/90 backdrop-blur-xl shadow-2xl overflow-hidden transform-gpu ${activeTab === 'analyze'
                 ? 'shadow-[0_0_40px_rgba(168,85,247,0.6)]'
                 : ''
                 }`}
@@ -141,15 +144,12 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                 borderRadius: ["50% 50% 45% 55%/50% 50% 50% 50%", "45% 55% 50% 50%/55% 45% 50% 50%", "50% 50% 45% 55%/50% 50% 50% 50%"],
               }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              style={{ borderRadius: "50% 50% 45% 55%/50% 50% 50% 50%" }}
+              style={{ borderRadius: "50% 50% 45% 55%/50% 50% 50% 50%", willChange: "border-radius" }}
             >
-              {/* Inner Border Glow */}
               <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-indigo-500/20 blur-sm"></div>
 
-              {/* Content */}
               <div className="relative px-2 py-4 flex items-center justify-center">
                 <div className="flex items-center gap-2">
-                  {/* Floating Icon */}
                   <motion.div
                     animate={{
                       y: [0, -8, 0],
@@ -157,6 +157,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                     }}
                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     className="relative"
+                    style={{ willChange: "transform" }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full blur-xl opacity-70"></div>
                     <div className="relative p-3 bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 shadow-2xl"
@@ -165,13 +166,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                     </div>
                   </motion.div>
 
-                  {/* Text */}
                   <div className="text-left">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-base font-black text-white leading-none">Analyze AI</p>
                       <motion.div
                         animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
                         transition={{ duration: 2, repeat: Infinity }}
+                        style={{ willChange: "transform" }}
                       >
                         <Zap className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" />
                       </motion.div>
@@ -182,7 +183,6 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                   </div>
                 </div>
 
-                {/* Pulsing Indicator */}
                 <motion.div
                   animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -191,11 +191,11 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                 />
               </div>
 
-              {/* Shimmer Effect */}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
                 animate={{ x: ["-100%", "100%"] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear", repeatDelay: 2 }}
+                style={{ willChange: "transform" }}
               />
             </motion.div>
 
@@ -217,7 +217,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                       repeat: Infinity,
                       delay: i * 0.3,
                     }}
-                    style={{ left: `${30 + i * 20}% `, top: "50%" }}
+                    style={{ left: `${30 + i * 20}%`, top: "50%", willChange: "transform, opacity" }}
                   />
                 ))}
               </>
@@ -225,8 +225,8 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
           </motion.button>
         </motion.div>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto space-y-2 px-2">
+        {/* Navigation List */}
+        <div className="flex-1 overflow-y-auto space-y-2 px-2 scrollbar-hide">
           <p className="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">
             Navigation
           </p>
@@ -245,10 +245,8 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                 whileHover={{ x: 4 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {/* Active Background & Border */}
                 {isActive && (
                   <>
-                    {/* Border Glow */}
                     <motion.div
                       layoutId="activeNavBorder"
                       className="absolute -inset-0.5 rounded-xl opacity-60 blur-sm"
@@ -261,7 +259,6 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                       }}
                       transition={{ duration: 0.8, ease: "easeOut" }}
                     />
-                    {/* Solid Background */}
                     <motion.div
                       layoutId="activeNav"
                       className="absolute inset-0 bg-[#1e1b4b]/50 rounded-xl border border-purple-500/30"
@@ -272,11 +269,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                   </>
                 )}
 
-                {/* Button Content */}
                 <div className={`relative flex items-center gap-3 px-5 rounded-xl transition-all duration-200 ${isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}>
 
-                  {/* Icon */}
                   <item.icon
                     className={`w-[18px] h-[18px] transition-all duration-300 ${isActive
                       ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]'
@@ -289,7 +284,6 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
                     {item.label}
                   </span>
 
-                  {/* Active Indicator */}
                   {isActive && (
                     <motion.div
                       className="ml-auto relative"
@@ -310,9 +304,10 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
         <div className="mt-6 pt-6 border-t border-purple-500/10">
           <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
             <img
-              src={userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.name}`}
+              src={profileImage}
               alt="Profile"
-              className="w-10 h-10 rounded-full bg-slate-800 border border-purple-500/20"
+              className="w-10 h-10 rounded-full bg-slate-800 border border-purple-500/20 object-cover"
+              loading="lazy"
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white truncate">{userData?.name || 'Pengguna'}</p>
@@ -321,11 +316,11 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData }) => {
             <button onClick={onLogout} className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 hover:text-red-400 transition-colors">
               <LogOut className="w-4 h-4" />
             </button>
-          </div >
-        </div >
+          </div>
+        </div>
 
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 

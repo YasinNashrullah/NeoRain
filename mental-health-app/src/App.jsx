@@ -195,8 +195,8 @@ const App = () => {
     <div className="fixed inset-0 w-full h-full bg-black font-sans flex overflow-hidden">
 
       {/* Background Blobs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[150px] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[150px] pointer-events-none"></div>
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(49,46,129,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
 
       {!hasOnboarded ? (
         <div className="w-full h-full flex items-center justify-center p-4">
@@ -232,7 +232,7 @@ const App = () => {
 
             {/* Desktop Container */}
             <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
-              <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/50 md:backdrop-blur-sm md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
+              <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/80 md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
 
                 {/* KONTEN */}
                 {activeTab === 'chat' ? (
