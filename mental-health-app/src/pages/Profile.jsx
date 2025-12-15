@@ -279,7 +279,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     </motion.div>
   );
 
-  // --- RENDER: ACHIEVEMENTS VIEW ---
+  // achievement view
   const renderAchievements = () => (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-4xl mx-auto">
       <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
@@ -317,7 +317,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
         </div>
       </div>
 
-      {/* MODAL DETAIL ACHIEVEMENT */}
+      {/* achievement */}
       <AnimatePresence>
         {selectedAchievement && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -352,7 +352,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     </motion.div>
   );
 
-  // --- RENDER: EDIT PROFILE VIEW (Dark Mode) ---
+  // edit profile view
   const renderEdit = () => (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl mx-auto">
       <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white transition-colors">

@@ -4,11 +4,6 @@ import { ChevronRight, CheckCircle, AlertCircle, BrainCircuit } from 'lucide-rea
 import { api } from '../utils/api';
 import { config } from '../utils/config';
 
-// --- KONFIGURASI OPENROUTER ---
-// --- KONFIGURASI GEMINI ---
-// API Key diambil langsung di dalam fungsi finishQuiz untuk memastikan re-render jika .env berubah
-// const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
 // --- DATA PERTANYAAN (DASS-21) ---
 const questions = [
   { id: 1, type: 'S', text: "Saya merasa susah untuk beristirahat" },
