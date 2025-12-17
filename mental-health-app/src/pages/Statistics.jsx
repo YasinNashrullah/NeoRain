@@ -36,7 +36,9 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
     const getAIReport = (data) => {
         if (!data || !data.ai_analysis) return null;
         try {
-            return typeof data.ai_analysis === 'string' ? JSON.parse(data.ai_analysis) : data.ai_analysis;
+            // Jika sudah object (dari Firestore/JSON native), kembalikan langsung
+            if (typeof data.ai_analysis === 'object') return data.ai_analysis;
+            return JSON.parse(data.ai_analysis);
         } catch (e) { return null; }
     };
 

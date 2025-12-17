@@ -73,7 +73,7 @@ const StatsTab = ({
             {/* Middle Row: Chart */}
             <div className="lg:col-span-12 bg-slate-900/50 border border-white/10 rounded-[30px] p-6 min-h-[300px]">
                 <h3 className="text-sm font-bold text-white mb-6">Statistics</h3>
-                <div className="h-[250px] w-full">
+                <div className="h-[250px] w-full" style={{ minHeight: '250px' }}>
                     {statsData?.trend?.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={statsData.trend}>

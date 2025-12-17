@@ -125,7 +125,9 @@ const Analyze = ({ userData, onFinish }) => {
 
       let aiAnalysis;
       try {
-        aiAnalysis = JSON.parse(rawText);
+        // Clean markdown code blocks if present (common in Gemini responses)
+        const cleanText = rawText.replace(/```json|```/g, '').trim();
+        aiAnalysis = JSON.parse(cleanText);
       } catch (e) {
         console.error("JSON Parse Error:", e);
         // Fallback (Rare with Native JSON)
@@ -137,7 +139,7 @@ const Analyze = ({ userData, onFinish }) => {
         };
       }
 
-      // 4. Simpan ke Database Laravel
+      // 4. Simpan ke Firestore
       const payload = {
         firebase_uid: userData?.uid,
         depression_score: scores.depression,
@@ -146,9 +148,24 @@ const Analyze = ({ userData, onFinish }) => {
         ai_analysis: aiAnalysis // Kirim object JSON
       };
 
-      await api.saveAssessment(payload);
+      const result = await api.saveAssessment(payload);
+      if (!result) {
+        throw new Error("Gagal menyimpan data ke server via API.");
+      }
 
-      // 5. Selesai & Pindah Halaman
+      // 5. (Opsional) Simpan juga ke Chat agar muncul di Riwayat Chat
+      try {
+        await api.saveChat({
+          firebase_uid: userData?.uid,
+          message: `Halo, ini hasil analisis kesehatan mentalmu:\n\n"${aiAnalysis.summary}"\n\nSaran: ${aiAnalysis.actions[0]}. Ceritakan lebih lanjut jika kamu mau.`,
+          sender: 'ai',
+          is_analysis: true
+        });
+      } catch (chatError) {
+        console.warn("Gagal auto-save ke chat (non-critical):", chatError);
+      }
+
+      // 6. Selesai & Pindah Halaman
       setTimeout(() => {
         onFinish();
       }, 1000);
@@ -165,101 +182,101 @@ const Analyze = ({ userData, onFinish }) => {
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-
-        <AnimatePresence mode='wait'>
-          {/* 1. INTRO SCREEN */}
-          {step === 'intro' && (
-            <motion.div
-              key="intro"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="max-w-md text-center"
-            >
-              <div className="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-500/30">
-                <CheckCircle className="w-10 h-10 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold mb-4">Cek Kesehatan Mentalmu</h1>
-              <p className="text-slate-400 mb-8 leading-relaxed">
-                Kuesioner ini menggunakan metode <strong>DASS-21</strong> dibantu <strong>AI</strong> untuk memberikan saran yang personal.
-              </p>
-              <button
-                onClick={() => setStep('quiz')}
-                className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2 mx-auto"
+      <div className="flex-1 w-full overflow-y-auto relative z-10">
+        <div className="min-h-full flex flex-col items-center justify-center p-6">
+          <AnimatePresence mode='wait'>
+            {/* 1. INTRO SCREEN */}
+            {step === 'intro' && (
+              <motion.div
+                key="intro"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="max-w-md text-center"
               >
-                Mulai Tes <ChevronRight className="w-5 h-5" />
-              </button>
-            </motion.div>
-          )}
-
-          {/* 2. QUIZ SCREEN */}
-          {step === 'quiz' && (
-            <motion.div
-              key="quiz"
-              className="w-full max-w-xl"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              {/* Progress Bar */}
-              <div className="mb-8">
-                <div className="flex justify-between text-xs text-slate-400 mb-2">
-                  <span>Pertanyaan {currentQ + 1}</span>
-                  <span>dari {questions.length}</span>
+                <div className="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-500/30">
+                  <CheckCircle className="w-10 h-10 text-white" />
                 </div>
-                <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-                    animate={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
-                  />
+                <h1 className="text-3xl font-bold mb-4">Cek Kesehatan Mentalmu</h1>
+                <p className="text-slate-400 mb-8 leading-relaxed">
+                  Kuesioner ini menggunakan metode <strong>DASS-21</strong> dibantu <strong>AI</strong> untuk memberikan saran yang personal.
+                </p>
+                <button
+                  onClick={() => setStep('quiz')}
+                  className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2 mx-auto"
+                >
+                  Mulai Tes <ChevronRight className="w-5 h-5" />
+                </button>
+              </motion.div>
+            )}
+
+            {/* 2. QUIZ SCREEN */}
+            {step === 'quiz' && (
+              <motion.div
+                key="quiz"
+                className="w-full max-w-xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {/* Progress Bar */}
+                <div className="mb-8">
+                  <div className="flex justify-between text-xs text-slate-400 mb-2">
+                    <span>Pertanyaan {currentQ + 1}</span>
+                    <span>dari {questions.length}</span>
+                  </div>
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                      animate={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Question Card */}
-              <div className="min-h-[120px] mb-8 flex items-center justify-center text-center">
-                <h2 className="text-2xl md:text-3xl font-bold leading-snug">
-                  {questions[currentQ].text}
-                </h2>
-              </div>
+                {/* Question Card */}
+                <div className="min-h-[120px] mb-8 flex items-center justify-center text-center">
+                  <h2 className="text-2xl md:text-3xl font-bold leading-snug">
+                    {questions[currentQ].text}
+                  </h2>
+                </div>
 
-              {/* Options */}
-              <div className="grid gap-4">
-                {options.map((opt) => (
-                  <button
-                    key={opt.val}
-                    onClick={() => handleAnswer(opt.val)}
-                    className="w-full p-5 rounded-2xl bg-slate-900 border border-white/10 hover:bg-purple-600 hover:border-purple-500 transition-all group text-left flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-bold text-lg text-white group-hover:text-white">{opt.label}</div>
-                      <div className="text-sm text-slate-500 group-hover:text-purple-200">{opt.desc}</div>
-                    </div>
-                    <div className="w-6 h-6 rounded-full border-2 border-slate-600 group-hover:border-white group-hover:bg-white/20"></div>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
+                {/* Options */}
+                <div className="grid gap-4">
+                  {options.map((opt) => (
+                    <button
+                      key={opt.val}
+                      onClick={() => handleAnswer(opt.val)}
+                      className="w-full p-5 rounded-2xl bg-slate-900 border border-white/10 hover:bg-purple-600 hover:border-purple-500 transition-all group text-left flex items-center justify-between"
+                    >
+                      <div>
+                        <div className="font-bold text-lg text-white group-hover:text-white">{opt.label}</div>
+                        <div className="text-sm text-slate-500 group-hover:text-purple-200">{opt.desc}</div>
+                      </div>
+                      <div className="w-6 h-6 rounded-full border-2 border-slate-600 group-hover:border-white group-hover:bg-white/20"></div>
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
-          {/* 3. PROCESSING SCREEN */}
-          {step === 'processing' && (
-            <motion.div
-              key="processing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center"
-            >
-              <div className="relative w-24 h-24 mx-auto mb-6">
-                <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
-                <div className="absolute inset-0 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                <BrainCircuit className="absolute inset-0 m-auto w-10 h-10 text-purple-400 animate-pulse" />
-              </div>
-              <h2 className="text-2xl font-bold mb-2">AI Sedang Menganalisa...</h2>
-              <p className="text-slate-400">Menyusun laporan kesehatan mentalmu.</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+            {/* 3. PROCESSING SCREEN */}
+            {step === 'processing' && (
+              <motion.div
+                key="processing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center"
+              >
+                <div className="relative w-24 h-24 mx-auto mb-6">
+                  <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                  <BrainCircuit className="absolute inset-0 m-auto w-10 h-10 text-purple-400 animate-pulse" />
+                </div>
+                <h2 className="text-2xl font-bold mb-2">AI Sedang Menganalisa...</h2>
+                <p className="text-slate-400">Menyusun laporan kesehatan mentalmu.</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

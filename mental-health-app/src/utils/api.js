@@ -1,253 +1,308 @@
-// URL Backend Laravel kamu
-const BASE_URL = "http://127.0.0.1:8000/api";
+import { db, storage } from "../firebase";
+import {
+  collection,
+  doc,
+  getDoc,
+  setDoc,
+  addDoc,
+  updateDoc,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+  serverTimestamp,
+  Timestamp,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-const headers = {
-  "Content-Type": "application/json",
-  Accept: "application/json", // PENTING: Memaksa Laravel return JSON, bukan HTML
+// Helper untuk format error
+const handleError = (context, error) => {
+  console.error(`Firebase Error (${context}):`, error);
+  return null;
 };
 
 export const api = {
-  // 1. Sync User
+  // 1. Sync User (Create/Update user di Firestore)
   syncUser: async (userData) => {
     try {
-      const response = await fetch(`${BASE_URL}/sync-user`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(userData),
-      });
+      if (!userData?.uid) return null;
+      const userRef = doc(db, "users", userData.uid);
 
-      if (!response.ok) {
-        console.warn(
-          `API Warning (Sync User): ${response.status} ${response.statusText}`
+      // Cek apakah user sudah ada
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        // Buat baru
+        await setDoc(userRef, {
+          ...userData,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        // Update login terakhir
+        await updateDoc(
+          userRef,
+          {
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
         );
-        return null;
       }
 
-      return await response.json();
+      return { ...userData, ...userSnap.data() };
     } catch (error) {
-      console.error("API Error (Sync User):", error);
-      return null;
+      return handleError("Sync User", error);
     }
   },
 
-  // 2. Simpan Mood ke Database
+  // 2. Simpan Mood
   saveMood: async (moodData) => {
     try {
-      const response = await fetch(`${BASE_URL}/moods`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(moodData),
+      const docRef = await addDoc(collection(db, "moods"), {
+        ...moodData,
+        created_at: serverTimestamp(), // Pakai timestamp server
       });
-      return await response.json();
+      return { id: docRef.id, ...moodData };
     } catch (error) {
-      console.error("API Error (Save Mood):", error);
-      throw error;
+      // return handleError("Save Mood", error);
+      throw error; // Lempar error agar UI tau
     }
   },
 
-  // 3. Ambil History Mood Harian
+  // 3. Ambil Mood (Harian/Semua)
   getMoods: async (firebaseUid) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/moods?firebase_uid=${firebaseUid}`,
-        { method: "GET", headers: headers }
+      const q = query(
+        collection(db, "moods"),
+        where("firebase_uid", "==", firebaseUid),
+        orderBy("created_at", "desc")
       );
-      const result = await response.json();
-      return result.data || [];
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        // Normalisasi tanggal untuk frontend
+        created_at:
+          doc.data().created_at?.toDate().toISOString() ||
+          new Date().toISOString(),
+      }));
     } catch (error) {
-      console.error("API Error (Get Moods):", error);
-      return [];
+      return handleError("Get Moods", error) || [];
     }
   },
 
-  // 4. Ambil Mood Mingguan
+  // 4. Ambil Mood Mingguan (Logic dipindah ke client/frontend processing)
   getWeeklyMoods: async (firebaseUid) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/moods/weekly?firebase_uid=${firebaseUid}`,
-        { method: "GET", headers: headers }
+      // Ambil 30 hari terakhir untuk aman
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 30);
+
+      const q = query(
+        collection(db, "moods"),
+        where("firebase_uid", "==", firebaseUid),
+        where("created_at", ">=", Timestamp.fromDate(pastDate)),
+        orderBy("created_at", "asc")
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data || [];
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        created_at: doc.data().created_at?.toDate().toISOString(),
+      }));
     } catch (error) {
-      console.error("API Error (Get Weekly):", error);
-      return [];
+      return handleError("Get Weekly Moods", error) || [];
     }
   },
 
   // 5. Simpan Chat
   saveChat: async (chatData) => {
     try {
-      const response = await fetch(`${BASE_URL}/chats`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(chatData),
+      const docRef = await addDoc(collection(db, "chats"), {
+        ...chatData,
+        created_at: serverTimestamp(),
       });
-
-      // Cek error tanpa crash
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.warn("API Warning: Endpoint /chats belum ada di Laravel.");
-          return null;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      return { id: docRef.id, ...chatData };
     } catch (error) {
-      // Jangan throw error agar chat tetap jalan di UI meski gagal simpan ke DB
-      console.error("API Error (Save Chat):", error);
+      console.error("Firebase Error (Save Chat):", error);
+      return null;
     }
   },
 
-  // 6. Ambil History Chat (Support Pagination)
+  // 6. Ambil History Chat
   getChats: async (firebaseUid, page = 1) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/chats?firebase_uid=${firebaseUid}&page=${page}`,
-        { method: "GET", headers: headers }
+      const limitPerReq = 20 * page; // Simplifikasi pagination untuk Firestore
+      const q = query(
+        collection(db, "chats"),
+        where("firebase_uid", "==", firebaseUid),
+        orderBy("created_at", "asc"), // Chat biasanya urut waktu
+        limit(limitPerReq) // Ambil X terakhir
       );
 
-      if (!response.ok) return { data: [], hasMore: false };
+      const querySnapshot = await getDocs(q);
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        created_at: doc.data().created_at?.toDate().toISOString(),
+      }));
 
-      const result = await response.json();
-      return {
-        data: result.data || [],
-        hasMore: result.hasMore || false,
-      };
+      return { data, hasMore: false }; // Firestore pagination butuh cursor, simplifikasi dulu
     } catch (error) {
-      console.error("API Error (Get Chats):", error);
-      return { data: [], hasMore: false };
+      return handleError("Get Chats", error) || { data: [], hasMore: false };
     }
   },
 
   // 7. Simpan Hasil Analisis
   saveAssessment: async (data) => {
     try {
-      const response = await fetch(`${BASE_URL}/assessments`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(data),
+      // Konversi object nested jika perlu, tapi Firestore support JSON nested
+      const docRef = await addDoc(collection(db, "assessments"), {
+        ...data,
+        depressi_score: data.depression_score, // Typo guard jika ada legacy
+        created_at: serverTimestamp(),
       });
-      return await response.json();
+
+      // Return format yang diharapkan frontend
+      return { success: true, id: docRef.id };
     } catch (error) {
-      console.error("API Error (Save Assessment):", error);
+      console.error("Firebase Error (Save Assessment):", error);
+      return null;
     }
   },
 
-  // 8. Ambil Hasil Analisis Terakhir
+  // 8. Ambil Analisis Terakhir
   getLatestAssessment: async (firebaseUid) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/assessments/latest?firebase_uid=${firebaseUid}`,
-        { method: "GET", headers: headers }
+      const q = query(
+        collection(db, "assessments"),
+        where("firebase_uid", "==", firebaseUid),
+        orderBy("created_at", "desc"),
+        limit(1)
       );
-      const result = await response.json();
-      return result.data;
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.empty) return null;
+
+      const doc = querySnapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data(),
+        created_at: doc.data().created_at?.toDate().toISOString(),
+      };
     } catch (error) {
-      console.error("API Error (Get Assessment):", error);
-      return null;
+      return handleError("Get Assessment", error);
     }
   },
 
   // 9. Ambil Semua Riwayat Analisis
   getAssessmentHistory: async (firebaseUid) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/assessments/history?firebase_uid=${firebaseUid}`,
-        { method: "GET", headers: headers }
+      const q = query(
+        collection(db, "assessments"),
+        where("firebase_uid", "==", firebaseUid),
+        orderBy("created_at", "desc")
       );
-      const result = await response.json();
-      return result.data || [];
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        created_at: doc.data().created_at?.toDate().toISOString(),
+      }));
     } catch (error) {
-      console.error("API Error (Get History):", error);
-      return [];
+      return handleError("Get History", error) || [];
     }
   },
 
   // 10. Ambil Detail User
   getUserDetail: async (firebaseUid) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/user/detail?firebase_uid=${firebaseUid}`,
-        { method: "GET", headers: headers }
+      const userRef = doc(db, "users", firebaseUid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) return null;
+      return userSnap.data();
+    } catch (error) {
+      return handleError("Get User", error);
+    }
+  },
+
+  // 11. Update Profile (Text)
+  updateUserProfile: async (data, uid) => {
+    try {
+      // Cari UID jika tidak dikirim dalam data
+      const targetUid = uid || data.firebase_uid;
+      if (!targetUid) throw new Error("No UID provided");
+
+      const userRef = doc(db, "users", targetUid);
+      await updateDoc(userRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
+      return { success: true };
+    } catch (error) {
+      console.error("Error update profile:", error);
+      throw error;
+    }  
+  },
+
+  // 12. Upload Foto Profile (Storage)
+  uploadProfilePhoto: async (firebaseUid, file) => {
+    try {
+      if (!storage)
+        throw new Error("Firebase Storage belum diaktifkan di code.");
+
+      // Path: users/{uid}/profile.jpg
+      const storageRef = ref(
+        storage,
+        `users/${firebaseUid}/profile_${Date.now()}`
       );
 
-      if (!response.ok) return null;
-      const result = await response.json();
-      return result.data;
-    } catch (error) {
-      console.error("API Error (Get User):", error);
-      return null;
-    }
-  },
+      // Upload
+      const snapshot = await uploadBytes(storageRef, file);
 
-  // 11. Update Profile
-  updateUserProfile: async (data) => {
-    try {
-      const response = await fetch(`${BASE_URL}/user/update`, {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify(data),
+      // Get URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // Update di Firestore User
+      const userRef = doc(db, "users", firebaseUid);
+      await updateDoc(userRef, {
+        photoURL: downloadURL,
+        updatedAt: serverTimestamp(),
       });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(errText);
-      }
-
-      return await response.json();
+      return { url: downloadURL };
     } catch (error) {
-      console.error("API Error (Update Profile):", error);
+      console.error("Error upload photo:", error);
       throw error;
     }
   },
 
-  // 12. Upload Foto Profile
-  uploadProfilePhoto: async (firebaseUid, file) => {
-    const formData = new FormData();
-    formData.append("firebase_uid", firebaseUid);
-    formData.append("photo", file);
-
-    try {
-      const response = await fetch(`${BASE_URL}/user/photo`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          // Jangan set Content-Type manual untuk FormData
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(errText);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("API Error (Upload Photo):", error);
-      throw error;
-    }
-  },
-
-  // 13. Ambil Statistik Mood (Opsional/Future Use)
+  // 13. Mood Stats (Client-side calculation for now)
   getMoodStatistics: async (firebaseUid, range = "monthly") => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/moods/stats?firebase_uid=${firebaseUid}&range=${range}`,
-        { method: "GET", headers: headers }
+      // Fetch last 30 days for stats
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 30);
+
+      const q = query(
+        collection(db, "moods"),
+        where("firebase_uid", "==", firebaseUid),
+        where("created_at", ">=", Timestamp.fromDate(pastDate)),
+        orderBy("created_at", "desc")
       );
-      if (!response.ok) return null;
-      const result = await response.json();
-      return result.data;
+
+      const querySnapshot = await getDocs(q);
+      const logs = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        created_at: doc.data().created_at?.toDate().toISOString(),
+      }));
+
+      return null;
     } catch (error) {
-      console.warn("API Error (Get Stats):", error);
+      console.error("Error getMoodStatistics:", error);
       return null;
     }
   },
