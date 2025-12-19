@@ -7,6 +7,7 @@ import {
   Flame, Music
 } from 'lucide-react';
 import { checkStreak } from '../utils/gamification';
+import { api } from '../utils/api';
 
 // --- Static Data & Constants ---
 // Moved outside to prevent re-creation on every render
@@ -101,16 +102,28 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     updateTime();
 
     // Load and check streak
-    const s = localStorage.getItem('streak') || 0;
-    setStreak(s);
-    if (userData?.uid) {
-      const lastLogin = localStorage.getItem('last_login') || new Date(Date.now() - 86400000).toISOString();
-      const currentStreak = parseInt(s);
-      const newStreak = checkStreak(lastLogin, currentStreak);
-      localStorage.setItem('last_login', new Date().toISOString());
-      localStorage.setItem('streak', newStreak);
-      if (newStreak !== currentStreak) setStreak(newStreak);
-    }
+    const initStreak = async () => {
+      if (userData?.uid) {
+        try {
+          const gamification = await api.getGamification(userData.uid);
+          const lastLogin = gamification?.last_login || new Date(Date.now() - 86400000).toISOString();
+          const currentStreak = gamification?.streak || 0;
+
+          const newStreak = checkStreak(lastLogin, currentStreak);
+          setStreak(newStreak);
+
+          // Save updated streak
+          await api.saveGamification(userData.uid, {
+            ...gamification,
+            streak: newStreak,
+            last_login: new Date().toISOString()
+          });
+        } catch (e) {
+          console.error("Failed to sync streak", e);
+        }
+      }
+    };
+    initStreak();
   }, [userData]);
 
   // Dynamic content logic

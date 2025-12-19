@@ -372,7 +372,10 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                             <Target className="w-6 h-6 text-green-400" /> Action Plan
                                         </h3>
                                         <div className="grid gap-4 relative z-10">
-                                            {aiData?.actions?.map((action, idx) => (
+                                            {aiData?.actions?.filter(action =>
+                                                !action.toLowerCase().includes("mencari dukungan profesional") &&
+                                                !action.toLowerCase().includes("psikolog atau psikiater")
+                                            ).map((action, idx) => (
                                                 <div key={idx} className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
                                                     <div className="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5 border border-green-500/50">
                                                         {idx + 1}

@@ -36,9 +36,10 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
         location: userData.location || ''
       });
 
-      // Load Streak Local
-      const s = localStorage.getItem('streak') || 0;
-      setStreak(s);
+      // Load Streak Firestore
+      api.getGamification(userData.uid).then(data => {
+        setStreak(data?.streak || 0);
+      });
     }
   }, [userData]);
 

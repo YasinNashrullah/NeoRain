@@ -138,7 +138,7 @@ export const api = {
       const q = query(
         collection(db, "chats"),
         where("firebase_uid", "==", firebaseUid),
-        orderBy("created_at", "asc"), // Chat biasanya urut waktu
+        orderBy("created_at", "desc"), // Chat terbaru dulu
         limit(limitPerReq) // Ambil X terakhir
       );
 
@@ -146,6 +146,7 @@ export const api = {
       const data = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
+        text: doc.data().message, // Map 'message' from DB to 'text' for UI
         created_at: doc.data().created_at?.toDate().toISOString(),
       }));
 
@@ -236,15 +237,15 @@ export const api = {
       if (!targetUid) throw new Error("No UID provided");
 
       const userRef = doc(db, "users", targetUid);
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         ...data,
         updatedAt: serverTimestamp(),
-      });
+      }, { merge: true });
       return { success: true };
     } catch (error) {
       console.error("Error update profile:", error);
       throw error;
-    }  
+    }
   },
 
   // 12. Upload Foto Profile (Storage)
@@ -267,10 +268,10 @@ export const api = {
 
       // Update di Firestore User
       const userRef = doc(db, "users", firebaseUid);
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         photoURL: downloadURL,
         updatedAt: serverTimestamp(),
-      });
+      }, { merge: true });
 
       return { url: downloadURL };
     } catch (error) {
@@ -304,6 +305,81 @@ export const api = {
     } catch (error) {
       console.error("Error getMoodStatistics:", error);
       return null;
+    }
+  },
+
+  // 14. Get Gamification Data
+  getGamification: async (firebaseUid) => {
+    try {
+      const userRef = doc(db, "users", firebaseUid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().gamification) {
+        return userSnap.data().gamification;
+      }
+      return null;
+    } catch (error) {
+      return handleError("Get Gamification", error);
+    }
+  },
+
+  // 15. Save Gamification Data
+  saveGamification: async (firebaseUid, data) => {
+    try {
+      const userRef = doc(db, "users", firebaseUid);
+      await setDoc(userRef, {
+        gamification: data,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      return { success: true };
+    } catch (error) {
+      return handleError("Save Gamification", error);
+    }
+  },
+
+  // 16. Get Current Mood (Latest)
+  getCurrentMood: async (firebaseUid) => {
+    try {
+      const q = query(
+        collection(db, "moods"),
+        where("firebase_uid", "==", firebaseUid),
+        orderBy("created_at", "desc"),
+        limit(1)
+      );
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data().mood;
+      }
+      return "default";
+    } catch (error) {
+      return handleError("Get Current Mood", error) || "default";
+    }
+  },
+
+  // 17. Save Daily Plan
+  saveDailyPlan: async (firebaseUid, planData) => {
+    try {
+      const userRef = doc(db, "users", firebaseUid);
+      await setDoc(userRef, {
+        daily_plan: planData,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      return { success: true };
+    } catch (error) {
+      return handleError("Save Daily Plan", error);
+    }
+  },
+
+  // 18. Get Daily Plan
+  getDailyPlan: async (firebaseUid) => {
+    try {
+      const userRef = doc(db, "users", firebaseUid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().daily_plan) {
+        return userSnap.data().daily_plan;
+      }
+      return null;
+    } catch (error) {
+      return handleError("Get Daily Plan", error);
     }
   },
 };

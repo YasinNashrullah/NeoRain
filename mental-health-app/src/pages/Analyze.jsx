@@ -73,23 +73,53 @@ const Analyze = ({ userData, onFinish }) => {
         throw new Error("API Key (VITE_GEMINI_API_KEY) missing. Please add it to .env");
       }
 
-      const prompt = `
-        Bertindaklah sebagai Psikolog Klinis.
-        User memiliki skor DASS-21:
-        - Depresi: ${scores.depression}
-        - Kecemasan: ${scores.anxiety}
-        - Stres: ${scores.stress}
-        
-        Tugas: Berikan analisis dalam format JSON murni.
-        
-        Format JSON wajib seperti ini:
-        {
-          "summary": "Kalimat penenang singkat (maks 2 kalimat).",
-          "factors": "Dugaan faktor penyebab umum (bahasa halus).",
-          "actions": ["Saran aksi 1", "Saran aksi 2", "Saran aksi 3"],
-          "education": "Info edukatif singkat."
+      // 1b. Fetch Contextual Data (Moods & Gamification)
+      let moodContext = "Belum ada data mood.";
+      let streakContext = "Belum ada streak.";
+
+      if (userData?.uid) {
+        try {
+          const [moods, gamification] = await Promise.all([
+            api.getMoods(userData.uid),
+            api.getGamification(userData.uid)
+          ]);
+
+          // Process Moods (Last 7 days)
+          if (moods && moods.length > 0) {
+            const recentMoods = moods.slice(0, 10).map(m => m.mood).join(", ");
+            moodContext = `Riwayat Mood Terakhir: ${recentMoods}`;
+          }
+
+          // Process Gamification
+          if (gamification) {
+            streakContext = `Streak saat ini: ${gamification.streak || 0} hari.`;
+          }
+        } catch (err) {
+          console.warn("Failed to fetch context data", err);
         }
-        Gunakan Bahasa Indonesia yang santai tapi profesional.
+      }
+
+      const prompt = `
+        Role: Psikolog Klinis Gen Z.
+        User Data:
+        - DASS-21: Depresi ${scores.depression}, Cemas ${scores.anxiety}, Stres ${scores.stress}.
+        - Context: ${moodContext}. ${streakContext}.
+        
+        Task: JSON Analysis.
+        
+        Actions Rule:
+        - 5 Self-Care steps.
+        - NO prefixes (e.g. "Journaling:").
+        - Descriptive, warm, persuasive sentences.
+        - Language: Indonesian, chill, relatable, "cool".
+
+        JSON Format:
+        {
+          "summary": "Validating & calming summary (max 2 sentences).",
+          "factors": "Possible causes (student life, overthinking, etc).",
+          "actions": ["Action 1", "Action 2", "Action 3", "Action 4", "Action 5"],
+          "education": "Short insightful fact."
+        }
       `;
 
       // 2. Request ke Google Gemini API

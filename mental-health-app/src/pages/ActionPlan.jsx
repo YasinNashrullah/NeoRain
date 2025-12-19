@@ -6,18 +6,21 @@ import {
     Quote, Zap, Crown, Sparkles, BrainCircuit
 } from 'lucide-react';
 import { api } from '../utils/api';
+import { config } from '../utils/config';
 import confetti from 'canvas-confetti';
 
 const ActionPlan = ({ userData, onNavigate }) => {
     const [loading, setLoading] = useState(true);
     const [actionItems, setActionItems] = useState([]);
     const [assessmentId, setAssessmentId] = useState(null);
+    const fetchingRef = React.useRef(false); // Lock to prevent double fetching
 
     // Gamification State
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0);
     const [completedIndices, setCompletedIndices] = useState([]);
     const [achievements, setAchievements] = useState([]);
+    const [lastActiveDate, setLastActiveDate] = useState(null);
 
     // UI State
     const [showCelebration, setShowCelebration] = useState(false);
@@ -29,60 +32,73 @@ const ActionPlan = ({ userData, onNavigate }) => {
             if (!userData?.uid) return;
 
             try {
-                // 1. Get Latest Assessment for Action Plan
-                const assessment = await api.getLatestAssessment(userData.uid);
+                const today = new Date().toDateString();
 
+                // 1. Load Gamification Data (Streak, Score, History)
+                const savedGamification = (await api.getGamification(userData.uid)) || {
+                    score: 0,
+                    streak: 0,
+                    last_active_date: null,
+                    completedIndices: [], // This tracks TODAY's completion
+                    history: [] // New: Track past completion for AI context
+                };
+
+                // 2. Load Daily Plan
+                let currentPlan = await api.getDailyPlan(userData.uid);
                 let actions = [];
-                let currentId = null;
 
-                if (assessment && assessment.ai_analysis) {
-                    const analysis = typeof assessment.ai_analysis === 'string'
-                        ? JSON.parse(assessment.ai_analysis)
-                        : assessment.ai_analysis;
+                // Check if plan is for today
+                if (currentPlan && currentPlan.date === today) {
+                    actions = currentPlan.actions;
+                } else if (!fetchingRef.current) {
+                    // GENERATE NEW DAILY PLAN (Only if not already fetching)
+                    fetchingRef.current = true; // Set lock
+                    const assessment = await api.getLatestAssessment(userData.uid);
+                    const moods = await api.getMoods(userData.uid); // Fetch moods
 
-                    actions = analysis.actions || [];
-                    currentId = assessment.id;
+                    // Context for AI
+                    const lastPlan = currentPlan || { actions: [], date: 'never' };
+                    const lastCompletedCount = savedGamification.completedIndices?.length || 0;
+
+                    actions = await generateDailyMissions(assessment, lastPlan, lastCompletedCount, moods);
+
+                    // Save new plan
+                    await api.saveDailyPlan(userData.uid, {
+                        date: today,
+                        actions: actions
+                    });
+
+                    // Reset daily completion for new day
+                    savedGamification.completedIndices = [];
+                    // Update gamification to clear old indices immediately
+                    await api.saveGamification(userData.uid, savedGamification);
+
+                    fetchingRef.current = false; // Release lock
                 }
 
                 setActionItems(actions);
-                setAssessmentId(currentId);
-
-                // 2. Load Gamification Data from LocalStorage
-                const savedData = JSON.parse(localStorage.getItem(`gamification_${userData.uid}`)) || {
-                    score: 0,
-                    streak: 0,
-                    lastActiveDate: null,
-                    completedIndices: [],
-                    assessmentId: null,
-                    achievements: []
-                };
 
                 // Streak Logic
-                const today = new Date().toDateString();
-                let newStreak = savedData.streak;
+                let newStreak = savedGamification.streak || 0;
+                const lastActive = savedGamification.last_active_date;
 
-                if (savedData.lastActiveDate !== today) {
+                if (lastActive !== today) {
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
 
-                    if (savedData.lastActiveDate === yesterday.toDateString()) {
+                    if (lastActive === yesterday.toDateString()) {
                         // Continued streak
-                    } else if (savedData.lastActiveDate && new Date(savedData.lastActiveDate) < yesterday) {
+                    } else if (lastActive && new Date(lastActive) < yesterday) {
                         // Broken streak
                         newStreak = 0;
                     }
                 }
 
-                setScore(savedData.score || 0);
+                setScore(savedGamification.score || 0);
                 setStreak(newStreak);
-                setAchievements(savedData.achievements || []);
-
-                // Reset checkboxes if it's a new assessment
-                if (savedData.assessmentId !== currentId) {
-                    setCompletedIndices([]);
-                } else {
-                    setCompletedIndices(savedData.completedIndices || []);
-                }
+                setAchievements(savedGamification.achievements || []);
+                setLastActiveDate(lastActive);
+                setCompletedIndices(savedGamification.completedIndices || []);
 
             } catch (error) {
                 console.error("Failed to load action plan", error);
@@ -94,21 +110,84 @@ const ActionPlan = ({ userData, onNavigate }) => {
         init();
     }, [userData]);
 
+    // --- AI GENERATOR ---
+    const generateDailyMissions = async (assessment, lastPlan, lastCompletedCount, moods) => {
+        try {
+            const { apiKey, baseUrl, model } = config.gemini;
+            if (!apiKey) throw new Error("API Key missing");
+
+            const scores = assessment ? {
+                depression: assessment.depression_score,
+                anxiety: assessment.anxiety_score,
+                stress: assessment.stress_score
+            } : { depression: 0, anxiety: 0, stress: 0 };
+
+            // Process Moods
+            const recentMoods = moods && moods.length > 0
+                ? moods.slice(0, 5).map(m => m.mood).join(", ")
+                : "Tidak ada data mood";
+
+            const prompt = `
+                Role: Life Coach Gen Z.
+                User: DASS-21(D:${scores.depression},A:${scores.anxiety},S:${scores.stress}). Mood:${recentMoods}.
+                History: "${lastPlan.actions.join(', ')}". Done:${lastCompletedCount}/${lastPlan.actions.length}.
+
+                Task: 5 NEW Daily Missions.
+                Adapt:
+                - Done < 2: Easier, supportive.
+                - Done >= 3: Slightly harder.
+                - Must be different.
+                
+                Style:
+                - No prefixes (e.g. "Journaling:"). Just the action.
+                - Descriptive, chill, aesthetic, persuasive sentences.
+                - Bahasa Indonesia gaul/santai.
+
+                JSON Output: { "actions": ["Action 1", "Action 2", "Action 3", "Action 4", "Action 5"] }
+            `;
+
+            const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                })
+            });
+
+            const data = await response.json();
+            const result = JSON.parse(data.candidates[0].content.parts[0].text);
+            return result.actions || ["Istirahat sejenak", "Minum air putih", "Tarik napas dalam", "Dengar lagu favorit", "Tidur lebih awal"];
+
+        } catch (e) {
+            console.error("AI Generation Failed", e);
+            // Fallback actions
+            return [
+                "Coba jalan santai sore ini sambil dengerin playlist favoritmu biar pikiran lebih fresh.",
+                "Luangkan waktu 5 menit untuk menumpahkan semua isi kepalamu ke kertas agar pikiran lebih lega.",
+                "Lepas HP dulu selama 15 menit sebelum tidur, seduh teh hangat, dan nikmati ketenangan.",
+                "Rapikan kasur atau meja belajarmu sedikit saja, ruang yang rapi bisa bikin mood lebih baik.",
+                "Minum segelas air hangat, tarik napas dalam-dalam, dan izinkan tubuhmu rileks sejenak."
+            ];
+        }
+    };
+
     // Save Data Effect
     useEffect(() => {
         if (!userData?.uid || loading) return;
 
-        const dataToSave = {
-            score,
-            streak,
-            lastActiveDate: localStorage.getItem(`last_active_${userData.uid}`),
-            completedIndices,
-            assessmentId,
-            achievements
+        const saveData = async () => {
+            const dataToSave = {
+                score,
+                streak,
+                last_active_date: lastActiveDate,
+                completedIndices,
+                achievements
+            };
+            await api.saveGamification(userData.uid, dataToSave);
         };
-
-        localStorage.setItem(`gamification_${userData.uid}`, JSON.stringify(dataToSave));
-    }, [score, streak, completedIndices, achievements, assessmentId, userData, loading]);
+        saveData();
+    }, [score, streak, completedIndices, achievements, userData, loading, lastActiveDate]);
 
 
     const handleToggleTask = (index) => {
@@ -129,11 +208,10 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
             // Update Streak (Once per day)
             const today = new Date().toDateString();
-            const lastActive = localStorage.getItem(`last_active_${userData.uid}`);
 
-            if (lastActive !== today) {
+            if (lastActiveDate !== today) {
                 setStreak(prev => prev + 1);
-                localStorage.setItem(`last_active_${userData.uid}`, today);
+                setLastActiveDate(today);
             }
 
             // Check Achievements
@@ -288,14 +366,14 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                             transition={{ delay: idx * 0.1 }}
                                             onClick={() => handleToggleTask(idx)}
                                             className={`group relative p-5 rounded-2xl border transition-all cursor-pointer overflow-hidden ${isCompleted
-                                                    ? 'bg-green-500/5 border-green-500/30'
-                                                    : 'bg-slate-900 border-white/10 hover:border-indigo-500/50 hover:bg-slate-800'
+                                                ? 'bg-green-500/5 border-green-500/30'
+                                                : 'bg-slate-900 border-white/10 hover:border-indigo-500/50 hover:bg-slate-800'
                                                 }`}
                                         >
                                             <div className="flex items-start gap-4 relative z-10">
                                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all mt-0.5 flex-shrink-0 ${isCompleted
-                                                        ? 'bg-green-500 border-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                                                        : 'border-slate-500 text-transparent group-hover:border-indigo-400'
+                                                    ? 'bg-green-500 border-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
+                                                    : 'border-slate-500 text-transparent group-hover:border-indigo-400'
                                                     }`}>
                                                     <CheckCircle2 className="w-4 h-4" />
                                                 </div>
@@ -346,8 +424,8 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                     const isUnlocked = achievements.includes(badge.id);
                                     return (
                                         <div key={badge.id} className={`relative overflow-hidden flex items-center gap-4 p-3 rounded-2xl border transition-all group ${isUnlocked
-                                                ? 'bg-gradient-to-r from-indigo-900/40 to-slate-900 border-indigo-500/30'
-                                                : 'bg-white/5 border-transparent opacity-60 grayscale hover:opacity-100 hover:grayscale-0'
+                                            ? 'bg-gradient-to-r from-indigo-900/40 to-slate-900 border-indigo-500/30'
+                                            : 'bg-white/5 border-transparent opacity-60 grayscale hover:opacity-100 hover:grayscale-0'
                                             }`}>
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isUnlocked ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/40' : 'bg-slate-700 text-slate-400'
                                                 }`}>

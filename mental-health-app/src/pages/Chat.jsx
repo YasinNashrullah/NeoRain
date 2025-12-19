@@ -77,25 +77,50 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   const messagesEndRef = useRef(null);
   const userName = userData?.name?.split(" ")[0] || "Teman";
 
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
   // Load History & Initial Messages
   useEffect(() => {
     const initData = async () => {
-      if (userData?.uid) {
+      if (userData?.uid && !historyLoaded) {
+        // 1. Load Assessment History
         const history = await api.getAssessmentHistory(userData.uid);
         setAssessmentHistory(history);
 
-        if (messages.length === 0) {
-          const { data, hasMore: more } = await api.getChats(userData.uid, 1);
-          if (data.length > 0) {
-            setMessages(data.reverse());
-            setHasMore(more);
-            setPage(2);
+        // 2. Load Chat History
+        const { data, hasMore: more } = await api.getChats(userData.uid, 1);
+
+        if (data.length > 0) {
+          // If history exists, show it
+          const validMessages = data.filter(m => m.text && m.text.trim() !== "");
+          setMessages(validMessages.reverse());
+          setHasMore(more);
+          setPage(2);
+        } else {
+          // If NO history, show Welcome Message or Context Message
+          if (initialContext) {
+            setActiveContext(initialContext);
+            setMessages([{
+              id: 'sys-init',
+              text: `Mode Analisis Aktif: Menggunakan data tanggal ${new Date(initialContext.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}. Silakan tanya tentang hasil ini.`,
+              sender: 'system',
+              time: 'Info'
+            }]);
+          } else {
+            setActiveContext(null);
+            setMessages([{
+              id: 'ai-init',
+              text: `Halo ${userName}! Gue NeoRain. Cerita aja, gue bakal dengerin. Ada yang mengganggu pikiranmu hari ini?`,
+              sender: 'ai',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }]);
           }
         }
+        setHistoryLoaded(true);
       }
     };
     initData();
-  }, [userData]);
+  }, [userData, historyLoaded, initialContext, userName]);
 
   const loadMoreMessages = async () => {
     if (isLoadingMore || !hasMore || !userData?.uid) return;
@@ -104,7 +129,8 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     try {
       const { data, hasMore: more } = await api.getChats(userData.uid, page);
       if (data.length > 0) {
-        setMessages(prev => [...data.reverse(), ...prev]);
+        const validMessages = data.filter(m => m.text && m.text.trim() !== "");
+        setMessages(validMessages.reverse()); // Replace state because API returns cumulative list
         setHasMore(more);
         setPage(prev => prev + 1);
       } else {
@@ -139,27 +165,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
   }, [activeContext, messages.length]);
 
-  useEffect(() => {
-    if (messages.length > 0 || isLoadingMore) return;
 
-    if (initialContext) {
-      setActiveContext(initialContext);
-      setMessages([{
-        id: 'sys-init',
-        text: `Mode Analisis Aktif: Menggunakan data tanggal ${new Date(initialContext.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}. Silakan tanya tentang hasil ini.`,
-        sender: 'system',
-        time: 'Info'
-      }]);
-    } else {
-      setActiveContext(null);
-      setMessages([{
-        id: 'ai-init',
-        text: `Halo ${userName}! Gue NeoRain. Cerita aja, gue bakal dengerin. Ada yang mengganggu pikiranmu hari ini?`,
-        sender: 'ai',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    }
-  }, [initialContext, userName]);
 
   const handleContextChange = (context) => {
     setActiveContext(context);
@@ -215,19 +221,70 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
       // 1. System Prompt
       let systemInstructionText = `
-        Kamu adalah NeoRain, teman curhat mahasiswa.
-        Nama User: ${userName}.
-        Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lu-gua". Panggil user dengan nama "${userName}" sesekali agar akrab.
-        
-        TUGAS UTAMA:
-        1. Jawab curhatan user dengan empati.
-        2. Analisis mood user.
-        3. Berikan 3 saran balasan singkat untuk user (Smart Reply).
+        PROMPT SISTEM FINAL (ANTI LOOP)
 
-        ATURAN PENTING:
-        - JAWABAN "REPLY" HARUS SINGKAT (MAKSIMAL 2000 KATA) AGAR TIDAK TERPOTONG.
-        - JANGAN GUNAKAN MARKDOWN FORMATTING (BOLS/ITALIC) DI DALAM STRING JSON.
-        HASILKAN RESPON DALAM FORMAT JSON MURNI SESUAI SKEMA YANG DITETAPKAN. JANGAN TAMBAHKAN TEKS APAPUN DI LUAR JSON.
+        1. Identitas & Posisi Profesional
+        Anda adalah AI pendamping kesehatan jiwa dengan pendekatan psikiatri klinis modern.
+        Anda bersikap empatik tanpa mengekspresikan emosi pribadi, menjaga jarak profesional, dan berfokus pada stabilitas psikologis user.
+
+        2. Gaya Bahasa (WAJIB DIPATUHI)
+        - Gunakan bahasa tenang, jelas, dan objektif.
+        - Empati ditunjukkan melalui: refleksi isi, validasi rasional, normalisasi klinis.
+        - Hindari bahasa emosional berlebihan.
+        - Tidak menggunakan sudut pandang emosional AI.
+        - DILARANG menggunakan frasa: "Aku bisa merasakan…", "Aku ikut merasakan…", "Aku membayangkan betapa…".
+        - Empati disampaikan melalui refleksi objektif, bukan klaim perasaan AI.
+
+        3. STRUKTUR RESPONS BARU (ANTI LOOP)
+        - DILARANG MEMBUKA DENGAN: "Dari yang kamu sampaikan...", "Terlihat bahwa...", "Kondisi di mana...", "Hal ini sering kali...".
+        - AI tidak boleh mengulang isi user dengan bahasa yang lebih panjang.
+        - Setiap respons harus memajukan percakapan, bukan merangkum ulang.
+        - Maksimal 3 paragraf pendek.
+        - Setiap respons hanya boleh memiliki 1 fokus utama.
+        - Jika user menggunakan bahasa puitis atau fragmentatif, AI tidak menirunya.
+
+        4. BANK PEMBUKA BARU (ROTASI WAJIB - PILIH SATU)
+        - "Kalimat ini terdengar sangat melelahkan."
+        - "Bagian ini terasa penuh tekanan."
+        - "Yang kamu tuliskan barusan cukup intens."
+        - "Ini bukan pengalaman yang ringan."
+        - "Ada beban besar di situ."
+
+        5. TEMPLATE RESPONS FINAL
+        [1 kalimat pembuka yang membumi dari Bank Pembuka]
+        [1–2 kalimat penamaan pengalaman secara umum, tanpa detail ulang]
+        [1 pertanyaan fokus, spesifik, dan baru]
+
+        6. Penanganan Depresi / Kecemasan / Burnout (Versi Klinis)
+        A. Depresi
+        - Gunakan istilah: kelelahan emosional, penurunan energi, kehilangan makna.
+        - Jangan menyebut “harapan” secara puitis.
+        - Fokus pada durasi dan dampak fungsi.
+
+        B. Kecemasan
+        - Tekankan hubungan pikiran–tubuh.
+        - Hindari kata “takut berlebihan”.
+        - Gunakan “aktivasi kecemasan” atau “kewaspadaan meningkat”.
+
+        C. Burnout
+        - Gunakan istilah “paparan stres berkepanjangan”.
+        - Tekankan ketidakseimbangan beban dan pemulihan.
+
+        7. Krisis Psikologis (Tanpa Drama, Tanpa Rujukan Kaku)
+        - Tetap tenang dan terstruktur.
+        - Validasi tanpa emosionalisasi.
+        - Eksplorasi keamanan dengan bahasa netral.
+        - Contoh: "Ketika pikiran seperti ini muncul, penting untuk memastikan kamu tetap aman. Apakah saat ini ada dorongan untuk menyakiti diri sendiri, atau perasaan tersebut masih sebatas pikiran?"
+
+        8. Batasan Etis (Halus & Profesional)
+        - "Percakapan ini dapat membantu memahami dan menstabilkan kondisi emosional. Untuk penanganan yang lebih mendalam, biasanya dibutuhkan dukungan tambahan di luar percakapan ini, dan kita bisa membicarakannya jika kamu siap."
+
+        ATURAN FORMAT OUTPUT (CRITICAL):
+        - JAWABAN "REPLY" HARUS PADAT & JELAS (Concise but Complete, Max 1500 tokens).
+        - GUNAKAN PARAGRAF BARU untuk memisahkan poin-poin agar mudah dibaca. Jangan menulis dalam satu blok teks panjang (Wall of Text).
+        - Gunakan tanda baca yang tepat.
+        - Structure JSON: { "reply": "...", "mood": "...", "suggestions": [...] }
+        - OUTPUT JSON ONLY. NO MARKDOWN.
       `;
 
       if (activeContext) {
@@ -247,8 +304,8 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
       // 2. Map History to Gemini Format
       // Gemini "contents" array: each item is { role: "user" | "model", parts: [{ text: "..." }] }
       const historyForAI = messages
-        .filter(m => m.sender !== 'system')
-        .slice(-6)
+        .filter(m => m.sender !== 'system' && m.text && m.text.trim() !== "") // Filter empty messages
+        .slice(-4) // Reduced from 6 to 4 to save tokens
         .map(msg => ({
           role: msg.sender === 'user' ? 'user' : 'model',
           parts: [{ text: msg.text }]
@@ -260,39 +317,56 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         { role: "user", parts: [{ text: userMsg.text }] }
       ];
 
-      // 3. Fetch Gemini API
-      // Using gemini-2.5-flash as per user request (despite experimental nature)
-      const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: chatContents,
-          systemInstruction: {
-            parts: [{ text: systemInstructionText }]
-          },
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000, // Reduced to safe limit as requested
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                reply: { type: "string" },
-                mood: { type: "string", enum: ["happy", "sad", "angry", "manic", "calm"] },
-                suggestions: { type: "array", items: { type: "string" } }
-              },
-              required: ["reply", "mood", "suggestions"]
-            }
-          }
-        })
-      });
+      // 3. Fetch Gemini API with Retry Logic
+      const makeRequest = async (retries = 3, delay = 1000) => {
+        try {
+          const response = await fetch(`${baseUrl}/${model}:generateContent`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": apiKey // Move key to header to hide from URL logs
+            },
+            body: JSON.stringify({
+              contents: chatContents,
+              systemInstruction: { parts: [{ text: systemInstructionText }] },
+              generationConfig: {
+                temperature: 0.5, // Lowered for more consistent/professional responses
+                maxOutputTokens: 1500, // Increased to prevent cutoff
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: "object",
+                  properties: {
+                    reply: { type: "string" },
+                    mood: { type: "string", enum: ["happy", "sad", "angry", "manic", "calm"] },
+                    suggestions: { type: "array", items: { type: "string" } }
+                  },
+                  required: ["reply", "mood", "suggestions"]
+                }
+              }
+            })
+          });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Gemini API Error ${response.status}: ${JSON.stringify(errorData)}`);
-      }
+          if (!response.ok) {
+            if ((response.status === 503 || response.status === 429) && retries > 0) {
+              console.warn(`Gemini API Busy (${response.status}). Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              return makeRequest(retries - 1, delay * 2);
+            }
+            // Sanitize error message to avoid spilling key or raw JSON
+            throw new Error(`Gemini API Error ${response.status}: Request failed`);
+          }
+          return response;
+        } catch (err) {
+          if (retries > 0 && (err.message.includes("Failed to fetch") || err.message.includes("NetworkError"))) {
+            console.warn(`Network Error. Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return makeRequest(retries - 1, delay * 2);
+          }
+          throw err;
+        }
+      };
+
+      const response = await makeRequest();
 
       const data = await response.json();
       if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
@@ -300,7 +374,6 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
       }
 
       const rawContent = data.candidates[0].content.parts[0].text;
-      console.log("Raw Gemini Response:", rawContent);
 
       let parsedResponse = null;
       try {
@@ -373,7 +446,11 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
     } catch (error) {
       console.error(error);
-      setMessages(prev => [...prev, { id: Date.now(), text: `Maaf, ada gangguan koneksi. (${error.message})`, sender: 'ai', time: 'Now' }]);
+      const friendlyError = error.message.includes("503") || error.message.includes("429")
+        ? "NeoRain lagi pusing banget nih (Server Overload). Coba tanya lagi dalam 1 menit ya?"
+        : "Maaf, sinyal hatiku putus-putus. Coba cek koneksi internetmu ya.";
+
+      setMessages(prev => [...prev, { id: Date.now(), text: friendlyError, sender: 'ai', time: 'Now' }]);
     } finally {
       setIsTyping(false);
     }

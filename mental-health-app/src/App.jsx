@@ -35,37 +35,39 @@ const App = () => {
   const [trackerInitialTab, setTrackerInitialTab] = useState(null);
 
   // Mood Persistence (Global State untuk Tema)
-  const [currentMood, setCurrentMood] = useState(() => {
-    return localStorage.getItem('currentMood') || 'default';
-  });
+  const [currentMood, setCurrentMood] = useState('default');
 
   // Chat Persistence
-  const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('chatHistory');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [messages, setMessages] = useState([]);
 
   // --- EFFECTS ---
 
-  // 1. Simpan Mood & Chat ke LocalStorage setiap berubah
-  useEffect(() => {
-    localStorage.setItem('currentMood', currentMood);
-  }, [currentMood]);
-
-  useEffect(() => {
-    localStorage.setItem('chatHistory', JSON.stringify(messages));
-  }, [messages]);
+  // 1. Wrapper untuk update mood ke Firestore
+  const updateMood = async (mood) => {
+    setCurrentMood(mood);
+    if (user?.uid) {
+      try {
+        await api.updateUserProfile({ current_mood: mood }, user.uid);
+      } catch (e) {
+        console.error("Failed to sync mood", e);
+      }
+    }
+  };
 
   // 2. Fungsi Refresh Data User dari MySQL
   const refreshUserData = async (uid) => {
     try {
       const dbUser = await api.getUserDetail(uid);
+      console.log("DEBUG: dbUser from Firestore:", dbUser); // Debugging
       if (dbUser) {
         setUserData((prev) => ({
           ...prev,
           ...dbUser,
-          name: dbUser.name
+          name: dbUser.name || dbUser.username || dbUser.displayName || prev.name
         }));
+        if (dbUser.current_mood) {
+          setCurrentMood(dbUser.current_mood);
+        }
       }
     } catch (error) {
       console.error("Gagal refresh user:", error);
@@ -93,7 +95,7 @@ const App = () => {
           email: currentUser.email
         });
 
-        // Ambil Data Lengkap
+        // Ambil Data Lengkap dari Firestore (Prioritas Nama dari DB)
         await refreshUserData(currentUser.uid);
 
         // Ambil Assessment Terakhir
@@ -133,8 +135,8 @@ const App = () => {
     // Reset Persistence (PENTING AGAR DATA TIDAK BOCOR KE USER LAIN)
     setMessages([]);
     setCurrentMood('default');
-    localStorage.removeItem('chatHistory');
-    localStorage.removeItem('currentMood');
+    // localStorage.removeItem('chatHistory'); // Optional: Clear old data
+    // localStorage.removeItem('currentMood');
 
     setActiveTab('home');
     setAuthView('landing');
@@ -225,7 +227,7 @@ const App = () => {
                   messages={messages}
                   setMessages={setMessages}
                   currentMood={currentMood}
-                  setCurrentMood={setCurrentMood}
+                  setCurrentMood={updateMood}
                 />
               </div>
             )}
@@ -244,7 +246,7 @@ const App = () => {
                       messages={messages}
                       setMessages={setMessages}
                       currentMood={currentMood}
-                      setCurrentMood={setCurrentMood}
+                      setCurrentMood={updateMood}
                     />
                   </div>
                 ) : (
@@ -259,7 +261,7 @@ const App = () => {
                         <Home
                           userData={userData}
                           currentMood={currentMood}
-                          setCurrentMood={setCurrentMood}
+                          setCurrentMood={updateMood}
                           onStartAnalysis={handleStartAnalysis}
                           onNavigate={setActiveTab}
                           lastAssessment={lastAssessment}
