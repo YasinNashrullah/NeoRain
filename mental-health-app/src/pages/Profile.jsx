@@ -81,11 +81,11 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     try {
       const res = await api.uploadProfilePhoto(userData.uid, file);
 
-      if (res.status === 'success') {
+      if (res && res.url) {
         alert("Foto berhasil diupdate!");
         if (onUpdateProfile) onUpdateProfile();
       } else {
-        alert("Gagal upload foto (Server Error).");
+        alert("Gagal upload foto.");
       }
     } catch (error) {
       console.error(error);

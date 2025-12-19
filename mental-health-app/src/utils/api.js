@@ -1,4 +1,4 @@
-import { db, storage } from "../firebase";
+import { db } from "../firebase";
 import {
   collection,
   doc,
@@ -14,7 +14,6 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Helper untuk format error
 const handleError = (context, error) => {
@@ -237,10 +236,14 @@ export const api = {
       if (!targetUid) throw new Error("No UID provided");
 
       const userRef = doc(db, "users", targetUid);
-      await setDoc(userRef, {
-        ...data,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await setDoc(
+        userRef,
+        {
+          ...data,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
       return { success: true };
     } catch (error) {
       console.error("Error update profile:", error);
@@ -248,34 +251,53 @@ export const api = {
     }
   },
 
-  // 12. Upload Foto Profile (Storage)
+  // 12. Upload Foto Profile (Cloudinary)
   uploadProfilePhoto: async (firebaseUid, file) => {
     try {
-      if (!storage)
-        throw new Error("Firebase Storage belum diaktifkan di code.");
+      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-      // Path: users/{uid}/profile.jpg
-      const storageRef = ref(
-        storage,
-        `users/${firebaseUid}/profile_${Date.now()}`
+      if (!cloudName || !uploadPreset) {
+        throw new Error(
+          "Cloudinary Config Missing! Harap isi VITE_CLOUDINARY_CLOUD_NAME dan VITE_CLOUDINARY_UPLOAD_PRESET di .env"
+        );
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+      formData.append("folder", "neorain_users");
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
       );
 
-      // Upload
-      const snapshot = await uploadBytes(storageRef, file);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Upload ke Cloudinary gagal");
+      }
 
-      // Get URL
-      const downloadURL = await getDownloadURL(snapshot.ref);
+      const data = await response.json();
+      const downloadURL = data.secure_url;
 
-      // Update di Firestore User
       const userRef = doc(db, "users", firebaseUid);
-      await setDoc(userRef, {
-        photoURL: downloadURL,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await setDoc(
+        userRef,
+        {
+          photo_url: downloadURL,
+          photoURL: downloadURL,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       return { url: downloadURL };
     } catch (error) {
-      console.error("Error upload photo:", error);
+      console.error("Error upload photo (Cloudinary):", error);
       throw error;
     }
   },
@@ -326,10 +348,14 @@ export const api = {
   saveGamification: async (firebaseUid, data) => {
     try {
       const userRef = doc(db, "users", firebaseUid);
-      await setDoc(userRef, {
-        gamification: data,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await setDoc(
+        userRef,
+        {
+          gamification: data,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
       return { success: true };
     } catch (error) {
       return handleError("Save Gamification", error);
@@ -359,10 +385,14 @@ export const api = {
   saveDailyPlan: async (firebaseUid, planData) => {
     try {
       const userRef = doc(db, "users", firebaseUid);
-      await setDoc(userRef, {
-        daily_plan: planData,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await setDoc(
+        userRef,
+        {
+          daily_plan: planData,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
       return { success: true };
     } catch (error) {
       return handleError("Save Daily Plan", error);
