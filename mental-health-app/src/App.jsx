@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from './firebase';
 import { api } from './utils/api';
+import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 
 // Pages
 import Home from './pages/Home';
@@ -29,9 +30,6 @@ const App = () => {
   // Theme State
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
-  // State Navigasi Auth
-  const [authView, setAuthView] = useState('landing');
-
   const [activeTab, setActiveTab] = useState('home');
   const [chatContext, setChatContext] = useState(null);
   const [lastAssessment, setLastAssessment] = useState(null);
@@ -42,6 +40,11 @@ const App = () => {
 
   // Chat Persistence
   const [messages, setMessages] = useState([]);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // --- EFFECTS ---
 
   // Toggle Theme
   const toggleTheme = () => {
@@ -132,7 +135,6 @@ const App = () => {
         setUserData(null);
         setMessages([]);
         setLastAssessment(null);
-        setAuthView('landing');
       }
       setLoading(false);
     });
@@ -141,7 +143,11 @@ const App = () => {
 
   // --- HANDLERS ---
 
-  const handleAuthSuccess = (data) => setUserData(data);
+  const handleAuthSuccess = (data) => {
+    setUserData(data);
+    navigate('/dashboard');
+  };
+
   const handleOnboardingFinish = (surveyData) => setUserData((prev) => ({ ...prev, ...surveyData }));
 
   const handleLogout = async () => {
@@ -153,11 +159,9 @@ const App = () => {
     // Reset Persistence (PENTING AGAR DATA TIDAK BOCOR KE USER LAIN)
     setMessages([]);
     setCurrentMood('default');
-    // localStorage.removeItem('chatHistory'); // Optional: Clear old data
-    // localStorage.removeItem('currentMood');
 
     setActiveTab('home');
-    setAuthView('landing');
+    navigate('/');
   };
 
   const handleAnalyzeFinish = () => {
@@ -176,64 +180,36 @@ const App = () => {
 
   if (loading) return <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>;
 
-  // Jika User BELUM Login
-  if (!user) {
-    if (authView === 'landing') {
+  const renderDashboard = () => {
+    // Jika User sudah Login tapi belum Onboarding
+    const hasOnboarded = userData && userData.role;
+
+    if (!hasOnboarded) {
       return (
-        <LandingPage
-          onLogin={() => setAuthView('login')}
-          onRegister={() => setAuthView('register')}
-        />
-      );
-    }
-
-    return (
-      <div className="fixed inset-0 w-full h-full bg-black flex justify-center items-center font-sans p-4 overflow-y-auto">
-        <div className="w-full h-full sm:h-auto bg-slate-950 relative flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
-          {authView === 'login' ? (
-            <Login
-              onLoginSuccess={handleAuthSuccess}
-              onSwitchToRegister={() => setAuthView('register')}
-            />
-          ) : (
-            <Register
-              onRegisterSuccess={handleAuthSuccess}
-              onSwitchToLogin={() => setAuthView('login')}
-            />
-          )}
-          {/* Tombol Back ke Landing */}
-          <button onClick={() => setAuthView('landing')} className="absolute top-4 left-4 text-slate-400 hover:text-white text-xs font-bold z-50">← Back</button>
-        </div>
-      </div>
-    );
-  }
-
-  // Jika User sudah Login tapi belum Onboarding
-  const hasOnboarded = userData && userData.role;
-
-  return (
-    <div className={`fixed inset-0 w-full h-full font-sans flex overflow-hidden transition-all duration-500
-      ${theme === 'dark'
-        ? 'bg-[#0a0a12]'
-        : 'bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)]'
-      }
-    `}>
-
-      {/* Background Blobs (Only Dark Mode) */}
-      {theme === 'dark' && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(49,46,129,0.2)_0%,_transparent_70%)]"></div>
-          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)]"></div>
-        </div>
-      )}
-
-      {!hasOnboarded ? (
         <div className="w-full h-full flex items-center justify-center p-4">
           <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
             <Onboarding onFinish={handleOnboardingFinish} />
           </div>
         </div>
-      ) : (
+      );
+    }
+
+    return (
+      <div className={`fixed inset-0 w-full h-full font-sans flex overflow-hidden transition-all duration-500
+        ${theme === 'dark'
+          ? 'bg-[#0a0a12]'
+          : 'bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)]'
+        }
+      `}>
+
+        {/* Background Blobs (Only Dark Mode) */}
+        {theme === 'dark' && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(49,46,129,0.2)_0%,_transparent_70%)]"></div>
+            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)]"></div>
+          </div>
+        )}
+
         <>
           <Sidebar
             activeTab={activeTab}
@@ -339,8 +315,31 @@ const App = () => {
 
           </div>
         </>
-      )}
-    </div>
+      </div>
+    );
+  };
+
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage onLogin={() => navigate('/login')} onRegister={() => navigate('/register')} theme={theme} toggleTheme={toggleTheme} />} />
+
+      <Route
+        path="/login"
+        element={!user ? <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => navigate('/register')} /> : <Navigate to="/dashboard" />}
+      />
+
+      <Route
+        path="/register"
+        element={!user ? <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => navigate('/login')} /> : <Navigate to="/dashboard" />}
+      />
+
+      <Route
+        path="/dashboard/*"
+        element={user ? renderDashboard() : <Navigate to="/login" />}
+      />
+
+      <Route path="*" element={<Navigate to="/" />} />
+    </Routes>
   );
 };
 
