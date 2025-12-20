@@ -21,10 +21,13 @@ import Sidebar from './components/Sidebar';
 import { Loader2 } from 'lucide-react';
 
 const App = () => {
-  // --- STATE MANAGEMENT ---
+  // State Management
   const [user, setUser] = useState(null);
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Theme State
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   // State Navigasi Auth
   const [authView, setAuthView] = useState('landing');
@@ -34,15 +37,30 @@ const App = () => {
   const [lastAssessment, setLastAssessment] = useState(null);
   const [trackerInitialTab, setTrackerInitialTab] = useState(null);
 
-  // Mood Persistence (Global State untuk Tema)
+  // Mood Persistence
   const [currentMood, setCurrentMood] = useState('default');
 
   // Chat Persistence
   const [messages, setMessages] = useState([]);
 
-  // --- EFFECTS ---
+  // Toggle Theme
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
-  // 1. Wrapper untuk update mood ke Firestore
+  // Apply Theme to DOM
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
+
+  // update mood ke Firestore
   const updateMood = async (mood) => {
     setCurrentMood(mood);
     if (user?.uid) {
@@ -54,7 +72,7 @@ const App = () => {
     }
   };
 
-  // 2. Fungsi Refresh Data User dari MySQL
+  // Refresh Data User
   const refreshUserData = async (uid) => {
     try {
       const dbUser = await api.getUserDetail(uid);
@@ -194,11 +212,20 @@ const App = () => {
   const hasOnboarded = userData && userData.role;
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-black font-sans flex overflow-hidden">
+    <div className={`fixed inset-0 w-full h-full font-sans flex overflow-hidden transition-all duration-500
+      ${theme === 'dark'
+        ? 'bg-[#0a0a12]'
+        : 'bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)]'
+      }
+    `}>
 
-      {/* Background Blobs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(49,46,129,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
+      {/* Background Blobs (Only Dark Mode) */}
+      {theme === 'dark' && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(49,46,129,0.2)_0%,_transparent_70%)]"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)]"></div>
+        </div>
+      )}
 
       {!hasOnboarded ? (
         <div className="w-full h-full flex items-center justify-center p-4">
@@ -213,6 +240,8 @@ const App = () => {
             setActiveTab={setActiveTab}
             onLogout={handleLogout}
             userData={userData}
+            theme={theme}
+            toggleTheme={toggleTheme}
           />
 
           <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
@@ -234,7 +263,10 @@ const App = () => {
 
             {/* Desktop Container */}
             <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
-              <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/80 md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
+              <div className={`flex-1 w-full h-full relative overflow-hidden shadow-2xl flex flex-col
+                  dark:bg-slate-950 md:dark:bg-slate-950/80 md:dark:border md:dark:border-white/5 md:dark:rounded-[30px]
+                  md:bg-white/10 md:backdrop-blur-sm md:border md:border-white/20 md:rounded-[30px]
+              `}>
 
                 {/* KONTEN */}
                 {activeTab === 'chat' ? (
@@ -301,7 +333,7 @@ const App = () => {
 
             {activeTab !== 'chat' && (
               <div className="md:hidden">
-                <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+                <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} toggleTheme={toggleTheme} />
               </div>
             )}
 

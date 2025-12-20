@@ -16,8 +16,8 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   // --- STATE DATA ---
-  const [historyLogs, setHistoryLogs] = useState([]); // Data Harian (Semua)
-  const [weeklyLogs, setWeeklyLogs] = useState([]);   // Data Mingguan (Raw)
+  const [historyLogs, setHistoryLogs] = useState([]); // Data Harian
+  const [weeklyLogs, setWeeklyLogs] = useState([]);   // Data Mingguan
   const [statsData, setStatsData] = useState(null);   // Data Statistik
   const [statsRange, setStatsRange] = useState('monthly'); // daily, weekly, monthly
 
@@ -25,13 +25,13 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   const [currentDate, setCurrentDate] = useState(new Date()); // Bulan yang dilihat
   const [dateRange, setDateRange] = useState({ start: null, end: null }); // Range Filter
 
-  // Config Mood
+  // Config Mood (Matched with Home.jsx for consistency)
   const moods = [
-    { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-400', bg: 'bg-pink-500/20', border: 'border-pink-500/50', shadow: 'shadow-pink-500/30', solid: 'bg-pink-500', score: 5 },
-    { id: 'manic', label: 'Manic', icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', shadow: 'shadow-yellow-500/30', solid: 'bg-yellow-500', score: 4 },
-    { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', shadow: 'shadow-cyan-500/30', solid: 'bg-cyan-500', score: 3 },
-    { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-400', bg: 'bg-indigo-500/20', border: 'border-indigo-500/50', shadow: 'shadow-indigo-500/30', solid: 'bg-indigo-500', score: 2 },
-    { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/50', shadow: 'shadow-orange-500/30', solid: 'bg-orange-500', score: 1 },
+    { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50', score: 5 },
+    { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50', score: 3 },
+    { id: 'manic', label: 'Manic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50', score: 4 },
+    { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50', score: 1 },
+    { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50', score: 2 },
   ];
 
   // --- FETCH DATA ---
@@ -42,8 +42,6 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       const filteredData = allData.filter(log => log.note !== "Mood Scanner Update");
       setHistoryLogs(filteredData);
       setWeeklyLogs(filteredData);
-
-      // Fetch stats or calc fallback
       fetchStats(userData.uid, statsRange, filteredData);
     }
   };
@@ -53,7 +51,6 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     if (apiStats) {
       setStatsData(apiStats);
     } else {
-      // Fallback Calculation
       calculateFrontendStats(localLogs, range);
     }
   };
@@ -269,10 +266,10 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       const isEnd = dateRange.end && thisDate.getTime() === dateRange.end.getTime();
       const isInRange = dateRange.start && dateRange.end && thisDate > dateRange.start && thisDate < dateRange.end;
 
-      let bgClass = "hover:bg-white/10 text-slate-400";
+      let bgClass = "hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400";
       if (isStart || isEnd) bgClass = "bg-indigo-600 text-white shadow-lg shadow-indigo-500/50 scale-110 z-10 font-bold";
-      else if (isInRange) bgClass = "bg-indigo-500/20 text-indigo-200";
-      else if (hasLog) bgClass = "bg-white/5 text-white border border-white/20 font-semibold";
+      else if (isInRange) bgClass = "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200";
+      else if (hasLog) bgClass = "bg-slate-200 dark:bg-white/5 text-slate-700 dark:text-white border border-slate-300 dark:border-white/20 font-semibold";
 
       days.push(
         <button
@@ -282,7 +279,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
         >
           {day}
           {hasLog && !isStart && !isEnd && (
-            <span className="absolute bottom-1 w-1 h-1 bg-green-400 rounded-full shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
+            <span className="absolute bottom-1 w-1 h-1 bg-green-500 dark:bg-green-400 rounded-full shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
           )}
         </button>
       );
@@ -296,18 +293,18 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   };
 
   return (
-    <div className="w-full h-full bg-slate-950 text-white flex flex-col relative overflow-hidden">
+    <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white flex flex-col relative overflow-hidden">
 
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-indigo-900/20 blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-indigo-500/10 dark:bg-indigo-900/20 blur-[100px] pointer-events-none"></div>
 
       {/* Header */}
       <div className="md:px-9 px-6 pt-8 pb-4 relative z-10 flex-none">
-        <div className="w-full mx-auto bg-white/5 p-1.5 rounded-2xl flex gap-2 relative border border-white/10 backdrop-blur-md shadow-xl">
+        <div className="w-full mx-auto bg-white/80 dark:bg-white/5 p-1.5 rounded-2xl flex gap-2 relative border border-slate-200 dark:border-white/10 backdrop-blur-md shadow-sm dark:shadow-xl">
           {['daily', 'weekly', 'stats', 'analysis'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors relative ${activeTab === tab ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors relative ${activeTab === tab ? 'text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
                 }`}
             >
               {activeTab === tab && (

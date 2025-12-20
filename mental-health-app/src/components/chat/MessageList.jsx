@@ -47,18 +47,20 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                     >
                         {msg.sender === 'system' ? (
                             <div className="w-full flex justify-center my-2">
-                                <span className="text-[10px] bg-white/10 text-slate-300 px-3 py-1 rounded-full backdrop-blur-sm border border-white/5 flex items-center gap-2">
-                                    <Sparkles className="w-3 h-3 text-yellow-400" />
+                                <span className="text-[10px] bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300 px-3 py-1 rounded-full backdrop-blur-sm border border-slate-200 dark:border-white/5 flex items-center gap-2 font-medium">
+                                    <Sparkles className="w-3 h-3 text-yellow-500 dark:text-yellow-400" />
                                     {typeof msg.text === 'string' ? msg.text.replace(/\\n/g, '\n') : msg.text}
                                 </span>
                             </div>
                         ) : (
-                            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-md whitespace-pre-wrap break-words ${msg.sender === 'user'
+                            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap break-words ${msg.sender === 'user'
                                 ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
-                                : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-white/5 text-left'
+                                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-sm border border-slate-200 dark:border-white/5 text-left'
                                 }`}>
                                 {typeof msg.text === 'string' ? msg.text.replace(/\\n/g, '\n') : msg.text}
-                                <div className="text-[10px] opacity-50 mt-1 text-right">{msg.time}</div>
+                                <div className={`text-[10px] mt-1 text-right ${msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'}`}>
+                                    {msg.time}
+                                </div>
                             </div>
                         )}
                     </motion.div>
@@ -66,9 +68,9 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
 
                 {isTyping && (
                     <div className="flex justify-start">
-                        <div className="bg-slate-800 border border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center">
-                            <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                            <span className="text-xs text-slate-400">Mengetik...</span>
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center shadow-sm">
+                            <Loader2 className="w-4 h-4 text-indigo-500 dark:text-indigo-400 animate-spin" />
+                            <span className="text-xs text-slate-500 dark:text-slate-400">Mengetik...</span>
                         </div>
                     </div>
                 )}

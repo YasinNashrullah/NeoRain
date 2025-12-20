@@ -43,11 +43,11 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
     const getSeverity = (score, type) => {
         const limits = { depression: [9, 13, 20, 27], anxiety: [7, 9, 14, 19], stress: [14, 18, 25, 33] };
         const limit = limits[type];
-        if (score <= limit[0]) return { label: 'Normal', color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/50' };
-        if (score <= limit[1]) return { label: 'Ringan', color: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50' };
-        if (score <= limit[2]) return { label: 'Sedang', color: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/50' };
-        if (score <= limit[3]) return { label: 'Parah', color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/50' };
-        return { label: 'Sangat Parah', color: 'text-red-500', bg: 'bg-red-500/20', border: 'border-red-500/50' };
+        if (score <= limit[0]) return { label: 'Normal', color: 'text-green-500 dark:text-green-400', bg: 'bg-green-100 dark:bg-green-500/20', border: 'border-green-200 dark:border-green-500/50' };
+        if (score <= limit[1]) return { label: 'Ringan', color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50' };
+        if (score <= limit[2]) return { label: 'Sedang', color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50' };
+        if (score <= limit[3]) return { label: 'Parah', color: 'text-red-600 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-500/20', border: 'border-red-200 dark:border-red-500/50' };
+        return { label: 'Sangat Parah', color: 'text-red-700 dark:text-red-500', bg: 'bg-red-200 dark:bg-red-500/20', border: 'border-red-300 dark:border-red-500/50' };
     };
 
     const logsOnSelectedDate = allHistory.filter(log =>
@@ -79,9 +79,9 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
             const hasLog = allHistory.some(log => new Date(log.created_at).setHours(0, 0, 0, 0) === thisDate.getTime());
             const isSelected = thisDate.getTime() === new Date(selectedDate).setHours(0, 0, 0, 0);
 
-            let bgClass = "text-slate-400 hover:bg-white/5";
+            let bgClass = "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5";
             if (isSelected) bgClass = "bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/50";
-            else if (hasLog) bgClass = "bg-white/5 text-white border border-white/20 font-semibold";
+            else if (hasLog) bgClass = "bg-slate-200 dark:bg-white/5 text-slate-700 dark:text-white border border-slate-300 dark:border-white/20 font-semibold";
 
             days.push(
                 <button
@@ -90,7 +90,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     className={`h-8 w-8 rounded-full flex items-center justify-center text-xs relative transition-all ${bgClass}`}
                 >
                     {day}
-                    {hasLog && !isSelected && <div className="absolute bottom-0.5 w-1 h-1 bg-green-400 rounded-full shadow-[0_0_5px_rgba(74,222,128,0.8)]"></div>}
+                    {hasLog && !isSelected && <div className="absolute bottom-0.5 w-1 h-1 bg-green-500 dark:bg-green-400 rounded-full shadow-[0_0_5px_rgba(74,222,128,0.8)]"></div>}
                 </button>
             );
         }
@@ -100,10 +100,10 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
     const CustomTooltip = ({ active, payload }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-slate-900 border border-white/10 p-3 rounded-xl shadow-xl">
-                    <p className="text-slate-300 text-xs font-bold mb-1">{payload[0].payload.subject}</p>
-                    <p className="text-indigo-400 font-bold text-sm">
-                        Skor: {payload[0].value} <span className="text-slate-500 text-[10px]">/ 42</span>
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-3 rounded-xl shadow-xl">
+                    <p className="text-slate-600 dark:text-slate-300 text-xs font-bold mb-1">{payload[0].payload.subject}</p>
+                    <p className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                        Skor: {payload[0].value} <span className="text-slate-400 dark:text-slate-500 text-[10px]">/ 42</span>
                     </p>
                 </div>
             );
@@ -122,17 +122,17 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
     if (!loading && allHistory.length === 0)
         return (
             <div className="w-full h-full flex flex-col items-center justify-center p-6 min-h-[400px]">
-                <div className="max-w-md w-full bg-slate-900/50 border border-white/10 rounded-[30px] p-8 shadow-2xl text-center relative overflow-hidden">
+                <div className="max-w-md w-full bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-xl dark:shadow-2xl text-center relative overflow-hidden">
                     {/* Background Effects */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>
 
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mb-6 border border-indigo-500/20">
-                            <BrainCircuit className="w-10 h-10 text-indigo-400" />
+                        <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-full flex items-center justify-center mb-6 border border-indigo-100 dark:border-indigo-500/20">
+                            <BrainCircuit className="w-10 h-10 text-indigo-500 dark:text-indigo-400" />
                         </div>
 
-                        <h2 className="text-2xl font-bold text-white mb-3">Belum Ada Data Analisis</h2>
-                        <p className="text-slate-400 mb-8 leading-relaxed">
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3">Belum Ada Data Analisis</h2>
+                        <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
                             Kamu belum melakukan analisis kesehatan mental. Yuk, mulai analisis sekarang untuk mengetahui kondisi kesehatan mentalmu!
                         </p>
 
@@ -164,25 +164,25 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                 <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
 
                     {/* Calendar */}
-                    <div className="order-1 lg:col-span-4 lg:order-3 bg-slate-900/50 border border-white/10 rounded-[30px] p-6 text-white shadow-xl h-fit">
+                    <div className="order-1 lg:col-span-4 lg:order-3 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 text-slate-800 dark:text-white shadow-sm dark:shadow-xl h-fit">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-md md:text-lg">Calendar</h3>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() - 1)))}
-                                    className="p-1 hover:bg-white/10 rounded"
+                                    className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() + 1)))}
-                                    className="p-1 hover:bg-white/10 rounded"
+                                    className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors"
                                 >
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
-                        <div className="text-md text-center font-bold mb-4 text-slate-300">
+                        <div className="text-md text-center font-bold mb-4 text-slate-600 dark:text-slate-300">
                             {selectedDate.toLocaleString("default", { month: "long", year: "numeric" })}
                         </div>
                         <div className="grid grid-cols-7 text-center mb-2 text-[10px] text-slate-500 font-bold uppercase">
@@ -194,9 +194,9 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     </div>
 
                     {/* History List */}
-                    <div className="order-2 lg:col-span-4 lg:order-5 bg-slate-900/50 border border-white/10 rounded-[30px] p-3 shadow-xl h-fit max-h-[500px] flex flex-col">
-                        <h3 className="text-lg font-bold text-white my-2 text-center capitalize flex items-center justify-center gap-2">
-                            <FileText className="w-5 h-5 text-indigo-400" /> Analysis History
+                    <div className="order-2 lg:col-span-4 lg:order-5 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-3 shadow-sm dark:shadow-xl h-fit max-h-[500px] flex flex-col">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white my-2 text-center capitalize flex items-center justify-center gap-2">
+                            <FileText className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Analysis History
                         </h3>
 
                         <div className="w-full py-3 flex-1 overflow-y-auto space-y-2 scrollbar-hide">
@@ -236,7 +236,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                                     {/* Solid Background */}
                                                     <motion.div
                                                         layoutId="activeHistoryBg"
-                                                        className="absolute inset-0 bg-[#1e1b4b]/50 rounded-xl border border-purple-500/30"
+                                                        className="absolute inset-0 bg-white dark:bg-[#1e1b4b]/50 rounded-xl border border-purple-200 dark:border-purple-500/30 shadow-sm"
                                                         initial={{ opacity: 0 }}
                                                         animate={{ opacity: 1 }}
                                                         transition={{ duration: 0.2 }}
@@ -245,16 +245,16 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                             )}
 
                                             {/* Content */}
-                                            <div className={`relative flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                                            <div className={`relative flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${isActive ? 'text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                                                 }`}>
 
                                                 {/* Date & Score */}
                                                 <div>
-                                                    <p className={`text-left text-[14px] font-bold mb-1 transition-colors ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                                                    <p className={`text-left text-[14px] font-bold mb-1 transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                                                         {new Date(log.created_at).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" })}
                                                     </p>
                                                     <div className="flex gap-2">
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${isActive ? 'bg-indigo-500/30 text-indigo-200' : 'bg-slate-800 text-slate-500'}`}>
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${isActive ? 'bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-indigo-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
                                                             Stress: {log.stress_score}
                                                         </span>
                                                     </div>
@@ -262,7 +262,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
 
                                                 {/* Time Indicator */}
                                                 <div className="flex items-center gap-1">
-                                                    <span className={`text-xs font-medium ${isActive ? 'text-cyan-300' : 'text-slate-500'}`}>
+                                                    <span className={`text-xs font-medium ${isActive ? 'text-cyan-600 dark:text-cyan-300' : 'text-slate-400 dark:text-slate-500'}`}>
                                                         {new Date(log.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
                                                     </span>
 
@@ -304,12 +304,11 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                     ].map((item) => {
                                         const stat = getSeverity(item.score, item.type);
                                         return (
-                                            <div key={item.label} className={`relative overflow-hidden rounded-2xl h-28 shadow-lg group border ${stat.border}`}>
-                                                <div className={`absolute inset-0 opacity-20 ${stat.bg.replace("/20", "/40")}`}></div>
+                                            <div key={item.label} className={`relative overflow-hidden rounded-2xl h-28 shadow-sm group border ${stat.border} ${stat.bg}`}>
                                                 <div className="relative z-10 p-5 flex flex-col justify-between h-full">
                                                     <div className="flex justify-between items-start">
-                                                        <h3 className="text-lg font-bold italic tracking-wider text-white">{item.label}</h3>
-                                                        <span className="text-3xl font-black text-white">{item.score}</span>
+                                                        <h3 className="text-lg font-bold italic tracking-wider text-slate-800 dark:text-white">{item.label}</h3>
+                                                        <span className="text-3xl font-black text-slate-800 dark:text-white">{item.score}</span>
                                                     </div>
                                                     <div className="text-right">
                                                         <span className={`text-xs font-bold italic ${stat.color}`}>{stat.label}</span>
@@ -324,10 +323,10 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     </div>
 
                     {/* Radar Chart */}
-                    <div className="order-4 lg:col-span-5 lg:order-2 bg-slate-900/50 border border-white/10 rounded-[30px] p-6 flex items-center justify-center shadow-2xl relative overflow-hidden min-h-[350px]">
+                    <div className="order-4 lg:col-span-5 lg:order-2 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 flex items-center justify-center shadow-sm dark:shadow-2xl relative overflow-hidden min-h-[350px]">
                         <div className="absolute top-0 left-0 w-full h-full bg-indigo-500/5 rounded-full blur-3xl"></div>
                         <div className="w-full h-full relative z-10">
-                            <h3 className="text-slate-400 font-bold text-center mb-2 absolute top-0 w-full text-sm uppercase tracking-widest">Chart Analysis</h3>
+                            <h3 className="text-slate-500 dark:text-slate-400 font-bold text-center mb-2 absolute top-0 w-full text-sm uppercase tracking-widest">Chart Analysis</h3>
                             <AnimatePresence mode="wait">
                                 {selectedAssessment && (
                                     <motion.div
@@ -340,7 +339,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                     >
                                         <ResponsiveContainer width="100%" height="100%">
                                             <RadarChart cx="50%" cy="55%" outerRadius="80%" data={chartData}>
-                                                <PolarGrid stroke="#334155" />
+                                                <PolarGrid stroke="#94a3b8" strokeOpacity={0.3} />
                                                 <PolarAngleAxis dataKey="subject" tick={{ fill: "#94a3b8", fontSize: 12, fontWeight: "bold" }} />
                                                 <PolarRadiusAxis angle={30} domain={[0, 42]} tick={false} axisLine={false} />
                                                 <Radar name="Skor" dataKey="A" stroke="#8b5cf6" strokeWidth={3} fill="#8b5cf6" fillOpacity={0.4} />
@@ -366,36 +365,36 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                     className="space-y-6"
                                 >
                                     {/* Action Plan */}
-                                    <div className="bg-slate-900/50 border border-white/10 rounded-[30px] p-8 shadow-xl min-h-[250px] relative overflow-hidden">
+                                    <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl min-h-[250px] relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl"></div>
-                                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2 relative z-10">
-                                            <Target className="w-6 h-6 text-green-400" /> Action Plan
+                                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 relative z-10">
+                                            <Target className="w-6 h-6 text-green-500 dark:text-green-400" /> Action Plan
                                         </h3>
                                         <div className="grid gap-4 relative z-10">
                                             {aiData?.actions?.filter(action =>
                                                 !action.toLowerCase().includes("mencari dukungan profesional") &&
                                                 !action.toLowerCase().includes("psikolog atau psikiater")
                                             ).map((action, idx) => (
-                                                <div key={idx} className="flex items-start gap-4 p-4 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                                                    <div className="w-6 h-6 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5 border border-green-500/50">
+                                                <div key={idx} className="flex items-start gap-4 p-4 bg-white/40 dark:bg-white/5 rounded-xl border border-white/60 dark:border-white/5 hover:bg-white/60 dark:hover:bg-white/10 transition-colors">
+                                                    <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400 flex items-center justify-center flex-shrink-0 font-bold text-xs mt-0.5 border border-green-200 dark:border-green-500/50">
                                                         {idx + 1}
                                                     </div>
-                                                    <p className="text-left text-slate-300 font-medium leading-relaxed">{action}</p>
+                                                    <p className="text-left text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{action}</p>
                                                 </div>
                                             )) || <p className="text-slate-500 italic">Tidak ada saran spesifik.</p>}
                                         </div>
                                     </div>
 
                                     {/* Insight */}
-                                    <div className="bg-slate-900/50 border border-white/10 rounded-[30px] p-8 shadow-xl relative overflow-hidden">
+                                    <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl"></div>
-                                        <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2 relative z-10">
-                                            <BookOpen className="w-6 h-6 text-blue-400" /> Insight & Education
+                                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2 relative z-10">
+                                            <BookOpen className="w-6 h-6 text-blue-500 dark:text-blue-400" /> Insight & Education
                                         </h3>
                                         <div className="space-y-4 relative z-10">
-                                            <p className="text-slate-300 text-left p-4 font-medium text-lg leading-relaxed">"{aiData?.summary}"</p>
-                                            <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
-                                                <p className="text-sm text-left text-blue-200 italic">💡 {aiData?.education}</p>
+                                            <p className="text-slate-600 dark:text-slate-300 text-left p-4 font-medium text-lg leading-relaxed">"{aiData?.summary}"</p>
+                                            <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-2xl border border-blue-100 dark:border-blue-500/20">
+                                                <p className="text-sm text-left text-blue-700 dark:text-blue-200 italic">💡 {aiData?.education}</p>
                                             </div>
                                         </div>
                                     </div>
