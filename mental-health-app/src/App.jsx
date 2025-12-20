@@ -259,7 +259,7 @@ const App = () => {
                   </div>
                 ) : (
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
-                    <div className="w-full h-full mx-auto">
+                    <div className="w-full h-full mx-auto pb-32 md:pb-0">
 
                       {activeTab === 'analyze' && (
                         <Analyze userData={userData} onFinish={handleAnalyzeFinish} />

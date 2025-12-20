@@ -323,7 +323,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     </div>
 
                     {/* Radar Chart */}
-                    <div className="order-4 lg:col-span-5 lg:order-2 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 flex items-center justify-center shadow-sm dark:shadow-2xl relative overflow-hidden min-h-[350px]">
+                    <div className="order-4 lg:col-span-5 lg:order-2 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-2xl relative overflow-hidden min-h-[350px]">
                         <div className="absolute top-0 left-0 w-full h-full bg-indigo-500/5 rounded-full blur-3xl"></div>
                         <div className="w-full h-full relative z-10">
                             <h3 className="text-slate-500 dark:text-slate-400 font-bold text-center mb-2 absolute top-0 w-full text-sm uppercase tracking-widest">Chart Analysis</h3>
@@ -337,7 +337,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                         transition={{ duration: 0.5 }}
                                         className="w-full h-[300px]"
                                     >
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height={300} minWidth={0}>
                                             <RadarChart cx="50%" cy="55%" outerRadius="80%" data={chartData}>
                                                 <PolarGrid stroke="#94a3b8" strokeOpacity={0.3} />
                                                 <PolarAngleAxis dataKey="subject" tick={{ fill: "#94a3b8", fontSize: 12, fontWeight: "bold" }} />
