@@ -10,7 +10,7 @@ const firebaseConfig = {
   storageBucket: "testingneorain.firebasestorage.app",
   messagingSenderId: "185821765622",
   appId: "1:185821765622:web:d515aad0e2f6813a1531d7",
-  measurementId: "G-D2VWHMRS8F"
+  measurementId: "G-D2VWHMRS8F",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,5 +18,3 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
-import { getStorage } from "firebase/storage";
-export const storage = getStorage(app);
