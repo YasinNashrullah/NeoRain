@@ -15,6 +15,7 @@ import Register from './pages/Register';
 import Analyze from './pages/Analyze';
 import ActionPlan from './pages/ActionPlan';
 import LandingPage from './pages/LandingPage';
+import Statistics from './pages/Statistics';
 
 // Components
 import BottomNav from './components/BottomNav';
@@ -176,6 +177,14 @@ const App = () => {
 
   const handleStartAnalysis = () => setActiveTab('analyze');
 
+  // Handle standard menu navigation 
+  const handleMenuNavigation = (tabId) => {
+    if (tabId === 'tracker') {
+      setTrackerInitialTab(null);
+    }
+    setActiveTab(tabId);
+  };
+
   // render
 
   if (loading) return <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>;
@@ -213,7 +222,7 @@ const App = () => {
         <>
           <Sidebar
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            setActiveTab={handleMenuNavigation}
             onLogout={handleLogout}
             userData={userData}
             theme={theme}
@@ -248,7 +257,10 @@ const App = () => {
                 {activeTab === 'chat' ? (
                   <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
                     <Chat
-                      onBack={() => setActiveTab('home')}
+                      onBack={() => {
+                        setTrackerInitialTab(null);
+                        setActiveTab('home');
+                      }}
                       userData={userData}
                       initialContext={chatContext}
                       messages={messages}
@@ -271,7 +283,11 @@ const App = () => {
                           currentMood={currentMood}
                           setCurrentMood={updateMood}
                           onStartAnalysis={handleStartAnalysis}
-                          onNavigate={setActiveTab}
+                          onNavigate={handleMenuNavigation}
+                          onVerifyHistory={() => {
+                            setTrackerInitialTab('analysis');
+                            setActiveTab('tracker');
+                          }}
                           lastAssessment={lastAssessment}
                         />
                       )}
@@ -281,14 +297,18 @@ const App = () => {
                           userData={userData}
                           initialTab={trackerInitialTab}
                           onChatRequest={handleChatWithContext}
-                          onNavigate={setActiveTab}
+                          onNavigate={handleMenuNavigation}
                         />
+                      )}
+
+                      {activeTab === 'stats' && (
+                        <Statistics userData={userData} onNavigate={handleMenuNavigation} />
                       )}
 
                       {activeTab === 'action-plan' && (
                         <ActionPlan
                           userData={userData}
-                          onNavigate={setActiveTab}
+                          onNavigate={handleMenuNavigation}
                         />
                       )}
 
@@ -309,10 +329,9 @@ const App = () => {
 
             {activeTab !== 'chat' && (
               <div className="md:hidden">
-                <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} theme={theme} toggleTheme={toggleTheme} />
+                <BottomNav activeTab={activeTab} setActiveTab={handleMenuNavigation} theme={theme} toggleTheme={toggleTheme} />
               </div>
             )}
-
           </div>
         </>
       </div>

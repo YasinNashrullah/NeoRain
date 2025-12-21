@@ -14,6 +14,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
+import { config } from "./config.js";
 
 // Helper untuk format error
 const handleError = (context, error) => {
@@ -305,14 +306,24 @@ export const api = {
   // 13. Mood Stats (Client-side calculation for now)
   getMoodStatistics: async (firebaseUid, range = "monthly") => {
     try {
-      // Fetch last 30 days for stats
-      const pastDate = new Date();
-      pastDate.setDate(pastDate.getDate() - 30);
+      let startDate = new Date();
+
+      if (range === "weekly") {
+        const day = startDate.getDay();
+        const diff = startDate.getDate() - day;
+        startDate.setDate(diff);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (range === "monthly") {
+        startDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      } else {
+        // Daily: Start from today 00:00
+        startDate.setHours(0, 0, 0, 0);
+      }
 
       const q = query(
         collection(db, "moods"),
         where("firebase_uid", "==", firebaseUid),
-        where("created_at", ">=", Timestamp.fromDate(pastDate)),
+        where("created_at", ">=", Timestamp.fromDate(startDate)),
         orderBy("created_at", "desc")
       );
 
@@ -323,7 +334,87 @@ export const api = {
         created_at: doc.data().created_at?.toDate().toISOString(),
       }));
 
-      return null;
+      // Calculate Stats
+      if (logs.length === 0) return null;
+
+      const moodScores = { happy: 5, calm: 4, manic: 3, sad: 2, angry: 1 };
+
+      let totalScore = 0;
+      const moodCounts = {};
+      const trend = []; // Simple daily trend
+
+      // Group by date for trend
+      const dailyScores = {};
+
+      logs.forEach((log) => {
+        const score = moodScores[log.mood] || 3;
+        totalScore += score;
+        moodCounts[log.mood] = (moodCounts[log.mood] || 0) + 1;
+
+        const dateKey = new Date(log.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        if (!dailyScores[dateKey]) {
+          dailyScores[dateKey] = { total: 0, count: 0 };
+        }
+        dailyScores[dateKey].total += score;
+        dailyScores[dateKey].count += 1;
+      });
+
+      // Format Trend
+      Object.keys(dailyScores).forEach((date) => {
+        trend.push({
+          date,
+          score: Number(
+            (dailyScores[date].total / dailyScores[date].count).toFixed(1)
+          ),
+        });
+      });
+      // Sort trend by date? It's likely mixed order due to object keys.
+      // API query is desc, so reverse logs might be easier, but simple object keys might lose order.
+      // Re-map from logs for better accuracy if needed, but this is okay for MVP.
+      // Better:
+      // Sort trend by date
+      trend.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      const average_score = (totalScore / logs.length).toFixed(1);
+
+      const sortedMoods = Object.entries(moodCounts).sort(
+        (a, b) => b[1] - a[1]
+      );
+      const most_frequent_mood = sortedMoods[0] ? sortedMoods[0][0] : null;
+
+      // Insights Calculation
+      const insights = [];
+      if (Number(average_score) >= 4)
+        insights.push({
+          icon: "Sun",
+          text: "Kondisi mentalmu sangat baik!",
+          color: "text-orange-500",
+        });
+      else if (Number(average_score) <= 2)
+        insights.push({
+          icon: "CloudRain",
+          text: "Kamu mungkin butuh istirahat.",
+          color: "text-indigo-500",
+        });
+
+      if (most_frequent_mood === "anxious")
+        insights.push({
+          icon: "Wind",
+          text: "Coba latihan pernapasan.",
+          color: "text-cyan-500",
+        });
+
+      return {
+        total_logs: logs.length,
+        average_score,
+        wellness_score: Math.round((Number(average_score) / 5) * 100),
+        most_frequent_mood,
+        trend: trend,
+        insights,
+      };
     } catch (error) {
       console.error("Error getMoodStatistics:", error);
       return null;
@@ -410,6 +501,100 @@ export const api = {
       return null;
     } catch (error) {
       return handleError("Get Daily Plan", error);
+    }
+  },
+
+  // 19. Chat with AI (Gemini Integration)
+  chatWithAI: async (message, firebaseUid, contextData = null) => {
+    try {
+      const { apiKey, baseUrl, model } = config.gemini;
+
+      // 1. Construct System Prompt
+      let systemPrompt = `
+        You are NeoRain, a friendly, empathetic, and supportive mental health AI assistant.
+        Your goal is to listen, validate feelings, and offer gentle guidance.
+        - Persona: Warm, "gaul" but polite (Indonesia), uses emojis appropriately 🌧️✨.
+        - Language: Indonesian (mix formal/informal as appropriate for supportive chat).
+        - Disclaimer: You are NOT a doctor. If user seems suicidal or in danger, suggest professional help immediately.
+        - Style: Keep responses concise (max 2-3 paragraphs). Avoid lecturing.
+      `;
+
+      // 2. Add Context if available
+      if (contextData) {
+        systemPrompt += `
+          \nUser's Request Context:
+          - DASS-21 Scores: Depression ${contextData.scores.d}, Anxiety ${
+          contextData.scores.a
+        }, Stress ${contextData.scores.s}.
+          - Analysis Date: ${new Date(contextData.date).toLocaleDateString()}.
+          - AI Analysis Summary: ${contextData.ai_analysis?.substring(
+            0,
+            200
+          )}...
+          
+          Use this to tailor your empathy. For example, if Depression is high, be extra gentle and validating.
+        `;
+      }
+
+      // 3. Call Gemini API
+      const response = await fetch(
+        `${baseUrl}/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: systemPrompt + "\n\nUser: " + message }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 500,
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Quota exceeded. Please try again later.");
+        }
+        throw new Error(`Gemini API Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const aiResponseText =
+        data.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "Maaf, aku tidak bisa menjawab sekarang.";
+
+      // 4. Save to Firestore (Async - don't block UI too long, but we await to ensure data integrity)
+      // Save User Message
+      await api.saveChat({
+        firebase_uid: firebaseUid,
+        message: message,
+        sender: "user",
+        created_at: new Date(), // Client side timestamp, serverTimestamp used in saveChat implementation
+      });
+
+      // Save AI Message
+      await api.saveChat({
+        firebase_uid: firebaseUid,
+        message: aiResponseText,
+        sender: "ai",
+        created_at: new Date(),
+      });
+
+      return aiResponseText;
+    } catch (error) {
+      console.error("Chat With AI Error:", error);
+      if (error.message.includes("Quota exceeded")) {
+        throw new Error(
+          "Maaf, Neo sedang istirahat sebentar (Limit API). Coba 1 menit lagi ya! 😴"
+        );
+      }
+      throw error;
     }
   },
 };

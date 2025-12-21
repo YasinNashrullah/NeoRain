@@ -249,7 +249,8 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
     } catch (error) {
       console.error("Chat Error", error);
-      setMessages((prev) => [...prev, { id: Date.now(), text: "Maaf, Neo sedang pusing 😵. Coba lagi ya.", sender: 'ai', time: 'Now' }]);
+      const errorMessage = error.message.includes("Maaf") ? error.message : "Maaf, Neo sedang pusing 😵. Coba lagi ya.";
+      setMessages((prev) => [...prev, { id: Date.now(), text: errorMessage, sender: 'ai', time: 'Now' }]);
     } finally {
       setIsTyping(false);
       scrollToBottom();
@@ -271,7 +272,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     for (const [mood, words] of Object.entries(keywords)) {
       if (words.some(w => text.includes(w))) return mood;
     }
-    return null; 
+    return null;
   };
 
   const scrollToBottom = () => {
@@ -289,7 +290,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
         style={{
           background: currentStyle.bgGradientLight,
-          opacity: 1 
+          opacity: 1
         }}
       />
       <div

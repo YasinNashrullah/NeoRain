@@ -157,7 +157,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
         const saveData = async () => {
             const dataToSave = {
                 score,
-                streak, // Persist current streak (modified by Home, read-only here)
+                streak,
                 completedIndices,
                 achievements
             };

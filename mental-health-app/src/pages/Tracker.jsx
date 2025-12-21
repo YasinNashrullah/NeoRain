@@ -16,13 +16,13 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   // state data
-  const [historyLogs, setHistoryLogs] = useState([]); 
-  const [weeklyLogs, setWeeklyLogs] = useState([]);   
-  const [statsData, setStatsData] = useState(null);   
-  const [statsRange, setStatsRange] = useState('monthly'); 
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [weeklyLogs, setWeeklyLogs] = useState([]);
+  const [statsData, setStatsData] = useState(null);
+  const [statsRange, setStatsRange] = useState('monthly');
 
   // state calendar & filter
-  const [currentDate, setCurrentDate] = useState(new Date()); 
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [dateRange, setDateRange] = useState({ start: null, end: null });
 
   // config mood

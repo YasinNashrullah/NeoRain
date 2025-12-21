@@ -43,11 +43,10 @@ const Analyze = ({ userData, onFinish }) => {
 
   const handleAnswer = (val) => {
     setAnswers({ ...answers, [questions[currentQ].id]: val });
-    if (currentQ < questions.length - 1) {
-      setTimeout(() => setCurrentQ(currentQ + 1), 200);
-    } else {
-      finishQuiz();
-    }
+    // Auto-advance removed to favor manual "Lanjut" button for better control
+    // if (currentQ < questions.length - 1) {
+    //   setTimeout(() => setCurrentQ(currentQ + 1), 200);
+    // }
   };
 
   // fungsi utama hitung skor panggil ai
@@ -208,11 +207,11 @@ const Analyze = ({ userData, onFinish }) => {
   };
 
   return (
-    <div className="w-full h-full bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] dark:bg-none dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col relative overflow-hidden">
+    <div className="pb-0 w-full h-full bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] dark:bg-none dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col relative overflow-hidden">
       {/* background glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
 
-      <div className="flex-1 w-full overflow-y-auto relative z-10">
+      <div className="flex-1 w-full overflow-y-auto relative z-10 pb-32">
         <div className="min-h-full flex flex-col items-center justify-center p-6">
           <AnimatePresence mode='wait'>
             {/* intro screen */}
@@ -270,20 +269,55 @@ const Analyze = ({ userData, onFinish }) => {
                 </div>
 
                 {/* options */}
-                <div className="grid gap-4">
+                {/* options */}
+                <div className="grid gap-4 mb-8">
                   {options.map((opt) => (
                     <button
                       key={opt.val}
                       onClick={() => handleAnswer(opt.val)}
-                      className="w-full p-5 rounded-2xl bg-white/60 dark:bg-slate-900 border border-white/40 dark:border-white/10 hover:bg-purple-600 dark:hover:bg-purple-600 hover:border-purple-500 hover:text-white transition-all group text-left flex items-center justify-between shadow-sm"
+                      className={`w-full p-5 rounded-2xl border transition-all group text-left flex items-center justify-between shadow-sm
+                        ${answers[questions[currentQ].id] === opt.val
+                          ? 'bg-purple-600 border-purple-500 text-white'
+                          : 'bg-white/60 dark:bg-slate-900 border-white/40 dark:border-white/10 hover:bg-purple-50 dark:hover:bg-slate-800 hover:border-purple-300'
+                        }`}
                     >
                       <div>
-                        <div className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-white transition-colors">{opt.label}</div>
-                        <div className="text-sm text-slate-500 dark:text-slate-500 group-hover:text-purple-100 transition-colors">{opt.desc}</div>
+                        <div className={`font-bold text-lg transition-colors ${answers[questions[currentQ].id] === opt.val ? 'text-white' : 'text-slate-800 dark:text-white'}`}>{opt.label}</div>
+                        <div className={`text-sm transition-colors ${answers[questions[currentQ].id] === opt.val ? 'text-purple-100' : 'text-slate-500 dark:text-slate-500'}`}>{opt.desc}</div>
                       </div>
-                      <div className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 group-hover:border-white group-hover:bg-white/20 transition-all"></div>
+                      <div className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center
+                        ${answers[questions[currentQ].id] === opt.val
+                          ? 'border-white bg-white/20'
+                          : 'border-slate-300 dark:border-slate-600'
+                        }`}>
+                        {answers[questions[currentQ].id] === opt.val && <div className="w-3 h-3 bg-white rounded-full" />}
+                      </div>
                     </button>
                   ))}
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => currentQ > 0 && setCurrentQ(currentQ - 1)}
+                    disabled={currentQ === 0}
+                    className="flex-1 py-4 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-white/50 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    Kembali
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (currentQ < questions.length - 1) {
+                        setCurrentQ(currentQ + 1);
+                      } else {
+                        finishQuiz();
+                      }
+                    }}
+                    disabled={answers[questions[currentQ].id] === undefined}
+                    className="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/30"
+                  >
+                    {currentQ === questions.length - 1 ? 'Selesai' : 'Lanjut'}
+                  </button>
                 </div>
               </motion.div>
             )}

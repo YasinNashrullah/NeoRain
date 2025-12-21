@@ -60,7 +60,7 @@ const itemVars = {
   visible: { opacity: 1, y: 0 }
 };
 
-const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNavigate, lastAssessment }) => {
+const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNavigate, onVerifyHistory, lastAssessment }) => {
   const [timeGreeting, setTimeGreeting] = useState('Pagi');
   const [streak, setStreak] = useState(0);
   const [isPlayingRain, setIsPlayingRain] = useState(false);
@@ -123,10 +123,11 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
   const isNegativeMood = ['angry', 'sad'].includes(displayMood);
   const recTitle = isNegativeMood ? "Butuh Teman Cerita?" : "Jaga Kesehatan Mentalmu";
   const recDesc = isNegativeMood
-    ? "Perasaanmu valid. Jangan dipendam sendiri. Ceritakan pada AI sekarang."
+    ? "Perasaanmu valid. Jangan dipendam sendiri. Cek kondisimu sekarang."
     : "Lakukan pengecekan rutin untuk mengetahui kondisi mentalmu saat ini.";
-  const recBtnText = isNegativeMood ? "Cerita ke AI" : "Mulai Analisis";
-  const recAction = isNegativeMood ? () => onNavigate('chat') : onStartAnalysis;
+
+  const recBtnText = "Mulai Analisis";
+  const recAction = onStartAnalysis;
 
   const selectedQuote = useMemo(() => {
     const moodQuotes = quotesData[displayMood] || quotesData.calm;
@@ -277,7 +278,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
 
         {/* last statistics */}
         {lastAssessment && (
-          <motion.div variants={itemVars} className={`md:col-span-2 lg:col-span-1 ${cardBaseStyle} flex items-center justify-between ${hoverCardStyle} hover:border-slate-300 dark:hover:border-white/20`} onClick={() => onNavigate('stats')}>
+          <motion.div variants={itemVars} className={`md:col-span-2 lg:col-span-1 ${cardBaseStyle} flex items-center justify-between ${hoverCardStyle} hover:border-slate-300 dark:hover:border-white/20`} onClick={onVerifyHistory}>
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400">
                 <Activity className="w-6 h-6" />
