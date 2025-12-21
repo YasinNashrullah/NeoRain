@@ -32,12 +32,12 @@ const DailyTab = ({
                         </h2>
 
                         {/* container scroll */}
-                        <div className="flex gap-4 overflow-x-auto py-4 pb-4 -mx-6 px-6 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        <div className="flex gap-2 overflow-x-auto py-4 pb-4 -mx-6 px-6 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {moods.map((m) => (
                                 <button
                                     key={m.id}
                                     onClick={() => setSelectedMood(m.id)}
-                                    className={`relative flex-1 min-w-[80px] mx-2 my-2 flex flex-col items-center justify-center gap-3 py-4 rounded-2xl border transition-all duration-300 group ${selectedMood === m.id
+                                    className={`relative flex-1 min-w-[85px] mx-1 my-2 flex flex-col items-center justify-center gap-3 py-4 rounded-2xl border transition-all duration-300 group ${selectedMood === m.id
                                         ? `${m.bg} ${m.border} shadow-md scale-105`
                                         : 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:scale-[1.02]'
                                         }`}

@@ -15,17 +15,17 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   const [note, setNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // --- STATE DATA ---
-  const [historyLogs, setHistoryLogs] = useState([]); // Data Harian
-  const [weeklyLogs, setWeeklyLogs] = useState([]);   // Data Mingguan
-  const [statsData, setStatsData] = useState(null);   // Data Statistik
-  const [statsRange, setStatsRange] = useState('monthly'); // daily, weekly, monthly
+  // state data
+  const [historyLogs, setHistoryLogs] = useState([]); 
+  const [weeklyLogs, setWeeklyLogs] = useState([]);   
+  const [statsData, setStatsData] = useState(null);   
+  const [statsRange, setStatsRange] = useState('monthly'); 
 
-  // --- STATE CALENDAR & FILTER ---
-  const [currentDate, setCurrentDate] = useState(new Date()); // Bulan yang dilihat
-  const [dateRange, setDateRange] = useState({ start: null, end: null }); // Range Filter
+  // state calendar & filter
+  const [currentDate, setCurrentDate] = useState(new Date()); 
+  const [dateRange, setDateRange] = useState({ start: null, end: null });
 
-  // Config Mood (Matched with Home.jsx for consistency)
+  // config mood
   const moods = [
     { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50', score: 5 },
     { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50', score: 3 },
@@ -34,7 +34,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50', score: 2 },
   ];
 
-  // --- FETCH DATA ---
+  // fetch data
   const fetchData = async () => {
     if (userData?.uid) {
       const allData = await api.getMoods(userData.uid);
@@ -56,7 +56,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   };
 
   const calculateFrontendStats = (logs, range) => {
-    // Simple fallback: use last 30 logs for trend
+    // Simple fallback use last 30 logs for trend
     const sortedLogs = [...logs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     const recentLogs = sortedLogs.slice(-30); // Last 30 entries
 
@@ -87,7 +87,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       };
     });
 
-    // --- Wellness Score Calculation ---
+    // Wellness Score Calculation
     const moodScore = (parseFloat(avg) / 5) * 60;
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -96,10 +96,10 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     const consistencyScore = Math.min((uniqueDays / 5) * 40, 40);
     const wellnessScore = Math.round(moodScore + consistencyScore);
 
-    // --- Smart Insights (Strictly 3 Useful Ones, No Emojis) ---
+    // Smart Insights (Strictly 3 Useful Ones, No Emojis)
     const insights = [];
 
-    // 1. Streak (Consistency)
+    // Streak (Consistency)
     let streak = 0;
     const today = new Date().setHours(0, 0, 0, 0);
     const logDates = new Set(logs.map(l => new Date(l.created_at).setHours(0, 0, 0, 0)));
@@ -117,7 +117,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       bg: streak > 0 ? 'bg-orange-500/10' : 'bg-slate-500/10'
     });
 
-    // 2. Stability (Mental Health Indicator)
+    // Stability (Mental Health Indicator)
     if (recentLogs.length >= 3) {
       const scores = recentLogs.map(l => moods.find(m => m.id === l.mood)?.score || 3);
       const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
@@ -130,7 +130,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       insights.push({ icon: 'Activity', text: "Track more for stability", color: 'text-slate-400', bg: 'bg-slate-500/10' });
     }
 
-    // 3. Trend (Progress)
+    // Trend (Progress)
     if (recentLogs.length >= 2) {
       const currentAvg = recentLogs.slice(-3).reduce((acc, l) => acc + (moods.find(m => m.id === l.mood)?.score || 3), 0) / Math.min(recentLogs.length, 3);
       const prevAvg = recentLogs.length >= 6 ? recentLogs.slice(-6, -3).reduce((acc, l) => acc + (moods.find(m => m.id === l.mood)?.score || 3), 0) / 3 : currentAvg;
@@ -162,7 +162,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     }
   }, [statsRange, activeTab]);
 
-  // --- SAVE MOOD ---
+  // save mood
   const handleSaveMood = async () => {
     if (!selectedMood) return alert("Pilih mood dulu ya!");
     setIsSaving(true);
@@ -186,7 +186,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     }
   };
 
-  // --- HELPERS ---
+  // helpers
   const getMoodConfig = (moodId) => moods.find(m => m.id === moodId) || moods[0];
 
   const formatTime = (isoString) => {
@@ -321,8 +321,8 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       </div>
 
       {/* Container */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-24 scrollbar-hide relative z-10">
-        <div className="max-w-6xl mx-auto h-full">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 md:pb-6 scrollbar-hide relative z-10">
+        <div className="max-w-6xl mx-auto min-h-full">
 
           <AnimatePresence mode='wait'>
 

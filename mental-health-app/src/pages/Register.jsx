@@ -44,22 +44,22 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen w-full bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] dark:bg-none dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
 
-      {/* --- PAGE BACKGROUND (Global) --- */}
+      {/* page background global */}
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(219,39,119,0.15)_0%,_transparent_70%)] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(79,70,229,0.15)_0%,_transparent_70%)] pointer-events-none"></div>
 
-      {/* --- CENTERED CARD --- */}
+      {/* centered registration card container */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-5xl bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10"
+        className="w-full max-w-5xl bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10"
       >
 
-        {/* --- LEFT SIDE (VISUAL) --- */}
-        <div className="hidden md:flex w-1/2 bg-slate-900/50 relative items-center justify-center p-12 border-r border-white/5 overflow-hidden">
+        {/* left side visual */}
+        <div className="hidden md:flex w-1/2 bg-pink-50/20 dark:bg-slate-900/50 relative items-center justify-center p-12 border-r border-white/20 dark:border-white/5 overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(236,72,153,0.1)_0%,_transparent_70%)]"></div>
 
           <div className="relative z-10 text-center">
@@ -71,27 +71,27 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               <div className="w-20 h-20 bg-gradient-to-tr from-pink-500 to-rose-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-pink-500/20">
                 <Sparkles className="w-10 h-10 text-white" />
               </div>
-              <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Bergabunglah</h1>
-              <p className="text-slate-400 text-lg leading-relaxed max-w-xs mx-auto">
+              <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-3 tracking-tight">Bergabunglah</h1>
+              <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed max-w-xs mx-auto">
                 Langkah pertama menuju kedamaian pikiran dimulai dari sini.
               </p>
             </motion.div>
           </div>
         </div>
 
-        {/* --- RIGHT SIDE (FORM) --- */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 bg-slate-950/40">
+        {/* right side form */}
+        <div className="w-full md:w-1/2 p-8 md:p-12 bg-white/30 dark:bg-slate-950/40">
           <div className="max-w-sm mx-auto">
             <div className="text-center md:text-left mb-10">
-              <h2 className="text-2xl font-bold text-white mb-2">Buat Akun Baru</h2>
-              <p className="text-slate-400 text-sm">Isi data diri untuk mendaftar sebagai mahasiswa.</p>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Buat Akun Baru</h2>
+              <p className="text-slate-600 dark:text-slate-400 text-sm">Isi data diri untuk mendaftar sebagai mahasiswa.</p>
             </div>
 
             {error && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-xl mb-6 text-xs flex items-center gap-2"
+                className="bg-red-500/10 border border-red-500/50 text-red-600 dark:text-red-400 p-3 rounded-xl mb-6 text-xs flex items-center gap-2"
               >
                 <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
               </motion.div>
@@ -100,13 +100,13 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
             <form onSubmit={handleRegister} className="space-y-4">
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Nama Lengkap</label>
-                <div className="bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-slate-900 transition-all group">
-                  <User className="w-4 h-4 text-slate-500 group-focus-within:text-pink-400 transition-colors" />
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">Nama Lengkap</label>
+                <div className="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all group">
+                  <User className="w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-pink-500 dark:group-focus-within:text-pink-400 transition-colors" />
                   <input
                     type="text"
                     placeholder="Nama Kamu"
-                    className="bg-transparent w-full text-white placeholder-slate-600 focus:outline-none text-sm"
+                    className="bg-transparent w-full text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none text-sm"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -115,13 +115,13 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Email</label>
-                <div className="bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-slate-900 transition-all group">
-                  <Mail className="w-4 h-4 text-slate-500 group-focus-within:text-pink-400 transition-colors" />
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">Email</label>
+                <div className="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all group">
+                  <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-pink-500 dark:group-focus-within:text-pink-400 transition-colors" />
                   <input
                     type="email"
                     placeholder="nama@email.com"
-                    className="bg-transparent w-full text-white placeholder-slate-600 focus:outline-none text-sm"
+                    className="bg-transparent w-full text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none text-sm"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -130,13 +130,13 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase tracking-wider">Password</label>
-                <div className="bg-slate-900/50 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-slate-900 transition-all group">
-                  <Lock className="w-4 h-4 text-slate-500 group-focus-within:text-pink-400 transition-colors" />
+                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">Password</label>
+                <div className="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all group">
+                  <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-pink-500 dark:group-focus-within:text-pink-400 transition-colors" />
                   <input
                     type="password"
                     placeholder="Min. 6 Karakter"
-                    className="bg-transparent w-full text-white placeholder-slate-600 focus:outline-none text-sm"
+                    className="bg-transparent w-full text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none text-sm"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -154,8 +154,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               </button>
             </form>
 
-            <p className="text-center text-slate-400 text-xs mt-8">
-              Sudah punya akun? <button onClick={onSwitchToLogin} className="text-pink-400 font-bold hover:text-pink-300 transition-colors">Masuk</button>
+            <p className="text-center text-slate-500 dark:text-slate-400 text-xs mt-8">
+              Sudah punya akun? <button onClick={onSwitchToLogin} className="text-pink-600 dark:text-pink-400 font-bold hover:text-pink-500 dark:hover:text-pink-300 transition-colors">Masuk</button>
             </p>
           </div>
         </div>

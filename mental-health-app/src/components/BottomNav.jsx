@@ -1,18 +1,18 @@
 import React from 'react';
-import { Home, CalendarDays, BarChart2, User, MessageCircle, Sun, Moon } from 'lucide-react';
+import { Home, Heart, MessageCircle, Target, User, Sun, Moon } from 'lucide-react';
 
 const BottomNav = ({ activeTab, setActiveTab, theme, toggleTheme }) => {
   const navItems = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'tracker', icon: CalendarDays, label: 'Tracker' },
-    { id: 'stats', icon: BarChart2, label: 'Stats' },
+    { id: 'tracker', icon: Heart, label: 'Tracker' },
+    { id: 'action-plan', icon: Target, label: 'Plan' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
 
   return (
     <div className="absolute bottom-0 w-full z-50">
 
-      {/* Floating Theme Toggle (Mobile Only) */}
+      {/* floating theme toggle mobile only */}
       <button
         onClick={toggleTheme}
         className="absolute bottom-24 right-4 z-[60] p-3 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg active:scale-95 transition-all duration-300"
@@ -26,10 +26,11 @@ const BottomNav = ({ activeTab, setActiveTab, theme, toggleTheme }) => {
       </button>
 
       {/* Background Bar */}
-      <div className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 px-6 py-4 flex justify-between items-center rounded-t-3xl relative shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors duration-500">
+      <div className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 px-6 py-4 flex justify-between items-center rounded-t-3xl relative shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors duration-500 pb-6">
 
         {navItems.map((item) => {
-          if (item.id === 'stats') {
+          // gap for floating button before action plan
+          if (item.id === 'action-plan') {
             return (
               <React.Fragment key={item.id}>
                 <div className="w-12"></div>
@@ -42,6 +43,7 @@ const BottomNav = ({ activeTab, setActiveTab, theme, toggleTheme }) => {
 
       </div>
 
+      {/* Floating Center Chat Button */}
       <div className="absolute left-1/2 -translate-x-1/2 -top-6 z-[60]">
         <button
           onClick={() => setActiveTab('chat')}
@@ -65,24 +67,24 @@ const NavBtn = ({ item, activeTab, setActiveTab }) => {
   return (
     <button
       onClick={() => setActiveTab(item.id)}
-      className="relative flex items-center justify-center w-12 h-12 group touch-manipulation"
+      className="relative flex flex-col items-center justify-center w-14 h-14 group touch-manipulation"
     >
-      {/* Active Background Glow */}
+      {/* active background glow */}
       <div
         className={`absolute inset-0 rounded-2xl transition-all duration-500 ease-out ${isActive
-            ? 'opacity-100 bg-indigo-50/80 dark:bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.4)] border border-indigo-100 dark:border-indigo-500/30 scale-100'
-            : 'opacity-0 scale-75'
+          ? 'opacity-100 bg-indigo-50/80 dark:bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.4)] border border-indigo-100 dark:border-indigo-500/30 scale-100'
+          : 'opacity-0 scale-50'
           }`}
       />
 
       {/* Icon Container */}
-      <div className={`relative z-10 transition-all duration-300 transform ${isActive ? 'scale-110 -translate-y-0.5' : 'group-active:scale-95'}`}>
+      <div className={`relative z-10 transition-all duration-300 transform flex flex-col items-center gap-1 ${isActive ? '-translate-y-1' : 'group-active:scale-95'}`}>
         <item.icon
           className={`w-6 h-6 transition-all duration-300 ${isActive
-              ? 'text-indigo-600 dark:text-indigo-300 fill-indigo-200/50 dark:fill-indigo-400/20 filter drop-shadow-[0_2px_4px_rgba(99,102,241,0.3)]'
-              : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
+            ? 'text-indigo-600 dark:text-indigo-300 fill-indigo-200/50 dark:fill-indigo-400/20 filter drop-shadow-[0_2px_4px_rgba(99,102,241,0.3)]'
+            : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'
             }`}
-          strokeWidth={isActive ? 2 : 1.5}
+          strokeWidth={isActive ? 2.5 : 1.5}
         />
 
         {/* Active Dot Indicator */}

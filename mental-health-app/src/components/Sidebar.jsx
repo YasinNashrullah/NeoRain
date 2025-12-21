@@ -6,7 +6,7 @@ import {
   Sun, Moon
 } from 'lucide-react';
 
-// data statis
+// static data
 const menuItems = [
   { id: 'home', label: 'Dashboard', icon: Home },
   { id: 'tracker', label: 'Mood Tracker', icon: Heart },
@@ -21,7 +21,7 @@ const smoothTransition = {
   damping: 20
 };
 
-// background animasi
+// animated background
 const BackgroundBlobs = React.memo(() => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
     <motion.div
@@ -59,7 +59,7 @@ const BackgroundBlobs = React.memo(() => (
 // component utama
 const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleTheme }) => {
 
-  // Memoize URL gambar agar tidak dihitung ulang tiap render
+  // memoize profile image url
   const profileImage = useMemo(() => {
     return userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData?.name || 'User'}`;
   }, [userData?.photo_url, userData?.name]);
@@ -70,7 +70,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
       bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] border-none
     `}>
 
-      {/* Render Background Terpisah */}
+      {/* render separated background */}
       <div className="dark:block hidden">
         <BackgroundBlobs />
       </div>
@@ -78,7 +78,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
       {/* Container */}
       <div className="relative z-10 flex flex-col h-full px-5 py-6">
 
-        {/* Logo */}
+        {/* logo */}
         <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: -20 }}
@@ -109,10 +109,10 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
           </div>
         </motion.div>
 
-        {/* Navigation List - Includes Analysis Button for smooth transition sharing */}
+        {/* navigation list with analysis button */}
         <div className="flex-1 overflow-y-auto space-y-2 px-2 scrollbar-hide">
 
-          {/* Analysis AI Button - Moved here for shared layout context */}
+          {/* analysis AI button */}
           <motion.div
             className="mb-6 relative"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -296,7 +296,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
           })}
         </div>
 
-        {/* Theme Toggle & Profile */}
+        {/* theme toggle and profile */}
         <div className="mt-6 pt-6 border-t dark:border-purple-500/10 border-white/20">
 
           {/* Toggle Theme */}

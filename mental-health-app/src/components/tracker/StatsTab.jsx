@@ -19,9 +19,9 @@ const StatsTab = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:pb-0 pb-0"
         >
-            {/* Top Row: Controls, Wellness, Chat */}
+            {/* top row controls wellness chat */}
             <div className="lg:col-span-4 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 flex flex-col items-center justify-center text-center shadow-sm dark:shadow-none">
                 <div className="w-full">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1">Mood Stats</h3>
@@ -70,7 +70,7 @@ const StatsTab = ({
                 </button>
             </div>
 
-            {/* Middle Row: Chart */}
+            {/* middle row chart */}
             <div className="lg:col-span-12 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 min-h-[300px] shadow-sm dark:shadow-none">
                 <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-6">Statistics</h3>
                 <div className="w-full" style={{ minHeight: '250px' }}>
@@ -102,7 +102,7 @@ const StatsTab = ({
                 </div>
             </div>
 
-            {/* Smart Insights Section */}
+            {/* smart Insights section */}
             {statsData?.insights?.length > 0 && (
                 <div className="lg:col-span-12 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-none">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
@@ -128,7 +128,7 @@ const StatsTab = ({
                 </div>
             )}
 
-            {/* Bottom Row: KPI Cards */}
+            {/* Bottom Row KPI Cards */}
             <div className="lg:col-span-4 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 flex flex-col justify-between h-[180px] shadow-sm dark:shadow-none">
                 <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 mb-2">
                     <span className="text-xs font-bold uppercase">Average Mood</span>

@@ -157,7 +157,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full h-full text-white pb-24"
+            className="w-full min-h-full text-white"
         >
             <div className="space-y-6">
                 {/* Layout */}
@@ -352,7 +352,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* Detail: Action Plan & Insight */}
+                    {/* Detail Action Plan & Insight */}
                     <div className="order-5 lg:col-span-8 lg:order-4 space-y-6">
                         <AnimatePresence mode='wait'>
                             {selectedAssessment && (

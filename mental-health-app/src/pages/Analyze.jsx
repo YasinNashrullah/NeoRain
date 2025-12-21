@@ -4,7 +4,7 @@ import { ChevronRight, CheckCircle, AlertCircle, BrainCircuit } from 'lucide-rea
 import { api } from '../utils/api';
 import { config } from '../utils/config';
 
-// --- DATA PERTANYAAN (DASS-21) ---
+// data pertanyaan dass-21
 const questions = [
   { id: 1, type: 'S', text: "Saya merasa susah untuk beristirahat" },
   { id: 2, type: 'A', text: "Saya merasa mulut saya kering" },
@@ -50,11 +50,11 @@ const Analyze = ({ userData, onFinish }) => {
     }
   };
 
-  // --- FUNGSI UTAMA: HITUNG SKOR & PANGGIL AI ---
+  // fungsi utama hitung skor panggil ai
   const finishQuiz = async () => {
     setStep('processing');
 
-    // 1. Hitung Skor Manual (DASS-21)
+    // hitung skor manual dass-21
     let d = 0, a = 0, s = 0;
     questions.forEach(q => {
       const val = answers[q.id] || 0;
@@ -63,7 +63,7 @@ const Analyze = ({ userData, onFinish }) => {
       if (q.type === 'S') s += val;
     });
 
-    // Skor DASS-21 dikali 2 untuk menyamai DASS-42
+    // skor dass-21 dikali 2 untuk menyamai dass-42
     const scores = { depression: d * 2, anxiety: a * 2, stress: s * 2 };
 
     try {
@@ -73,7 +73,7 @@ const Analyze = ({ userData, onFinish }) => {
         throw new Error("API Key (VITE_GEMINI_API_KEY) missing. Please add it to .env");
       }
 
-      // 1b. Fetch Contextual Data (Moods & Gamification)
+      // fetch contextual data moods gamification
       let moodContext = "Belum ada data mood.";
       let streakContext = "Belum ada streak.";
 
@@ -84,13 +84,13 @@ const Analyze = ({ userData, onFinish }) => {
             api.getGamification(userData.uid)
           ]);
 
-          // Process Moods (Last 7 days)
+          // process moods last 7 days
           if (moods && moods.length > 0) {
             const recentMoods = moods.slice(0, 10).map(m => m.mood).join(", ");
             moodContext = `Riwayat Mood Terakhir: ${recentMoods}`;
           }
 
-          // Process Gamification
+          // process gamification
           if (gamification) {
             streakContext = `Streak saat ini: ${gamification.streak || 0} hari.`;
           }
@@ -122,7 +122,7 @@ const Analyze = ({ userData, onFinish }) => {
         }
       `;
 
-      // 2. Request ke Google Gemini API
+      // request ke google gemini api
       const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
         method: "POST",
         headers: {
@@ -155,12 +155,12 @@ const Analyze = ({ userData, onFinish }) => {
 
       let aiAnalysis;
       try {
-        // Clean markdown code blocks if present (common in Gemini responses)
+        // clean markdown code blocks if present
         const cleanText = rawText.replace(/```json|```/g, '').trim();
         aiAnalysis = JSON.parse(cleanText);
       } catch (e) {
         console.error("JSON Parse Error:", e);
-        // Fallback (Rare with Native JSON)
+        // fallback rare with native json
         aiAnalysis = {
           summary: "Analisis selesai. Skor kamu telah direkam.",
           factors: "Tidak dapat memuat detail faktor saat ini.",
@@ -169,7 +169,7 @@ const Analyze = ({ userData, onFinish }) => {
         };
       }
 
-      // 4. Simpan ke Firestore
+      // simpan ke firestore
       const payload = {
         firebase_uid: userData?.uid,
         depression_score: scores.depression,
@@ -183,7 +183,7 @@ const Analyze = ({ userData, onFinish }) => {
         throw new Error("Gagal menyimpan data ke server via API.");
       }
 
-      // 5. (Opsional) Simpan juga ke Chat agar muncul di Riwayat Chat
+      // opsional simpan juga ke chat agar muncul di riwayat chat
       try {
         await api.saveChat({
           firebase_uid: userData?.uid,
@@ -195,7 +195,7 @@ const Analyze = ({ userData, onFinish }) => {
         console.warn("Gagal auto-save ke chat (non-critical):", chatError);
       }
 
-      // 6. Selesai & Pindah Halaman
+      // selesai pindah halaman
       setTimeout(() => {
         onFinish();
       }, 1000);
@@ -203,19 +203,19 @@ const Analyze = ({ userData, onFinish }) => {
     } catch (error) {
       console.error("CRITICAL ERROR:", error);
       alert(`Gagal memproses: ${error.message}. Cek Console untuk detail.`);
-      setStep('intro'); // Reset ke awal agar user bisa coba lagi
+      setStep('intro');
     }
   };
 
   return (
-    <div className="w-full h-full bg-slate-950 text-white flex flex-col relative overflow-hidden">
-      {/* Background Glow */}
+    <div className="w-full h-full bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] dark:bg-none dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col relative overflow-hidden">
+      {/* background glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
 
       <div className="flex-1 w-full overflow-y-auto relative z-10">
         <div className="min-h-full flex flex-col items-center justify-center p-6">
           <AnimatePresence mode='wait'>
-            {/* 1. INTRO SCREEN */}
+            {/* intro screen */}
             {step === 'intro' && (
               <motion.div
                 key="intro"
@@ -227,20 +227,20 @@ const Analyze = ({ userData, onFinish }) => {
                 <div className="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-500/30">
                   <CheckCircle className="w-10 h-10 text-white" />
                 </div>
-                <h1 className="text-3xl font-bold mb-4">Cek Kesehatan Mentalmu</h1>
-                <p className="text-slate-400 mb-8 leading-relaxed">
+                <h1 className="text-3xl font-bold mb-4 text-slate-800 dark:text-white">Cek Kesehatan Mentalmu</h1>
+                <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
                   Kuesioner ini menggunakan metode <strong>DASS-21</strong> dibantu <strong>AI</strong> untuk memberikan saran yang personal.
                 </p>
                 <button
                   onClick={() => setStep('quiz')}
-                  className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2 mx-auto"
+                  className="bg-white dark:bg-white text-indigo-600 dark:text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-indigo-50 dark:hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2 mx-auto shadow-lg shadow-indigo-500/10"
                 >
                   Mulai Tes <ChevronRight className="w-5 h-5" />
                 </button>
               </motion.div>
             )}
 
-            {/* 2. QUIZ SCREEN */}
+            {/* quiz screen */}
             {step === 'quiz' && (
               <motion.div
                 key="quiz"
@@ -248,13 +248,13 @@ const Analyze = ({ userData, onFinish }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                {/* Progress Bar */}
+                {/* progress bar */}
                 <div className="mb-8">
-                  <div className="flex justify-between text-xs text-slate-400 mb-2">
+                  <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-2">
                     <span>Pertanyaan {currentQ + 1}</span>
                     <span>dari {questions.length}</span>
                   </div>
-                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div className="h-2 bg-white/50 dark:bg-slate-800 rounded-full overflow-hidden border border-white/20 dark:border-transparent">
                     <motion.div
                       className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
                       animate={{ width: `${((currentQ + 1) / questions.length) * 100}%` }}
@@ -262,33 +262,33 @@ const Analyze = ({ userData, onFinish }) => {
                   </div>
                 </div>
 
-                {/* Question Card */}
+                {/* question card */}
                 <div className="min-h-[120px] mb-8 flex items-center justify-center text-center">
-                  <h2 className="text-2xl md:text-3xl font-bold leading-snug">
+                  <h2 className="text-2xl md:text-3xl font-bold leading-snug text-slate-800 dark:text-white">
                     {questions[currentQ].text}
                   </h2>
                 </div>
 
-                {/* Options */}
+                {/* options */}
                 <div className="grid gap-4">
                   {options.map((opt) => (
                     <button
                       key={opt.val}
                       onClick={() => handleAnswer(opt.val)}
-                      className="w-full p-5 rounded-2xl bg-slate-900 border border-white/10 hover:bg-purple-600 hover:border-purple-500 transition-all group text-left flex items-center justify-between"
+                      className="w-full p-5 rounded-2xl bg-white/60 dark:bg-slate-900 border border-white/40 dark:border-white/10 hover:bg-purple-600 dark:hover:bg-purple-600 hover:border-purple-500 hover:text-white transition-all group text-left flex items-center justify-between shadow-sm"
                     >
                       <div>
-                        <div className="font-bold text-lg text-white group-hover:text-white">{opt.label}</div>
-                        <div className="text-sm text-slate-500 group-hover:text-purple-200">{opt.desc}</div>
+                        <div className="font-bold text-lg text-slate-800 dark:text-white group-hover:text-white transition-colors">{opt.label}</div>
+                        <div className="text-sm text-slate-500 dark:text-slate-500 group-hover:text-purple-100 transition-colors">{opt.desc}</div>
                       </div>
-                      <div className="w-6 h-6 rounded-full border-2 border-slate-600 group-hover:border-white group-hover:bg-white/20"></div>
+                      <div className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 group-hover:border-white group-hover:bg-white/20 transition-all"></div>
                     </button>
                   ))}
                 </div>
               </motion.div>
             )}
 
-            {/* 3. PROCESSING SCREEN */}
+            {/* processing screen */}
             {step === 'processing' && (
               <motion.div
                 key="processing"
@@ -297,12 +297,12 @@ const Analyze = ({ userData, onFinish }) => {
                 className="text-center"
               >
                 <div className="relative w-24 h-24 mx-auto mb-6">
-                  <div className="absolute inset-0 border-4 border-slate-800 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-white/30 dark:border-slate-800 rounded-full"></div>
                   <div className="absolute inset-0 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                  <BrainCircuit className="absolute inset-0 m-auto w-10 h-10 text-purple-400 animate-pulse" />
+                  <BrainCircuit className="absolute inset-0 m-auto w-10 h-10 text-purple-600 dark:text-purple-400 animate-pulse" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2">AI Sedang Menganalisa...</h2>
-                <p className="text-slate-400">Menyusun laporan kesehatan mentalmu.</p>
+                <h2 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white">AI Sedang Menganalisa...</h2>
+                <p className="text-slate-500 dark:text-slate-400">Menyusun laporan kesehatan mentalmu.</p>
               </motion.div>
             )}
           </AnimatePresence>

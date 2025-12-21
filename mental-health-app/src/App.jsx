@@ -44,7 +44,7 @@ const App = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- EFFECTS ---
+  // Effects
 
   // Toggle Theme
   const toggleTheme = () => {
@@ -79,7 +79,7 @@ const App = () => {
   const refreshUserData = async (uid) => {
     try {
       const dbUser = await api.getUserDetail(uid);
-      console.log("DEBUG: dbUser from Firestore:", dbUser); // Debugging
+      // console.log("DEBUG: dbUser from Firestore:", dbUser); // Debugging
       if (dbUser) {
         setUserData((prev) => ({
           ...prev,
@@ -95,7 +95,7 @@ const App = () => {
     }
   };
 
-  // 3. Auth Listener & Initial Data Fetch
+  // Auth Listener & Initial Data Fetch
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
@@ -116,7 +116,7 @@ const App = () => {
           email: currentUser.email
         });
 
-        // Ambil Data Lengkap dari Firestore (Prioritas Nama dari DB)
+        // Ambil Data Lengkap dari Firestore
         await refreshUserData(currentUser.uid);
 
         // Ambil Assessment Terakhir
@@ -130,7 +130,7 @@ const App = () => {
         }
 
       } else {
-        // Reset State saat Logout (PENTING)
+        // Reset State saat Logout
         setUser(null);
         setUserData(null);
         setMessages([]);
@@ -141,7 +141,7 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  // --- HANDLERS ---
+  // handlers
 
   const handleAuthSuccess = (data) => {
     setUserData(data);
@@ -156,7 +156,7 @@ const App = () => {
     setUserData(null);
     setChatContext(null);
 
-    // Reset Persistence (PENTING AGAR DATA TIDAK BOCOR KE USER LAIN)
+    // Reset Persistence
     setMessages([]);
     setCurrentMood('default');
 
@@ -176,7 +176,7 @@ const App = () => {
 
   const handleStartAnalysis = () => setActiveTab('analyze');
 
-  // --- RENDER ---
+  // render
 
   if (loading) return <div className="fixed inset-0 bg-slate-950 flex items-center justify-center text-white"><Loader2 className="w-10 h-10 animate-spin text-indigo-500" /></div>;
 
@@ -259,7 +259,7 @@ const App = () => {
                   </div>
                 ) : (
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
-                    <div className="w-full h-full mx-auto pb-32 md:pb-0">
+                    <div className="w-full h-full mx-auto md:pb-8 pb-3">
 
                       {activeTab === 'analyze' && (
                         <Analyze userData={userData} onFinish={handleAnalyzeFinish} />

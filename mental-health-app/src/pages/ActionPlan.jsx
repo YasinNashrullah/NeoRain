@@ -13,9 +13,9 @@ const ActionPlan = ({ userData, onNavigate }) => {
     const [loading, setLoading] = useState(true);
     const [actionItems, setActionItems] = useState([]);
     const [assessmentId, setAssessmentId] = useState(null);
-    const fetchingRef = React.useRef(false); // Lock to prevent double fetching
+    const fetchingRef = React.useRef(false);
 
-    // Gamification State
+    // gamification state
     const [score, setScore] = useState(0);
     const [streak, setStreak] = useState(0);
     const [completedIndices, setCompletedIndices] = useState([]);
@@ -33,7 +33,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
             try {
                 const today = new Date().toDateString();
 
-                // 1. Load Gamification Data
+                // load gamification data
                 const savedGamification = (await api.getGamification(userData.uid)) || {
                     score: 0,
                     streak: 0,
@@ -41,46 +41,39 @@ const ActionPlan = ({ userData, onNavigate }) => {
                     history: []
                 };
 
-                // 2. Load Daily Plan
+                // load daily plan
                 let currentPlan = await api.getDailyPlan(userData.uid);
                 let actions = [];
 
-                // Check if plan is for today
+                // check if plan is for today
                 if (currentPlan && currentPlan.date === today) {
                     actions = currentPlan.actions;
                 } else if (!fetchingRef.current) {
-                    // GENERATE NEW DAILY PLAN (Only if not already fetching)
-                    fetchingRef.current = true; // Set lock
+                    fetchingRef.current = true;
                     const assessment = await api.getLatestAssessment(userData.uid);
-                    const moods = await api.getMoods(userData.uid); // Fetch moods
+                    const moods = await api.getMoods(userData.uid);
 
-                    // Context for AI
                     const lastPlan = currentPlan || { actions: [], date: 'never' };
                     const lastCompletedCount = savedGamification.completedIndices?.length || 0;
 
                     actions = await generateDailyMissions(assessment, lastPlan, lastCompletedCount, moods);
 
-                    // Save new plan
+                    // save new plan
                     await api.saveDailyPlan(userData.uid, {
                         date: today,
                         actions: actions
                     });
 
-                    // Reset daily completion for new day
                     savedGamification.completedIndices = [];
-                    // Update gamification to clear old indices immediately
                     await api.saveGamification(userData.uid, savedGamification);
 
-                    fetchingRef.current = false; // Release lock
+                    fetchingRef.current = false;
                 }
 
                 setActionItems(actions);
 
-                // Streak Logic: 
-                // We TRUST the streak from the DB (managed by Home.jsx/Login).
-                // We do NOT reset it here to avoid conflicts.
+                // streak logic 
                 setStreak(savedGamification.streak || 0);
-
                 setScore(savedGamification.score || 0);
                 setAchievements(savedGamification.achievements || []);
                 setCompletedIndices(savedGamification.completedIndices || []);
@@ -95,7 +88,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
         init();
     }, [userData]);
 
-    // --- AI GENERATOR ---
+    // ai generator
     const generateDailyMissions = async (assessment, lastPlan, lastCompletedCount, moods) => {
         try {
             const { apiKey, baseUrl, model } = config.gemini;
@@ -107,7 +100,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                 stress: assessment.stress_score
             } : { depression: 0, anxiety: 0, stress: 0 };
 
-            // Process Moods
+            // process moods
             const recentMoods = moods && moods.length > 0
                 ? moods.slice(0, 5).map(m => m.mood).join(", ")
                 : "Tidak ada data mood";
@@ -146,7 +139,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
         } catch (e) {
             console.error("AI Generation Failed", e);
-            // Fallback actions
+            // fallback actions
             return [
                 "Coba jalan santai sore ini sambil dengerin playlist favoritmu biar pikiran lebih fresh.",
                 "Luangkan waktu 5 menit untuk menumpahkan semua isi kepalamu ke kertas agar pikiran lebih lega.",
@@ -157,7 +150,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
         }
     };
 
-    // Save Data Effect
+    // save data effect
     useEffect(() => {
         if (!userData?.uid || loading) return;
 
@@ -178,25 +171,22 @@ const ActionPlan = ({ userData, onNavigate }) => {
         const isCompleted = completedIndices.includes(index);
 
         if (isCompleted) {
-            // Uncheck Logic
+            // uncheck logic
             setCompletedIndices(prev => prev.filter(i => i !== index));
             setScore(prev => Math.max(0, prev - 10)); // Deduct points
         } else {
-            // Check Logic
+            // check logic
             const newCompleted = [...completedIndices, index];
             setCompletedIndices(newCompleted);
 
-            // Add Score
+            // add score
             const points = 10;
             setScore(prev => prev + points);
 
-            // NOTE: We do NOT increment streak here. Streak is Daily Login Streak (managed by Home.jsx).
-            // This prevents double-counting or resetting conflicts.
-
-            // Check Achievements
+            // check achievements
             checkAchievements(newCompleted.length, score + points);
 
-            // Celebration
+            // celebration
             triggerCelebration();
         }
     };
@@ -254,7 +244,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
             <div className="max-w-6xl mx-auto p-6 space-y-8 relative z-10">
 
-                {/* Header Stats */}
+                {/* header stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="col-span-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[30px] p-6 flex items-center justify-between shadow-lg shadow-indigo-500/20 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -288,13 +278,13 @@ const ActionPlan = ({ userData, onNavigate }) => {
                     </div>
                 </div>
 
-                {/* Main Content Grid */}
+                {/* main content grid */}
                 <div className="grid lg:grid-cols-12 gap-8">
 
-                    {/* Left Column: Missions (8 cols) */}
+                    {/* left column missions */}
                     <div className="lg:col-span-8 space-y-6">
 
-                        {/* Progress Bar */}
+                        {/* progress bar */}
                         <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[20px] p-6 backdrop-blur-sm shadow-sm dark:shadow-none">
                             <div className="flex justify-between items-end mb-3">
                                 <div>
@@ -315,7 +305,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             </div>
                         </div>
 
-                        {/* Mission List */}
+                        {/* mission list */}
                         <div className="space-y-4">
                             {actionItems.length === 0 ? (
                                 <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-12 text-center flex flex-col items-center justify-center min-h-[400px] shadow-sm">
@@ -377,10 +367,10 @@ const ActionPlan = ({ userData, onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* Right Column: Sidebar (4 cols) */}
+                    {/* right column sidebar */}
                     <div className="lg:col-span-4 space-y-6">
 
-                        {/* Daily Motivation Card */}
+                        {/* daily motivation card */}
                         <div className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-orange-500/10 dark:to-purple-500/10 border border-orange-200 dark:border-orange-500/20 rounded-[30px] p-6 relative overflow-hidden shadow-sm">
                             <Quote className="absolute top-4 right-4 w-12 h-12 text-orange-500/10 rotate-12" />
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
@@ -391,7 +381,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             </p>
                         </div>
 
-                        {/* Achievements List - Refined */}
+                        {/* achievements list */}
                         <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                                 <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" /> Achievements
@@ -429,7 +419,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             </div>
                         </div>
 
-                        {/* Level Card - Refined */}
+                        {/* level card */}
                         <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 relative overflow-hidden shadow-sm dark:shadow-xl">
                             <div className={`absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-20 ${currentLevel.bg.replace('/10', '')}`}></div>
 
@@ -464,7 +454,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
             </div>
 
-            {/* Mission Complete Modal */}
+            {/* mission complete modal */}
             <AnimatePresence>
                 {showCelebration && (
                     <motion.div
@@ -486,7 +476,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                 )}
             </AnimatePresence>
 
-            {/* Achievement Unlocked Modal */}
+            {/* achievement unlocked modal */}
             <AnimatePresence>
                 {justUnlocked && (
                     <motion.div

@@ -16,7 +16,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
   // State untuk Modal Achievement
   const [selectedAchievement, setSelectedAchievement] = useState(null);
 
-  // State Form Edit
+  // state form edit
   const [formData, setFormData] = useState({
     name: '',
     gender: '',
@@ -24,7 +24,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     location: ''
   });
 
-  // State Security
+  // state security
   const [passData, setPassData] = useState({ newPass: '', confirmPass: '' });
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
         location: userData.location || ''
       });
 
-      // Load Streak Firestore
+      // load streak firestore
       api.getGamification(userData.uid).then(data => {
         setStreak(data?.streak || 0);
       });
@@ -66,14 +66,13 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     }
   ];
 
-  // --- HANDLERS ---
-
-  // Upload Foto
+  // handlers
+  // upload foto
   const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validasi Ukuran Max 2MB
+    // validasi ukuran max 2mb
     if (file.size > 2 * 1024 * 1024) {
       return alert("Ukuran file terlalu besar! Maksimal 2MB.");
     }
@@ -93,7 +92,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     }
   };
 
-  // Simpan Profil
+  // simpan profil
   const handleSaveProfile = async () => {
     if (!formData.name.trim()) return alert("Nama tidak boleh kosong!");
 
@@ -123,7 +122,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     }
   };
 
-  // Ganti Password (Firebase)
+  // change password firebase
   const handleChangePassword = async () => {
     if (passData.newPass.length < 6) return alert("Password minimal 6 karakter!");
     if (passData.newPass !== passData.confirmPass) return alert("Password konfirmasi tidak cocok!");
@@ -135,7 +134,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     } catch (e) { alert("Gagal: " + e.message); }
   };
 
-  // Hapus Akun
+  // delete account
   const handleDeleteAccount = async () => {
     if (confirm("Yakin hapus akun? Data hilang permanen!")) {
       try {
@@ -145,7 +144,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     }
   };
 
-  // Format Tanggal Bergabung
+  // format tanggal bergabung
   const joinDate = auth.currentUser?.metadata?.creationTime
     ? new Date(auth.currentUser.metadata.creationTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
     : '-';
@@ -163,7 +162,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
 
           <div className="flex items-center gap-6 mb-8 relative z-10">
             <div className="relative group">
-              {/* Foto Profile dari Database */}
+              {/* foto profile dari database */}
               <img
                 src={userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`}
                 alt="Profile"
@@ -185,7 +184,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
             </div>
           </div>
 
-          {/* Grid Info Detail */}
+          {/* grid info detail */}
           <div className="grid grid-cols-2 gap-y-6 gap-x-4 relative z-10">
             <div>
               <p className="text-xs text-slate-500 font-bold uppercase mb-1">Email</p>
@@ -206,10 +205,10 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
           </div>
         </div>
 
-        {/* KANAN: STATS */}
+        {/* kanan stats */}
         <div className="lg:col-span-5 flex flex-col gap-6">
 
-          {/* Streak Card */}
+          {/* streak card */}
           <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl flex items-center justify-between relative overflow-hidden h-full">
             <div className="relative z-10">
               <h3 className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider mb-1">Your Streak</h3>
@@ -221,7 +220,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
             <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
           </div>
 
-          {/* Achievement Card (Preview) */}
+          {/* achievement card preview */}
           <button
             onClick={() => setActiveView('achievements')}
             className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl flex items-center justify-between relative overflow-hidden h-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
@@ -244,7 +243,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
         </div>
       </div>
 
-      {/* BOTTOM: MENU LIST */}
+      {/* bottom menu list */}
       <div className="grid grid-cols-1 gap-4">
         <button onClick={() => setActiveView('security')} className="bg-white/80 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm group backdrop-blur-sm">
           <div className="flex items-center gap-4">
@@ -269,7 +268,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
         </button>
       </div>
 
-      {/* LOGOUT */}
+      {/* logout */}
       <div className="pt-4 pb-8 text-center">
         <button onClick={onLogout} className="text-red-500 dark:text-red-400 font-bold text-sm hover:text-red-600 dark:hover:text-red-300 flex items-center justify-center gap-2 mx-auto mb-4 hover:scale-105 transition-transform">
           <LogOut className="w-4 h-4" /> Keluar Akun
@@ -424,7 +423,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     </motion.div>
   );
 
-  // --- RENDER: SECURITY VIEW (Dark Mode & Validation) ---
+  // render security view dark mode validation
   const renderSecurity = () => (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl mx-auto">
       <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
@@ -433,7 +432,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
       </button>
 
       <div className="space-y-6">
-        {/* Change Password */}
+        {/* change password */}
         <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
             <Lock className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Ganti Password
@@ -459,7 +458,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
           </div>
         </div>
 
-        {/* Delete Account */}
+        {/* delete account */}
         <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-500/20 rounded-[30px] p-8 shadow-sm dark:shadow-xl">
           <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
             <ShieldCheck className="w-5 h-5" /> Zona Bahaya
@@ -475,7 +474,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
     </motion.div>
   );
 
-  // --- RENDER: HELP VIEW (Dark Mode) ---
+  // render help view dark mode
   const renderHelp = () => (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-2xl mx-auto">
       <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
@@ -513,7 +512,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
   );
 
   return (
-    <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-24">
+    <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-16 md:pb-6">
       <div className="max-w-6xl mx-auto p-6 md:p-8">
         <AnimatePresence mode='wait'>
           {activeView === 'main' && renderMain()}

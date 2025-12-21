@@ -16,7 +16,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [loading, setLoading] = useState(true);
 
-    // Data
+    // load assessment history data effect
     useEffect(() => {
         const loadData = async () => {
             if (userData?.uid) {
@@ -32,16 +32,17 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
         loadData();
     }, [userData]);
 
-    // AI
+    // ai
     const getAIReport = (data) => {
         if (!data || !data.ai_analysis) return null;
         try {
-            // Jika sudah object (dari Firestore/JSON native), kembalikan langsung
+            // jika sudah object dari firestore json native kembalikan langsung
             if (typeof data.ai_analysis === 'object') return data.ai_analysis;
             return JSON.parse(data.ai_analysis);
         } catch (e) { return null; }
     };
 
+    // determine severity level based on score
     const getSeverity = (score, type) => {
         const limits = { depression: [9, 13, 20, 27], anxiety: [7, 9, 14, 19], stress: [14, 18, 25, 33] };
         const limit = limits[type];
@@ -56,6 +57,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
         new Date(log.created_at).toDateString() === selectedDate.toDateString()
     );
 
+    // format chart data based on selected assessment
     const chartData = selectedAssessment ? [
         { subject: 'Depression', A: selectedAssessment.depression_score, fullMark: 42 },
         { subject: 'Anxiety', A: selectedAssessment.anxiety_score, fullMark: 42 },
@@ -64,7 +66,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
 
     const aiData = getAIReport(selectedAssessment);
 
-    // Calendar
+    // calendar
     const renderCalendar = () => {
         const year = selectedDate.getFullYear();
         const month = selectedDate.getMonth();
@@ -125,7 +127,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
         return (
             <div className="w-full h-full bg-slate-950 text-white flex flex-col items-center justify-center p-6">
                 <div className="max-w-md w-full bg-slate-900 border border-white/10 rounded-[30px] p-8 shadow-2xl text-center relative overflow-hidden">
-                    {/* Background Effects */}
+                    {/* background effects */}
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>
 
                     <div className="relative z-10 flex flex-col items-center">
@@ -154,14 +156,14 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
         );
 
     return (
-        <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-24">
+        <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-32 md:pb-6">
             <div className="max-w-[1400px] mx-auto p-6 space-y-6">
                 <h1 className="text-3xl font-bold text-center mb-8 text-slate-800 dark:text-white">Analysis Your Report</h1>
 
-                {/* Layout */}
+                {/* main dashboard layout */}
                 <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
 
-                    {/* Calendar */}
+                    {/* calendar widget section */}
                     <div className="order-1 lg:col-span-4 lg:order-3 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 text-slate-800 dark:text-white shadow-sm dark:shadow-xl h-fit">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-bold text-md md:text-lg">Calendar</h3>
@@ -191,7 +193,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* History List */}
+                    {/* history list */}
                     <div className="order-2 lg:col-span-4 lg:order-5 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-3 shadow-sm dark:shadow-xl h-fit max-h-[500px] flex flex-col">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white my-2 text-center capitalize flex items-center justify-center gap-2">
                             <FileText className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Analysis History
@@ -218,7 +220,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                                         >
                                             {isActive && (
                                                 <>
-                                                    {/* Border Glow */}
+                                                    {/* border glow */}
                                                     <motion.div
                                                         layoutId="activeHistoryBorder"
                                                         className="absolute -inset-0.5 rounded-xl opacity-60 blur-sm"
@@ -231,7 +233,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                                                         }}
                                                         transition={{ duration: 0.8, ease: "easeOut" }}
                                                     />
-                                                    {/* Solid Background */}
+                                                    {/* solid background */}
                                                     <motion.div
                                                         layoutId="activeHistoryBg"
                                                         className="absolute inset-0 bg-white dark:bg-[#1e1b4b]/50 rounded-xl border border-purple-200 dark:border-purple-500/30 shadow-sm"
@@ -242,11 +244,11 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                                                 </>
                                             )}
 
-                                            {/* Content */}
+                                            {/* content */}
                                             <div className={`relative flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${isActive ? 'text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                                                 }`}>
 
-                                                {/* Date & Score */}
+                                                {/* date score */}
                                                 <div>
                                                     <p className={`text-left text-[14px] font-bold mb-1 transition-colors ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                                                         {new Date(log.created_at).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" })}
@@ -258,7 +260,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                                                     </div>
                                                 </div>
 
-                                                {/* Time Indicator */}
+                                                {/* time indicator */}
                                                 <div className="flex items-center gap-1">
                                                     <span className={`text-xs font-medium ${isActive ? 'text-cyan-600 dark:text-cyan-300' : 'text-slate-400 dark:text-slate-500'}`}>
                                                         {new Date(log.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
@@ -283,7 +285,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* Score Cards (Depression/Anxiety/Stress) */}
+                    {/* severity score cards section */}
                     <div className="order-3 lg:col-span-3 lg:order-1 flex flex-col gap-4">
                         <AnimatePresence mode="wait">
                             {selectedAssessment && (
@@ -350,7 +352,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                         </div>
                     </div>
 
-                    {/* Detail: Action Plan & Insight */}
+                    {/* detail action plan insight */}
                     <div className="order-5 lg:col-span-8 lg:order-4 space-y-6">
                         <AnimatePresence mode='wait'>
                             {selectedAssessment && (
@@ -362,7 +364,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                                     transition={{ duration: 0.4, delay: 0.1 }}
                                     className="space-y-6"
                                 >
-                                    {/* Action Plan */}
+                                    {/* action plan */}
                                     <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl min-h-[250px] relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl"></div>
                                         <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 relative z-10">
@@ -394,7 +396,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
                                         </div>
                                     </div>
 
-                                    {/* Tombol Tanya AI */}
+                                    {/* chat with ai button */}
                                     <div className="flex justify-center pt-4">
                                         <button
                                             onClick={() => onChatRequest(selectedAssessment)}
