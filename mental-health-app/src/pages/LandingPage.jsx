@@ -4,6 +4,7 @@ import {
   Sparkles, ChevronDown, Activity, Home, Heart, Target, MessageCircle, User,
   Flame, Quote, ArrowRight, CloudRain, Smile, Wind, Zap, Frown, Sun, Moon, BrainCircuit
 } from 'lucide-react';
+import logo from '../assets/neorain-logo-svg.svg';
 
 const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
   const [activeSection, setActiveSection] = useState('main');
@@ -82,8 +83,12 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
 
           {/* logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollToSection('main')}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-pink-600 flex items-center justify-center shadow-lg">
-              <Sparkles className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-600 flex items-center justify-center shadow-lg overflow-hidden">
+              <img
+                src={logo}
+                alt="NeoRain Logo"
+                className="w-full h-full object-contain brightness-0 invert drop-shadow-sm"
+              />
             </div>
             <span className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-colors">NeoRain</span>
           </div>
@@ -182,8 +187,12 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
 
                   {/* mock sidebar */}
                   <div className="hidden md:flex w-14 bg-white/50 dark:bg-[#0a0a12] border-r border-white/20 dark:border-white/5 flex-col items-center py-4 gap-3 transition-colors backdrop-blur-sm">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-1">
-                      <Sparkles className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-1 overflow-hidden">
+                      <img
+                        src={logo}
+                        alt="NeoRain Logo"
+                        className="w-full h-full object-contain brightness-0 invert drop-shadow-sm scale-75"
+                      />
                     </div>
 
                     {/* analyze button */}
@@ -362,8 +371,12 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
         <footer className="py-20 text-center border-t border-transparent bg-transparent transition-colors">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex justify-center items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-600 flex items-center justify-center shadow-lg">
-                <Sparkles className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-600 flex items-center justify-center shadow-lg overflow-hidden">
+                <img
+                  src={logo}
+                  alt="NeoRain Logo"
+                  className="w-full h-full object-contain brightness-0 invert drop-shadow-sm"
+                />
               </div>
               <span className="text-2xl font-bold text-slate-800 dark:text-white transition-colors">NeoRain</span>
             </div>

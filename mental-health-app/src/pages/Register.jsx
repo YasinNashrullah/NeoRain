@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from '../firebase';
+import logo from '../assets/neorain-logo-svg.svg';
 
 const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   const [name, setName] = useState('');
@@ -68,8 +69,12 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="w-20 h-20 bg-gradient-to-tr from-pink-500 to-rose-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-pink-500/20">
-                <Sparkles className="w-10 h-10 text-white" />
+              <div className="w-20 h-20 bg-gradient-to-tr from-pink-500 to-rose-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-pink-500/20 overflow-hidden">
+                <img
+                  src={logo}
+                  alt="NeoRain Logo"
+                  className="w-20 h-20 object-contain brightness-0 invert drop-shadow-md"
+                />
               </div>
               <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-3 tracking-tight">Bergabunglah</h1>
               <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed max-w-xs mx-auto">

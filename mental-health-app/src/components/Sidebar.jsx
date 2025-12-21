@@ -6,6 +6,8 @@ import {
   Sun, Moon
 } from 'lucide-react';
 
+import logo from '../assets/neorain-logo-svg.svg';
+
 // static data
 const menuItems = [
   { id: 'home', label: 'Dashboard', icon: Home },
@@ -56,7 +58,7 @@ const BackgroundBlobs = React.memo(() => (
   </div>
 ));
 
-// component utama
+// main component
 const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleTheme }) => {
 
   // memoize profile image url
@@ -92,8 +94,12 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
               transition={{ duration: 0.8, type: "spring" }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 rounded-3xl blur-lg opacity-70 animate-pulse"></div>
-              <div className="relative w-full h-full bg-gradient-to-br dark:from-slate-900 dark:via-purple-900/30 dark:to-slate-900 from-white/80 via-purple-50 to-white/80 rounded-3xl flex items-center justify-center shadow-2xl border dark:border-purple-500/20 border-white/50">
-                <Sparkles className="w-6 h-6 dark:text-purple-300 text-purple-600" strokeWidth={2.5} />
+              <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden">
+                <img
+                  src={logo}
+                  alt="NeoRain Logo"
+                  className="w-24 h-24 object-contain brightness-0 invert drop-shadow-md"
+                />
               </div>
             </motion.div>
             <div>
