@@ -505,34 +505,45 @@ export const api = {
   },
 
   // 19. Chat with AI (Gemini Integration)
-  chatWithAI: async (message, firebaseUid, contextData = null) => {
+  chatWithAI: async (
+    message,
+    firebaseUid,
+    contextData = null,
+    userName = "Teman"
+  ) => {
     try {
       const { apiKey, baseUrl, model } = config.gemini;
 
       // 1. Construct System Prompt
       let systemPrompt = `
-        You are NeoRain, a friendly, empathetic, and supportive mental health AI assistant.
-        Your goal is to listen, validate feelings, and offer gentle guidance.
-        - Persona: Warm, "gaul" but polite (Indonesia), uses emojis appropriately 🌧️✨.
-        - Language: Indonesian (mix formal/informal as appropriate for supportive chat).
-        - Disclaimer: You are NOT a doctor. If user seems suicidal or in danger, suggest professional help immediately.
-        - Style: Keep responses concise (max 2-3 paragraphs). Avoid lecturing.
+        Kamu adalah NeoRain, teman curhat mahasiswa.
+        Nama User: ${userName}.
+        Gaya Bicara: Santai, gaul, suportif, pakai "aku-kamu" atau "lo-gue". Panggil user dengan nama "${userName}" sesekali agar akrab.
+        Tugas: Analisis emosi user dan berikan saran respon selanjutnya.
+        Gunakan teks biasa (plain text). JANGAN gunakan format markdown seperti bold (**teks**) atau bullet points (*). Gunakan paragraf santai atau emoji sebagai pengganti poin.
+        OUTPUT FORMAT (JSON ONLY):
+        {
+          "text": "Respon kamu ke user (gunakan emoji)",
+          "mood": "happy | sad | angry | manic | calm",
+          "suggestions": ["Saran balasan singkat 1", "Saran balasan singkat 2", "Saran balasan singkat 3"] 
+        }
       `;
 
       // 2. Add Context if available
       if (contextData) {
         systemPrompt += `
-          \nUser's Request Context:
-          - DASS-21 Scores: Depression ${contextData.scores.d}, Anxiety ${
-          contextData.scores.a
-        }, Stress ${contextData.scores.s}.
-          - Analysis Date: ${new Date(contextData.date).toLocaleDateString()}.
-          - AI Analysis Summary: ${contextData.ai_analysis?.substring(
-            0,
-            200
-          )}...
+          \n[DATA KESEHATAN MENTAL USER SAAT INI]
+          Tanggal Tes: ${new Date(contextData.date).toLocaleDateString()}
+          Skor DASS-21: 
+          - Depresi: ${contextData.scores.d} (Skala 0-42)
+          - Kecemasan: ${contextData.scores.a} (Skala 0-42)
+          - Stres: ${contextData.scores.s} (Skala 0-42)
           
-          Use this to tailor your empathy. For example, if Depression is high, be extra gentle and validating.
+          Ringkasan AI Sebelumnya: "${String(
+            contextData.ai_analysis || ""
+          ).substring(0, 200)}..."
+          
+          INSTRUKSI KHUSUS: User bertanya dalam konteks hasil tes ini. Validasi perasaan mereka berdasarkan data ini.
         `;
       }
 
@@ -551,7 +562,8 @@ export const api = {
             ],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 500,
+              maxOutputTokens: 2000,
+              responseMimeType: "application/json",
             },
           }),
         }
@@ -565,28 +577,43 @@ export const api = {
       }
 
       const data = await response.json();
-      const aiResponseText =
-        data.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "Maaf, aku tidak bisa menjawab sekarang.";
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-      // 4. Save to Firestore (Async - don't block UI too long, but we await to ensure data integrity)
+      let parsedResponse = {
+        text: "Maaf, aku tidak bisa menjawab sekarang.",
+        mood: "default",
+        suggestions: [],
+      };
+
+      try {
+        if (rawText) {
+          parsedResponse = JSON.parse(rawText);
+        }
+      } catch (e) {
+        console.error("Failed to parse AI JSON:", e);
+        // Fallback cleanup if JSON fails but text exists
+        parsedResponse.text = rawText || parsedResponse.text;
+      }
+
+      // 4. Save to Firestore (Async)
       // Save User Message
       await api.saveChat({
         firebase_uid: firebaseUid,
         message: message,
         sender: "user",
-        created_at: new Date(), // Client side timestamp, serverTimestamp used in saveChat implementation
+        created_at: new Date(),
       });
 
       // Save AI Message
       await api.saveChat({
         firebase_uid: firebaseUid,
-        message: aiResponseText,
+        message: parsedResponse.text,
         sender: "ai",
         created_at: new Date(),
+        mood: parsedResponse.mood,
       });
 
-      return aiResponseText;
+      return parsedResponse;
     } catch (error) {
       console.error("Chat With AI Error:", error);
       if (error.message.includes("Quota exceeded")) {

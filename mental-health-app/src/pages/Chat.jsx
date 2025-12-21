@@ -113,7 +113,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
               sender: 'ai',
               time: 'Now'
             }]);
-            generateSuggestions([]);
+
           }
         }
         setHistoryLoaded(true);
@@ -172,41 +172,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
 
   // suggestion generator gemini
-  const generateSuggestions = async (history) => {
-    setLoadingSuggestions(true);
-    try {
-      const { apiKey, baseUrl, model } = config.gemini;
-      const recentContext = history.slice(-3).map(m => `${m.sender}: ${m.text}`).join('\n');
 
-      const prompt = `
-        Context conversation:
-        ${recentContext}
-        
-        Suggest 3 short, relevant, empathy-based responses for the USER (Indonesia Gaul).
-        Max 5 words each.
-        Output JSON: { "suggestions": ["text1", "text2", "text3"] }
-      `;
-
-      const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json" }
-        })
-      });
-
-      const data = await response.json();
-      const result = JSON.parse(data.candidates[0].content.parts[0].text);
-      setSuggestions(result.suggestions || []);
-
-    } catch (e) {
-      console.error("Suggestion Error", e);
-      setSuggestions(["Ceritakan lebih lanjut", "Aku sedih..", "Saran kamu?"]);
-    } finally {
-      setLoadingSuggestions(false);
-    }
-  };
 
 
   // send message logic
@@ -225,27 +191,24 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     setSuggestions([]); // clear old suggestions
 
     try {
-      // Prepare Context for AI
-      const contextData = activeContext ? {
-        scores: { d: activeContext.depression_score, a: activeContext.anxiety_score, s: activeContext.stress_score },
-        ai_analysis: activeContext.ai_analysis,
-        date: activeContext.created_at
-      } : null;
-
       // Call API
-      const aiResponseText = await api.chatWithAI(textToSend, userData.uid, contextData);
+      // Note: chatWithAI now returns { text, mood, suggestions } in a single call to save RPM
+      const { text: aiResponseText, mood, suggestions: newSuggestions } = await api.chatWithAI(textToSend, userData.uid, contextData, userName);
 
       const newAiMsg = { id: Date.now() + 1, text: aiResponseText, sender: 'ai', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
       setMessages((prev) => [...prev, newAiMsg]);
 
-      // detect mood change
-      const detectedMood = await detectMood(aiResponseText, textToSend);
-      if (detectedMood && detectedMood !== currentMood) {
-        setCurrentMood(detectedMood);
+      // Mood change from AI
+      if (mood && mood !== currentMood && moodColors[mood]) {
+        setCurrentMood(mood);
       }
 
-      // generate next suggestions
-      generateSuggestions([...messages, { text: textToSend, sender: 'user' }, newAiMsg]);
+      // Update suggestions from the single API call
+      if (newSuggestions && Array.isArray(newSuggestions)) {
+        setSuggestions(newSuggestions);
+      } else {
+        setSuggestions([]);
+      }
 
     } catch (error) {
       console.error("Chat Error", error);
@@ -257,29 +220,20 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
     }
   };
 
-
-  const detectMood = async (aiText, userText) => {
-    // simple verification real implementation would check intent
-    const keywords = {
-      happy: ['senang', 'bahagia', 'semangat', 'keren', 'hebat', 'bersyukur'],
-      sad: ['sedih', 'kecewa', 'nangis', 'lelah', 'capek', 'sakit'],
-      angry: ['marah', 'kesal', 'benci', 'emosi', 'gila'],
-      calm: ['tenang', 'santai', 'damai', 'oke', 'baik'],
-      manic: ['energi', 'fokus', 'produktif', 'cepat']
-    };
-
-    const text = (aiText + " " + userText).toLowerCase();
-    for (const [mood, words] of Object.entries(keywords)) {
-      if (words.some(w => text.includes(w))) return mood;
-    }
-    return null;
-  };
-
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  useEffect(() => {
+    // Auto-scroll to bottom controls
+    if (!isLoadingMore) {
+      scrollToBottom();
+    }
+  }, [messages, isLoadingMore]);
+
+
 
   const currentStyle = moodColors[currentMood] || moodColors.default;
 
