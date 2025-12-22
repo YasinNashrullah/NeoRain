@@ -87,6 +87,24 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     setIsPlayingRain(!isPlayingRain);
   };
 
+  const handleSaveGratitude = async () => {
+    if (!gratitudeText.trim() || !userData?.uid) return;
+
+    try {
+      await api.saveMood({
+        firebase_uid: userData.uid,
+        mood: 'grateful',
+        note: gratitudeText,
+        intensity: 5 // Default intensity for gratitude
+      });
+      setGratitudeText('');
+      // Optional: Show success feedback (toast/alert) if needed, 
+      // but for now just clearing input is enough visual feedback.
+    } catch (error) {
+      console.error("Failed to save gratitude:", error);
+    }
+  };
+
   // time and streak logic
   useEffect(() => {
     const updateTime = () => {
@@ -231,13 +249,23 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
             <h4 className="text-slate-800 dark:text-white font-bold text-sm">Gratitude Journal</h4>
           </div>
           <div className="relative">
-            <input
-              type="text"
-              value={gratitudeText}
-              onChange={(e) => setGratitudeText(e.target.value)}
-              placeholder="Satu hal yang kamu syukuri hari ini..."
-              className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-4 text-slate-800 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-pink-500/50 focus:bg-white dark:focus:bg-white/10 transition-all"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={gratitudeText}
+                onChange={(e) => setGratitudeText(e.target.value)}
+                placeholder="Satu hal yang kamu syukuri hari ini..."
+                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-4 text-slate-800 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-pink-500/50 focus:bg-white dark:focus:bg-white/10 transition-all"
+                onKeyPress={(e) => e.key === 'Enter' && handleSaveGratitude()}
+              />
+              <button
+                onClick={handleSaveGratitude}
+                disabled={!gratitudeText.trim()}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 disabled:opacity-0 disabled:scale-75 transition-all shadow-sm"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </motion.div>
 
