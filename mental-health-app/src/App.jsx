@@ -20,6 +20,8 @@ import Statistics from './pages/Statistics';
 // Components
 import BottomNav from './components/BottomNav';
 import Sidebar from './components/Sidebar';
+import PageTransition from './components/PageTransition';
+import { AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 
 const App = () => {
@@ -214,11 +216,7 @@ const App = () => {
 
     if (!hasOnboarded) {
       return (
-        <div className="w-full h-full flex items-center justify-center p-4">
-          <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
-            <Onboarding onFinish={handleOnboardingFinish} />
-          </div>
-        </div>
+        <Onboarding onFinish={handleOnboardingFinish} />
       );
     }
 
@@ -297,54 +295,68 @@ const App = () => {
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
                     <div className="w-full h-full mx-auto md:pb-8 pb-3">
 
-                      {activeTab === 'analyze' && (
-                        <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
-                      )}
+                      <AnimatePresence mode='wait'>
+                        {activeTab === 'analyze' && (
+                          <PageTransition key="analyze">
+                            <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'home' && (
-                        <Home
-                          userData={userData}
-                          currentMood={currentMood}
-                          setCurrentMood={updateMood}
-                          onStartAnalysis={handleStartAnalysis}
-                          onNavigate={handleMenuNavigation}
-                          onVerifyHistory={() => {
-                            setTrackerInitialTab('analysis');
-                            setActiveTab('tracker');
-                          }}
-                          lastAssessment={lastAssessment}
-                        />
-                      )}
+                        {activeTab === 'home' && (
+                          <PageTransition key="home">
+                            <Home
+                              userData={userData}
+                              currentMood={currentMood}
+                              setCurrentMood={updateMood}
+                              onStartAnalysis={handleStartAnalysis}
+                              onNavigate={handleMenuNavigation}
+                              onVerifyHistory={() => {
+                                setTrackerInitialTab('analysis');
+                                setActiveTab('tracker');
+                              }}
+                              lastAssessment={lastAssessment}
+                            />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'tracker' && (
-                        <Tracker
-                          userData={userData}
-                          initialTab={trackerInitialTab}
-                          onChatRequest={handleChatWithContext}
-                          onNavigate={handleMenuNavigation}
-                        />
-                      )}
+                        {activeTab === 'tracker' && (
+                          <PageTransition key="tracker">
+                            <Tracker
+                              userData={userData}
+                              initialTab={trackerInitialTab}
+                              onChatRequest={handleChatWithContext}
+                              onNavigate={handleMenuNavigation}
+                            />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'stats' && (
-                        <Statistics userData={userData} onNavigate={handleMenuNavigation} />
-                      )}
+                        {activeTab === 'stats' && (
+                          <PageTransition key="stats">
+                            <Statistics userData={userData} onNavigate={handleMenuNavigation} />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'action-plan' && (
-                        <ActionPlan
-                          userData={userData}
-                          onNavigate={handleMenuNavigation}
-                        />
-                      )}
+                        {activeTab === 'action-plan' && (
+                          <PageTransition key="action-plan">
+                            <ActionPlan
+                              userData={userData}
+                              onNavigate={handleMenuNavigation}
+                            />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'profile' && (
-                        <Profile
-                          userData={userData}
-                          onLogout={handleLogout}
-                          onUpdateProfile={() => refreshUserData(user.uid)}
-                          theme={theme}
-                          setTheme={setTheme}
-                        />
-                      )}
+                        {activeTab === 'profile' && (
+                          <PageTransition key="profile">
+                            <Profile
+                              userData={userData}
+                              onLogout={handleLogout}
+                              onUpdateProfile={() => refreshUserData(user.uid)}
+                              theme={theme}
+                              setTheme={setTheme}
+                            />
+                          </PageTransition>
+                        )}
+                      </AnimatePresence>
 
                     </div>
                   </div>
@@ -365,26 +377,44 @@ const App = () => {
   };
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage onLogin={() => navigate('/login')} onRegister={() => navigate('/register')} theme={theme} toggleTheme={toggleTheme} />} />
+    <AnimatePresence mode='wait'>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={
+          <PageTransition>
+            <LandingPage onLogin={() => navigate('/login')} onRegister={() => navigate('/register')} theme={theme} toggleTheme={toggleTheme} />
+          </PageTransition>
+        } />
 
-      <Route
-        path="/login"
-        element={!user ? <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => navigate('/register')} /> : <Navigate to="/dashboard" />}
-      />
+        <Route
+          path="/login"
+          element={!user ? (
+            <PageTransition>
+              <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => navigate('/register')} />
+            </PageTransition>
+          ) : <Navigate to="/dashboard" />}
+        />
 
-      <Route
-        path="/register"
-        element={!user ? <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => navigate('/login')} /> : <Navigate to="/dashboard" />}
-      />
+        <Route
+          path="/register"
+          element={!user ? (
+            <PageTransition>
+              <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => navigate('/login')} />
+            </PageTransition>
+          ) : <Navigate to="/dashboard" />}
+        />
 
-      <Route
-        path="/dashboard/*"
-        element={user ? renderDashboard() : <Navigate to="/login" />}
-      />
+        <Route
+          path="/dashboard/*"
+          element={user ? (
+            <PageTransition>
+              {renderDashboard()}
+            </PageTransition>
+          ) : <Navigate to="/login" />}
+        />
 
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </AnimatePresence>
   );
 };
 
