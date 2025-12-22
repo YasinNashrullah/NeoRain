@@ -170,7 +170,16 @@ const App = () => {
     navigate('/dashboard');
   };
 
-  const handleOnboardingFinish = (surveyData) => setUserData((prev) => ({ ...prev, ...surveyData }));
+  const handleOnboardingFinish = async (surveyData) => {
+    setUserData((prev) => ({ ...prev, ...surveyData }));
+    if (user?.uid) {
+      try {
+        await api.updateUserProfile(surveyData, user.uid);
+      } catch (e) {
+        console.error("Failed to save onboarding data", e);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
