@@ -538,11 +538,9 @@ export const api = {
           - Depresi: ${contextData.scores.d} (Skala 0-42)
           - Kecemasan: ${contextData.scores.a} (Skala 0-42)
           - Stres: ${contextData.scores.s} (Skala 0-42)
-          
           Ringkasan AI Sebelumnya: "${String(
             contextData.ai_analysis || ""
           ).substring(0, 200)}..."
-          
           INSTRUKSI KHUSUS: User bertanya dalam konteks hasil tes ini. Validasi perasaan mereka berdasarkan data ini.
         `;
       }
