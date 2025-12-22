@@ -17,46 +17,52 @@ const moodColors = {
     bubble2: 'rgba(244, 114, 182, 0.04)',
     primary: 'bg-pink-600',
     text: 'text-pink-400',
-    bgGradient: 'radial-gradient(circle at center, #3f1a28 0%, #020617 100%)'
+    bgGradient: 'radial-gradient(circle at center, #3f1a28 0%, #020617 100%)',
+    bgGradientLight: 'radial-gradient(circle at center, #fce7f3 0%, #fff1f2 100%)'
   },
   calm: {
     bubble1: 'rgba(34, 211, 238, 0.05)',
     bubble2: 'rgba(6, 182, 212, 0.04)',
     primary: 'bg-cyan-600',
     text: 'text-cyan-400',
-    bgGradient: 'radial-gradient(circle at center, #0e2a35 0%, #020617 100%)'
+    bgGradient: 'radial-gradient(circle at center, #0e2a35 0%, #020617 100%)',
+    bgGradientLight: 'radial-gradient(circle at center, #cffafe 0%, #ecfeff 100%)'
   },
   manic: {
     bubble1: 'rgba(250, 204, 21, 0.05)',
     bubble2: 'rgba(234, 179, 8, 0.04)',
     primary: 'bg-yellow-600',
     text: 'text-yellow-400',
-    bgGradient: 'radial-gradient(circle at center, #2e2408 0%, #020617 100%)'
+    bgGradient: 'radial-gradient(circle at center, #2e2408 0%, #020617 100%)',
+    bgGradientLight: 'radial-gradient(circle at center, #fef9c3 0%, #fefce8 100%)'
   },
   angry: {
     bubble1: 'rgba(251, 146, 60, 0.05)',
     bubble2: 'rgba(249, 115, 22, 0.04)',
     primary: 'bg-orange-600',
     text: 'text-orange-400',
-    bgGradient: 'radial-gradient(circle at center, #331408 0%, #020617 100%)'
+    bgGradient: 'radial-gradient(circle at center, #331408 0%, #020617 100%)',
+    bgGradientLight: 'radial-gradient(circle at center, #ffedd5 0%, #fff7ed 100%)'
   },
   sad: {
     bubble1: 'rgba(99, 102, 241, 0.05)',
     bubble2: 'rgba(79, 70, 229, 0.04)',
     primary: 'bg-indigo-600',
     text: 'text-indigo-400',
-    bgGradient: 'radial-gradient(circle at center, #141430 0%, #020617 100%)'
+    bgGradient: 'radial-gradient(circle at center, #141430 0%, #020617 100%)',
+    bgGradientLight: 'radial-gradient(circle at center, #e0e7ff 0%, #eef2ff 100%)'
   },
   default: {
     bubble1: 'rgba(99, 102, 241, 0.05)',
     bubble2: 'rgba(139, 92, 246, 0.04)',
     primary: 'bg-indigo-600',
     text: 'text-indigo-400',
-    bgGradient: 'radial-gradient(circle at center, #0f172a 0%, #020617 100%)'
+    bgGradient: 'radial-gradient(circle at center, #0f172a 0%, #020617 100%)',
+    bgGradientLight: 'radial-gradient(circle at center, #f1f5f9 0%, #f8fafc 100%)'
   }
 };
 
-const Chat = ({ onBack, userData, initialContext, messages, setMessages, currentMood, setCurrentMood }) => {
+const Chat = ({ onBack, userData, initialContext, messages, setMessages, currentMood, setCurrentMood, theme }) => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
@@ -436,7 +442,7 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
   return (
     <motion.div
       className="flex flex-col w-full h-full relative overflow-hidden"
-      animate={{ background: currentStyle.bgGradient }}
+      animate={{ background: theme === 'light' ? currentStyle.bgGradientLight : currentStyle.bgGradient }}
       transition={{ duration: 1, ease: "easeInOut" }}
     >
       <div className="chat-bubbles-container">

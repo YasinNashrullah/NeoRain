@@ -29,7 +29,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   // Theme State
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'auto');
 
   const [activeTab, setActiveTab] = useState('home');
   const [chatContext, setChatContext] = useState(null);
@@ -47,21 +47,40 @@ const App = () => {
 
   // Effects
 
-  // Toggle Theme
+  // Toggle Theme Helper (for LandingPage/BottomNav)
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  // Calculate Effective Theme
+  const getEffectiveTheme = () => {
+    if (theme === 'auto') {
+      const hour = new Date().getHours();
+      // Dark mode from 5 PM (17:00) to 7 AM (07:00)
+      if (hour >= 17 || hour < 7) return 'dark';
+      return 'light';
+    }
+    return theme;
   };
 
   // Apply Theme to DOM
   useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    const applyTheme = () => {
+      const effectiveTheme = getEffectiveTheme();
+      const root = window.document.documentElement;
+      if (effectiveTheme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    };
+
+    applyTheme();
+    localStorage.setItem('theme', theme);
+
+    // Re-check every minute for auto mode
+    const interval = setInterval(applyTheme, 60000);
+    return () => clearInterval(interval);
   }, [theme]);
 
   // update mood ke Firestore
@@ -203,16 +222,19 @@ const App = () => {
       );
     }
 
+    // Determine effective theme for background rendering
+    const effectiveTheme = getEffectiveTheme();
+
     return (
       <div className={`fixed inset-0 w-full h-full font-sans flex overflow-hidden transition-all duration-500
-        ${theme === 'dark'
+        ${effectiveTheme === 'dark'
           ? 'bg-[#0a0a12]'
           : 'bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)]'
         }
       `}>
 
         {/* Background Blobs (Only Dark Mode) */}
-        {theme === 'dark' && (
+        {effectiveTheme === 'dark' && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(49,46,129,0.2)_0%,_transparent_70%)]"></div>
             <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)]"></div>
@@ -226,7 +248,7 @@ const App = () => {
             onLogout={handleLogout}
             userData={userData}
             theme={theme}
-            toggleTheme={toggleTheme}
+          // Sidebar doesn't need toggleTheme anymore
           />
 
           <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
@@ -242,6 +264,7 @@ const App = () => {
                   setMessages={setMessages}
                   currentMood={currentMood}
                   setCurrentMood={updateMood}
+                  theme={effectiveTheme}
                 />
               </div>
             )}
@@ -267,6 +290,7 @@ const App = () => {
                       setMessages={setMessages}
                       currentMood={currentMood}
                       setCurrentMood={updateMood}
+                      theme={effectiveTheme}
                     />
                   </div>
                 ) : (
@@ -317,6 +341,8 @@ const App = () => {
                           userData={userData}
                           onLogout={handleLogout}
                           onUpdateProfile={() => refreshUserData(user.uid)}
+                          theme={theme}
+                          setTheme={setTheme}
                         />
                       )}
 

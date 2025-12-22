@@ -305,23 +305,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
         {/* theme toggle and profile */}
         <div className="mt-6 pt-6 border-t dark:border-purple-500/10 border-white/20">
 
-          {/* Toggle Theme */}
-          <button
-            onClick={toggleTheme}
-            className="w-full flex items-center justify-between p-3 mb-4 rounded-xl dark:bg-slate-800/50 bg-white/40 border border-white/20 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-500 dark:bg-indigo-500/10 dark:text-indigo-400">
-                {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-              </div>
-              <span className="text-xs font-bold dark:text-slate-300 text-slate-700">
-                {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-              </span>
-            </div>
-            <div className={`w-8 h-4 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-indigo-600' : 'bg-slate-300'}`}>
-              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${theme === 'dark' ? 'left-4.5' : 'left-0.5'}`} style={{ left: theme === 'dark' ? '18px' : '2px' }}></div>
-            </div>
-          </button>
+
 
           <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group">
             <img
