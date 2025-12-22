@@ -66,7 +66,7 @@ export const api = {
       return { id: docRef.id, ...moodData };
     } catch (error) {
       // return handleError("Save Mood", error);
-      throw error; // Lempar error agar UI tau
+      throw error; 
     }
   },
 
@@ -539,8 +539,9 @@ export const api = {
           - Kecemasan: ${contextData.scores.a} (Skala 0-42)
           - Stres: ${contextData.scores.s} (Skala 0-42)
           Ringkasan AI Sebelumnya: "${String(
-            contextData.ai_analysis || ""
-          ).substring(0, 200)}..."
+          contextData.ai_analysis || ""
+        ).substring(0, 200)}..."
+          
           INSTRUKSI KHUSUS: User bertanya dalam konteks hasil tes ini. Validasi perasaan mereka berdasarkan data ini.
         `;
       }
@@ -560,7 +561,7 @@ export const api = {
             ],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 2000,
+              maxOutputTokens: 8192,
               responseMimeType: "application/json",
             },
           }),
