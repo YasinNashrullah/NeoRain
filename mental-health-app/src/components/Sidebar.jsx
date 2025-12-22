@@ -24,39 +24,7 @@ const smoothTransition = {
 };
 
 // animated background
-const BackgroundBlobs = React.memo(() => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-    <motion.div
-      className="absolute top-10 -left-10 w-64 h-64 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-full blur-3xl transform-gpu"
-      animate={{
-        scale: [1, 1.2, 1],
-        x: [0, 20, 0],
-        y: [0, -20, 0],
-      }}
-      transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-      style={{ willChange: "transform" }}
-    />
-    <motion.div
-      className="absolute bottom-20 -right-10 w-56 h-56 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-full blur-3xl transform-gpu"
-      animate={{
-        scale: [1, 1.3, 1],
-        x: [0, -30, 0],
-        y: [0, 20, 0],
-      }}
-      transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-      style={{ willChange: "transform" }}
-    />
-    <motion.div
-      className="absolute top-1/2 left-1/2 w-40 h-40 bg-gradient-to-br from-pink-600/10 to-purple-600/10 rounded-full blur-2xl transform-gpu"
-      animate={{
-        scale: [1, 1.5, 1],
-        rotate: [0, 180, 360],
-      }}
-      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-      style={{ willChange: "transform" }}
-    />
-  </div>
-));
+// BackgroundBlobs removed for performance
 
 // main component
 const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleTheme }) => {
@@ -73,9 +41,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
     `}>
 
       {/* render separated background */}
-      <div className="dark:block hidden">
-        <BackgroundBlobs />
-      </div>
+      <div className="dark:block hidden absolute inset-0 bg-gradient-to-b from-slate-950 to-[#0a0a12]"></div>
 
       {/* Container */}
       <div className="relative z-10 flex flex-col h-full px-5 py-6">
@@ -152,7 +118,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
               )}
 
               <motion.div
-                className={`relative w-full h-full bg-gradient-to-br dark:from-slate-900/90 dark:via-purple-900/20 dark:to-slate-900/90 from-white/90 via-purple-50/50 to-white/90 backdrop-blur-xl border-2 dark:border-purple-500/30 border-white/60 p-1 overflow-hidden ${activeTab === 'analyze' ? 'border-purple-500 dark:border-purple-400' : ''}`}
+                className={`relative w-full h-full bg-gradient-to-br dark:from-slate-900 dark:via-purple-900/10 dark:to-slate-900 from-white via-purple-50 to-white border-2 dark:border-purple-500/30 border-white/60 p-1 overflow-hidden ${activeTab === 'analyze' ? 'border-purple-500 dark:border-purple-400' : ''}`}
                 style={{ borderRadius: "1.5rem" }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 blur-sm"></div>

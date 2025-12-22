@@ -1,5 +1,4 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Sparkles, Loader2 } from 'lucide-react';
 
 const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadMore, hasMore, isLoadingMore }) => {
@@ -39,10 +38,8 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                 <div className="h-4 flex-none"></div>
 
                 {messages.map((msg) => (
-                    <motion.div
+                    <div
                         key={msg.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
                         className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                         {msg.sender === 'system' ? (
@@ -63,7 +60,7 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                                 </div>
                             </div>
                         )}
-                    </motion.div>
+                    </div>
                 ))}
 
                 {isTyping && (
@@ -81,4 +78,4 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
     );
 };
 
-export default MessageList;
+export default React.memo(MessageList);
