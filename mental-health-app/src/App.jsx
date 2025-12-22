@@ -20,6 +20,8 @@ import Statistics from './pages/Statistics';
 // Components
 import BottomNav from './components/BottomNav';
 import Sidebar from './components/Sidebar';
+import PageTransition from './components/PageTransition';
+import { AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 
 const App = () => {
@@ -29,7 +31,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   // Theme State
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'auto');
 
   const [activeTab, setActiveTab] = useState('home');
   const [chatContext, setChatContext] = useState(null);
@@ -47,21 +49,40 @@ const App = () => {
 
   // Effects
 
-  // Toggle Theme
+  // Toggle Theme Helper (for LandingPage/BottomNav)
   const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  // Calculate Effective Theme
+  const getEffectiveTheme = () => {
+    if (theme === 'auto') {
+      const hour = new Date().getHours();
+      // Dark mode from 5 PM (17:00) to 7 AM (07:00)
+      if (hour >= 17 || hour < 7) return 'dark';
+      return 'light';
+    }
+    return theme;
   };
 
   // Apply Theme to DOM
   useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    const applyTheme = () => {
+      const effectiveTheme = getEffectiveTheme();
+      const root = window.document.documentElement;
+      if (effectiveTheme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    };
+
+    applyTheme();
+    localStorage.setItem('theme', theme);
+
+    // Re-check every minute for auto mode
+    const interval = setInterval(applyTheme, 60000);
+    return () => clearInterval(interval);
   }, [theme]);
 
   // update mood ke Firestore
@@ -149,7 +170,16 @@ const App = () => {
     navigate('/dashboard');
   };
 
-  const handleOnboardingFinish = (surveyData) => setUserData((prev) => ({ ...prev, ...surveyData }));
+  const handleOnboardingFinish = async (surveyData) => {
+    setUserData((prev) => ({ ...prev, ...surveyData }));
+    if (user?.uid) {
+      try {
+        await api.updateUserProfile(surveyData, user.uid);
+      } catch (e) {
+        console.error("Failed to save onboarding data", e);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -195,24 +225,23 @@ const App = () => {
 
     if (!hasOnboarded) {
       return (
-        <div className="w-full h-full flex items-center justify-center p-4">
-          <div className="w-full h-full sm:h-[90vh] sm:max-w-md bg-slate-950 relative overflow-hidden flex flex-col shadow-2xl sm:rounded-[30px] sm:border sm:border-slate-800">
-            <Onboarding onFinish={handleOnboardingFinish} />
-          </div>
-        </div>
+        <Onboarding onFinish={handleOnboardingFinish} />
       );
     }
 
+    // Determine effective theme for background rendering
+    const effectiveTheme = getEffectiveTheme();
+
     return (
       <div className={`fixed inset-0 w-full h-full font-sans flex overflow-hidden transition-all duration-500
-        ${theme === 'dark'
+        ${effectiveTheme === 'dark'
           ? 'bg-[#0a0a12]'
           : 'bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)]'
         }
       `}>
 
         {/* Background Blobs (Only Dark Mode) */}
-        {theme === 'dark' && (
+        {effectiveTheme === 'dark' && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(49,46,129,0.2)_0%,_transparent_70%)]"></div>
             <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)]"></div>
@@ -226,7 +255,7 @@ const App = () => {
             onLogout={handleLogout}
             userData={userData}
             theme={theme}
-            toggleTheme={toggleTheme}
+          // Sidebar doesn't need toggleTheme anymore
           />
 
           <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
@@ -242,6 +271,7 @@ const App = () => {
                   setMessages={setMessages}
                   currentMood={currentMood}
                   setCurrentMood={updateMood}
+                  theme={effectiveTheme}
                 />
               </div>
             )}
@@ -267,58 +297,75 @@ const App = () => {
                       setMessages={setMessages}
                       currentMood={currentMood}
                       setCurrentMood={updateMood}
+                      theme={effectiveTheme}
                     />
                   </div>
                 ) : (
                   <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
                     <div className="w-full h-full mx-auto md:pb-8 pb-3">
 
-                      {activeTab === 'analyze' && (
-                        <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
-                      )}
+                      <AnimatePresence mode='wait'>
+                        {activeTab === 'analyze' && (
+                          <PageTransition key="analyze">
+                            <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'home' && (
-                        <Home
-                          userData={userData}
-                          currentMood={currentMood}
-                          setCurrentMood={updateMood}
-                          onStartAnalysis={handleStartAnalysis}
-                          onNavigate={handleMenuNavigation}
-                          onVerifyHistory={() => {
-                            setTrackerInitialTab('analysis');
-                            setActiveTab('tracker');
-                          }}
-                          lastAssessment={lastAssessment}
-                        />
-                      )}
+                        {activeTab === 'home' && (
+                          <PageTransition key="home">
+                            <Home
+                              userData={userData}
+                              currentMood={currentMood}
+                              setCurrentMood={updateMood}
+                              onStartAnalysis={handleStartAnalysis}
+                              onNavigate={handleMenuNavigation}
+                              onVerifyHistory={() => {
+                                setTrackerInitialTab('analysis');
+                                setActiveTab('tracker');
+                              }}
+                              lastAssessment={lastAssessment}
+                            />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'tracker' && (
-                        <Tracker
-                          userData={userData}
-                          initialTab={trackerInitialTab}
-                          onChatRequest={handleChatWithContext}
-                          onNavigate={handleMenuNavigation}
-                        />
-                      )}
+                        {activeTab === 'tracker' && (
+                          <PageTransition key="tracker">
+                            <Tracker
+                              userData={userData}
+                              initialTab={trackerInitialTab}
+                              onChatRequest={handleChatWithContext}
+                              onNavigate={handleMenuNavigation}
+                            />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'stats' && (
-                        <Statistics userData={userData} onNavigate={handleMenuNavigation} />
-                      )}
+                        {activeTab === 'stats' && (
+                          <PageTransition key="stats">
+                            <Statistics userData={userData} onNavigate={handleMenuNavigation} />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'action-plan' && (
-                        <ActionPlan
-                          userData={userData}
-                          onNavigate={handleMenuNavigation}
-                        />
-                      )}
+                        {activeTab === 'action-plan' && (
+                          <PageTransition key="action-plan">
+                            <ActionPlan
+                              userData={userData}
+                              onNavigate={handleMenuNavigation}
+                            />
+                          </PageTransition>
+                        )}
 
-                      {activeTab === 'profile' && (
-                        <Profile
-                          userData={userData}
-                          onLogout={handleLogout}
-                          onUpdateProfile={() => refreshUserData(user.uid)}
-                        />
-                      )}
+                        {activeTab === 'profile' && (
+                          <PageTransition key="profile">
+                            <Profile
+                              userData={userData}
+                              onLogout={handleLogout}
+                              onUpdateProfile={() => refreshUserData(user.uid)}
+                              theme={theme}
+                              setTheme={setTheme}
+                            />
+                          </PageTransition>
+                        )}
+                      </AnimatePresence>
 
                     </div>
                   </div>
@@ -339,26 +386,44 @@ const App = () => {
   };
 
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage onLogin={() => navigate('/login')} onRegister={() => navigate('/register')} theme={theme} toggleTheme={toggleTheme} />} />
+    <AnimatePresence mode='wait'>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={
+          <PageTransition>
+            <LandingPage onLogin={() => navigate('/login')} onRegister={() => navigate('/register')} theme={theme} toggleTheme={toggleTheme} />
+          </PageTransition>
+        } />
 
-      <Route
-        path="/login"
-        element={!user ? <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => navigate('/register')} /> : <Navigate to="/dashboard" />}
-      />
+        <Route
+          path="/login"
+          element={!user ? (
+            <PageTransition>
+              <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => navigate('/register')} />
+            </PageTransition>
+          ) : <Navigate to="/dashboard" />}
+        />
 
-      <Route
-        path="/register"
-        element={!user ? <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => navigate('/login')} /> : <Navigate to="/dashboard" />}
-      />
+        <Route
+          path="/register"
+          element={!user ? (
+            <PageTransition>
+              <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => navigate('/login')} />
+            </PageTransition>
+          ) : <Navigate to="/dashboard" />}
+        />
 
-      <Route
-        path="/dashboard/*"
-        element={user ? renderDashboard() : <Navigate to="/login" />}
-      />
+        <Route
+          path="/dashboard/*"
+          element={user ? (
+            <PageTransition>
+              {renderDashboard()}
+            </PageTransition>
+          ) : <Navigate to="/login" />}
+        />
 
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </AnimatePresence>
   );
 };
 

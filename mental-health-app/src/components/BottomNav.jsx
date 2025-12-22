@@ -13,20 +13,10 @@ const BottomNav = ({ activeTab, setActiveTab, theme, toggleTheme }) => {
     <div className="absolute bottom-0 w-full z-50">
 
       {/* floating theme toggle mobile only */}
-      <button
-        onClick={toggleTheme}
-        className="absolute bottom-24 right-4 z-[60] p-3 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-white/10 shadow-lg active:scale-95 transition-all duration-300"
-        aria-label="Toggle Theme"
-      >
-        {theme === 'dark' ? (
-          <Moon className="w-5 h-5 text-indigo-400 fill-indigo-400/20" />
-        ) : (
-          <Sun className="w-5 h-5 text-orange-500 fill-orange-500/20" />
-        )}
-      </button>
+
 
       {/* Background Bar */}
-      <div className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 px-6 py-4 flex justify-between items-center rounded-t-3xl relative shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors duration-500 pb-6">
+      <div className="bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-white/5 px-6 py-4 flex justify-between items-center rounded-t-3xl relative shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors duration-500 pb-6">
 
         {navItems.map((item) => {
           // gap for floating button before action plan

@@ -3,13 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Lock, HelpCircle, LogOut, Camera, ChevronRight,
   MapPin, Calendar, Mail, Flame, Award, Phone, MessageSquare,
-  HeartHandshake, Save, X, Star, ShieldCheck
+  HeartHandshake, Save, X, Star, ShieldCheck, Sun, Moon, Smartphone, Clock
 } from 'lucide-react';
 import { updateProfile, updatePassword, deleteUser } from "firebase/auth";
 import { auth } from '../firebase';
 import { api } from '../utils/api';
 
-const Profile = ({ userData, onLogout, onUpdateProfile }) => {
+const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
   const [activeView, setActiveView] = useState('main');
   const [streak, setStreak] = useState(0);
 
@@ -245,6 +245,57 @@ const Profile = ({ userData, onLogout, onUpdateProfile }) => {
 
       {/* bottom menu list */}
       <div className="grid grid-cols-1 gap-4">
+        {/* Toggle Theme */}
+        {/* Theme Selector */}
+        {/* Theme Selector Compact */}
+        <div className="bg-white/80 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center justify-between shadow-sm backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400">
+              {theme === 'dark' ? <Moon className="w-6 h-6" /> : theme === 'light' ? <Sun className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-slate-800 dark:text-white text-lg">Appearance</p>
+              <p className="text-xs text-slate-500">
+                {theme === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light'}
+              </p>
+            </div>
+          </div>
+
+          {/* Compact Controls */}
+          <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 gap-1">
+            <button
+              onClick={() => setTheme('light')}
+              className={`p-2 rounded-md transition-all ${theme === 'light'
+                ? 'bg-white dark:bg-slate-600 text-orange-500 shadow-sm'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              title="Light Mode"
+            >
+              <Sun className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setTheme('dark')}
+              className={`p-2 rounded-md transition-all ${theme === 'dark'
+                ? 'bg-white dark:bg-slate-600 text-indigo-400 shadow-sm'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              title="Dark Mode"
+            >
+              <Moon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setTheme('auto')}
+              className={`p-2 rounded-md transition-all ${theme === 'auto'
+                ? 'bg-white dark:bg-slate-600 text-blue-500 shadow-sm'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}
+              title="Auto Mode"
+            >
+              <Clock className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
         <button onClick={() => setActiveView('security')} className="bg-white/80 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm group backdrop-blur-sm">
           <div className="flex items-center gap-4">
             <div className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"><Lock className="w-6 h-6" /></div>

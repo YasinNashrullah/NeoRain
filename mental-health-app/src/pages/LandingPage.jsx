@@ -59,16 +59,8 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
       {/* smooth mesh gradient */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         {/* blob top left periwinkle */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#D2DAFF]/60 dark:bg-indigo-900/20 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-normal animate-blob"></div>
-
-        {/* blob top right light blue */}
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#AAC4FF]/60 dark:bg-blue-900/20 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-normal animate-blob animation-delay-2000"></div>
-
-        {/* blob bottom left soft indigo */}
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#B1B2FF]/60 dark:bg-indigo-900/20 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-normal animate-blob animation-delay-4000"></div>
-
-        {/* blob bottom right pale blue base */}
-        <div className="absolute bottom-[-20%] right-[-20%] w-[60%] h-[60%] bg-[#EEF1FF] dark:bg-slate-800/20 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-normal animate-blob animation-delay-2000"></div>
+        {/* Simple Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950/30"></div>
 
         {/* overlay grid for texture */}
         <div className="absolute inset-0 bg-[radial-gradient(#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
@@ -78,7 +70,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
       <motion.div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-400 to-blue-500 origin-left z-[100]" style={{ scaleX }} />
 
       {/* navbar */}
-      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/60 dark:bg-slate-950/90 backdrop-blur-md border-b border-white/20 dark:border-white/5 py-3' : 'bg-transparent py-5'}`}>
+      <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/95 dark:bg-slate-950/95 border-b border-white/20 dark:border-white/5 py-3 shadow-sm' : 'bg-transparent py-5'}`}>
         <div className="w-full max-w-7xl mx-auto px-6 flex items-center justify-between relative">
 
           {/* logo */}
@@ -94,7 +86,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
           </div>
 
           {/* desktop menu */}
-          <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 bg-white/40 dark:bg-white/5 p-1 rounded-full border border-white/20 dark:border-white/5 backdrop-blur-sm shadow-sm dark:shadow-none transition-colors">
+          <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 bg-white dark:bg-slate-900 p-1 rounded-full border border-slate-200 dark:border-white/10 shadow-sm transition-colors">
             {['main', 'features', 'technology'].map((item) => (
               <button
                 key={item}
@@ -137,7 +129,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
             className="text-center max-w-4xl mx-auto"
           >
             <motion.h1 variants={fadeInUp} className="text-4xl md:text-7xl font-black mb-6 leading-tight tracking-tight text-slate-900 dark:text-white transition-colors">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 dark:from-purple-500 dark:via-pink-500 dark:to-purple-500 animate-gradient-x">Mental Health</span>mu, sangatlah berarti
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 dark:from-purple-500 dark:via-pink-500 dark:to-purple-500">Mental Health</span>mu, sangatlah berarti
             </motion.h1>
 
             <motion.p variants={fadeInUp} className="text-lg md:text-2xl text-slate-700 dark:text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed transition-colors drop-shadow-sm">
@@ -148,15 +140,13 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
               <button onClick={onRegister} className="w-40 py-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-lg hover:scale-105 transition-transform shadow-xl shadow-pink-500/20">
                 Sign In
               </button>
-              <button onClick={onLogin} className="w-40 py-4 rounded-full bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/10 text-slate-800 dark:text-white font-bold text-lg hover:bg-white dark:hover:bg-white/10 transition-colors shadow-lg shadow-indigo-500/5 dark:shadow-none backdrop-blur-sm">
+              <button onClick={onLogin} className="w-40 py-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg shadow-indigo-500/5 dark:shadow-none">
                 Log In
               </button>
             </motion.div>
           </motion.div>
 
           <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="absolute bottom-10 cursor-pointer text-slate-500 dark:text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
             onClick={() => scrollToSection('features')}
           >
@@ -180,13 +170,13 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
                 initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }}
                 className="aspect-[4/3] bg-gradient-to-br from-white/60 to-slate-100/60 dark:from-slate-900 dark:to-slate-800 border border-white/40 dark:border-white/10 rounded-[30px] shadow-2xl flex items-center justify-center relative overflow-hidden transition-colors"
               >
-                <div className="absolute inset-0 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm z-0"></div>
+                <div className="absolute inset-0 bg-white/40 dark:bg-slate-900/40 z-0"></div>
 
                 {/* mock dashboard */}
                 <div className="relative z-10 w-[94%] h-[88%] bg-white/80 dark:bg-[#0a0a12] rounded-2xl border border-white/50 dark:border-white/10 shadow-2xl flex overflow-hidden font-sans transition-colors">
 
                   {/* mock sidebar */}
-                  <div className="hidden md:flex w-14 bg-white/50 dark:bg-[#0a0a12] border-r border-white/20 dark:border-white/5 flex-col items-center py-4 gap-3 transition-colors backdrop-blur-sm">
+                  <div className="hidden md:flex w-14 bg-white dark:bg-[#0a0a12] border-r border-slate-200 dark:border-white/5 flex-col items-center py-4 gap-3 transition-colors">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-1 overflow-hidden">
                       <img
                         src={logo}
@@ -283,11 +273,11 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
                   initial={{ y: 20, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="absolute bottom-8 -right-4 bg-white/80 dark:bg-slate-900 border border-green-500/20 px-4 py-2 rounded-xl shadow-xl shadow-green-500/10 z-20 flex items-center gap-3 backdrop-blur-md"
+                  className="absolute bottom-8 -right-4 bg-white dark:bg-slate-900 border border-green-500/20 px-4 py-2 rounded-xl shadow-xl shadow-green-500/10 z-20 flex items-center gap-3"
                 >
                   <div className="relative">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-50"></div>
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div className="absolute inset-0 bg-green-500 rounded-full opacity-50"></div>
                   </div>
                   <div className="text-xs font-bold text-slate-800 dark:text-white">Live Preview</div>
                 </motion.div>
@@ -343,7 +333,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
               {/* card 1 */}
               <motion.div
                 whileHover={{ y: -5 }} transition={{ duration: 0.2 }}
-                className="p-10 rounded-[30px] bg-white/40 dark:bg-slate-900 border border-white/40 dark:border-white/10 relative overflow-hidden group shadow-lg dark:shadow-none transition-colors backdrop-blur-md"
+                className="p-10 rounded-[30px] bg-white/40 dark:bg-slate-900 border border-white/40 dark:border-white/10 relative overflow-hidden group shadow-lg dark:shadow-none transition-colors backdrop-blur-sm"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[50px]"></div>
                 <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white transition-colors">Analisis Mental Health dengan DASS</h3>
@@ -355,7 +345,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
               {/* card 2 */}
               <motion.div
                 whileHover={{ y: -5 }} transition={{ duration: 0.2 }}
-                className="p-10 rounded-[30px] bg-white/40 dark:bg-slate-900 border border-white/40 dark:border-white/10 relative overflow-hidden group shadow-lg dark:shadow-none transition-colors backdrop-blur-md"
+                className="p-10 rounded-[30px] bg-white/80 dark:bg-slate-900 border border-white/40 dark:border-white/10 relative overflow-hidden group shadow-lg dark:shadow-none transition-colors"
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-[50px]"></div>
                 <h3 className="text-xl font-bold mb-4 text-slate-800 dark:text-white transition-colors">Wawasan Lebih Dalam dengan Chatbot AI</h3>

@@ -40,6 +40,7 @@ const Analyze = ({ userData, onFinish }) => {
   const [step, setStep] = useState('intro'); // intro, quiz, processing
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAnswer = (val) => {
     setAnswers({ ...answers, [questions[currentQ].id]: val });
@@ -51,6 +52,8 @@ const Analyze = ({ userData, onFinish }) => {
 
   // fungsi utama hitung skor panggil ai
   const finishQuiz = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setStep('processing');
 
     // hitung skor manual dass-21
@@ -202,7 +205,9 @@ const Analyze = ({ userData, onFinish }) => {
     } catch (error) {
       console.error("CRITICAL ERROR:", error);
       alert(`Gagal memproses: ${error.message}. Cek Console untuk detail.`);
+      alert(`Gagal memproses: ${error.message}. Cek Console untuk detail.`);
       setStep('intro');
+      setIsSubmitting(false);
     }
   };
 
@@ -300,7 +305,7 @@ const Analyze = ({ userData, onFinish }) => {
                 <div className="flex gap-4">
                   <button
                     onClick={() => currentQ > 0 && setCurrentQ(currentQ - 1)}
-                    disabled={currentQ === 0}
+                    disabled={currentQ === 0 || isSubmitting}
                     className="flex-1 py-4 rounded-xl font-bold text-slate-600 dark:text-slate-300 bg-white/50 dark:bg-white/10 hover:bg-white dark:hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     Kembali
@@ -313,10 +318,17 @@ const Analyze = ({ userData, onFinish }) => {
                         finishQuiz();
                       }
                     }}
-                    disabled={answers[questions[currentQ].id] === undefined}
-                    className="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/30"
+                    disabled={answers[questions[currentQ].id] === undefined || isSubmitting}
+                    className="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2"
                   >
-                    {currentQ === questions.length - 1 ? 'Selesai' : 'Lanjut'}
+                    {currentQ === questions.length - 1 ? (
+                      isSubmitting ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Memproses...
+                        </>
+                      ) : 'Selesai'
+                    ) : 'Lanjut'}
                   </button>
                 </div>
               </motion.div>

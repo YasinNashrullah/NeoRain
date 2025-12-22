@@ -26,8 +26,8 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
       onRegisterSuccess({
         uid: user.uid,
         name: user.displayName,
-        email: user.email,
-        role: "Mahasiswa"
+        email: user.email
+        // role removed to trigger onboarding
       });
 
     } catch (err) {
