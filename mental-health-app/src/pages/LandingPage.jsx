@@ -138,7 +138,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-5 justify-center items-center">
               <button onClick={onRegister} className="w-40 py-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-lg hover:scale-105 transition-transform shadow-xl shadow-pink-500/20">
-                Sign In
+                Sign Up
               </button>
               <button onClick={onLogin} className="w-40 py-4 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-lg shadow-indigo-500/5 dark:shadow-none">
                 Log In
