@@ -161,7 +161,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
       {/* header section */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">{timeGreeting},</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1 text-left">{timeGreeting},</p>
           <h1 className="text-2xl md:text-4xl font-black text-slate-800 dark:text-white capitalize tracking-tight">
             {userData?.name?.split(' ')[0] || "Teman"}
           </h1>
