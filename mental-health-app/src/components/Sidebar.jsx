@@ -165,12 +165,12 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
             >
               <motion.div
                 className="absolute inset-0 rounded-3xl blur-lg opacity-70 animate-pulse"
-                animate={{ background: activeStyle.primaryGradient }}
+                animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
                 transition={{ duration: 1 }}
               />
               <motion.div
                 className="relative w-full h-full rounded-3xl flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden"
-                animate={{ background: activeStyle.primaryGradient }}
+                animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
                 transition={{ duration: 1 }}
               >
                 <img
@@ -182,7 +182,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
             </motion.div>
             <div>
               <motion.h1
-                className={`text-2xl font-black text-transparent bg-gradient-to-r ${activeStyle.textGradientClass} bg-clip-text leading-none bg-[length:200%_auto]`}
+                className="text-2xl font-black text-transparent bg-gradient-to-r from-pink-600 via-purple-500 to-indigo-600 dark:from-pink-300 dark:via-purple-300 dark:to-indigo-300 bg-clip-text leading-none bg-[length:200%_auto]"
                 animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               >
@@ -215,9 +215,11 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                   <motion.div
                     layoutId="activeNavBorder"
                     className="absolute -inset-0.5 rounded-[1.6rem] opacity-60 blur-sm z-0"
-                    animate={{ background: activeStyle.activeGradient }}
-                    style={{ backgroundSize: '200% 100%' }}
-                    transition={{ duration: 1 }}
+                    style={{
+                      background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
+                      backgroundSize: '200% 100%'
+                    }}
+                    transition={smoothTransition}
                   />
                   <motion.div
                     layoutId="activeNav"
@@ -228,7 +230,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
               )}
 
               <motion.div
-                className={`relative w-full h-full bg-gradient-to-br dark:from-slate-900 dark:via-purple-900/10 dark:to-slate-900 from-white via-purple-50 to-white border-2 dark:border-purple-500/30 border-white/60 p-1 overflow-hidden ${activeTab === 'analyze' ? activeStyle.analyzeBtn.border : ''}`}
+                className={`relative w-full h-full bg-gradient-to-br dark:from-slate-900 dark:via-purple-900/10 dark:to-slate-900 from-white via-purple-50 to-white border-2 dark:border-purple-500/30 border-white/60 p-1 overflow-hidden ${activeTab === 'analyze' ? 'border-purple-500 dark:border-purple-400' : ''}`}
                 style={{ borderRadius: "1.5rem" }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 blur-sm"></div>
@@ -244,19 +246,11 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                       className="relative"
                       style={{ willChange: "transform" }}
                     >
-                      <motion.div
-                        className="absolute inset-0 rounded-full blur-xl opacity-70"
-                        animate={{ background: activeStyle.iconGlowGradient }}
-                        transition={{ duration: 1 }}
-                      />
-                      <motion.div
-                        className="relative p-3 shadow-2xl"
-                        style={{ borderRadius: "45% 55% 50% 50%/50% 60% 40% 50%" }}
-                        animate={{ background: activeStyle.iconBgGradient }}
-                        transition={{ duration: 1 }}
-                      >
+                      <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full blur-xl opacity-70"></div>
+                      <div className="relative p-3 bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 shadow-2xl"
+                        style={{ borderRadius: "45% 55% 50% 50%/50% 60% 40% 50%" }}>
                         <BrainCircuit className="w-3 h-3 text-white" strokeWidth={2.5} />
-                      </motion.div>
+                      </div>
                     </motion.div>
 
                     <div className="text-left">
@@ -267,7 +261,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                           transition={{ duration: 2, repeat: Infinity }}
                           style={{ willChange: "transform" }}
                         >
-                          <Zap className={`w-3.5 h-3.5 ${activeStyle.analyzeBtn.smallIcon}`} fill="currentColor" />
+                          <Zap className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" />
                         </motion.div>
                       </div>
                       <p className="text-xs dark:text-slate-400 text-slate-500 font-medium">
@@ -277,13 +271,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                   </div>
 
                   <motion.div
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      opacity: [0.5, 1, 0.5],
-                      background: activeStyle.analyzeBtn.dot
-                    }}
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="w-3 h-3 shadow-lg shadow-purple-500/50"
+                    className="w-3 h-3 bg-gradient-to-br from-pink-400 to-purple-500 shadow-lg shadow-purple-500/50"
                     style={{ borderRadius: "50% 50% 40% 60%" }}
                   />
                 </div>
@@ -302,7 +292,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                   {[...Array(3)].map((_, i) => (
                     <motion.div
                       key={i}
-                      className={`absolute w-2 h-2 ${activeStyle.bgGlow} rounded-full`}
+                      className="absolute w-2 h-2 bg-purple-400 rounded-full"
                       initial={{ x: 0, y: 0, opacity: 0 }}
                       animate={{
                         x: [0, (i - 1) * 30, 0],
