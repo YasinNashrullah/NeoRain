@@ -27,7 +27,111 @@ const smoothTransition = {
 // BackgroundBlobs removed for performance
 
 // main component
-const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleTheme }) => {
+const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleTheme, currentMood }) => {
+
+  // Mood Configuration (Consistent with BottomNav)
+  const moodConfig = {
+    happy: {
+      // Gradients for animation
+      primaryGradient: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)', // pink-500, purple-500, indigo-500
+      activeGradient: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
+      iconBgGradient: 'linear-gradient(135deg, #ec4899, #9333ea, #4f46e5)',
+      iconGlowGradient: 'linear-gradient(135deg, #ec4899, #9333ea)',
+
+      // Text Gradients (CSS class for clip-text)
+      textGradientClass: 'from-pink-600 via-purple-500 to-indigo-600 dark:from-pink-300 dark:via-purple-300 dark:to-indigo-300',
+
+      // Borders & Colors
+      activeBorder: 'border-pink-500 dark:border-pink-400',
+      iconColor: 'text-pink-500',
+      glow: 'shadow-[0_0_8px_rgba(236,72,153,1)]',
+      dropShadow: 'drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]',
+      bgGlow: 'bg-pink-500',
+      analyzeBtn: {
+        border: 'border-pink-500 dark:border-pink-400',
+        smallIcon: 'text-pink-500',
+        dot: 'linear-gradient(135deg, #f472b6, #a855f7)'
+      }
+    },
+    sad: {
+      primaryGradient: 'linear-gradient(135deg, #6366f1, #3b82f6, #06b6d4)', // indigo-500, blue-500, cyan-500
+      activeGradient: 'linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)',
+      iconBgGradient: 'linear-gradient(135deg, #6366f1, #2563eb, #0891b2)',
+      iconGlowGradient: 'linear-gradient(135deg, #6366f1, #2563eb)',
+
+      textGradientClass: 'from-indigo-600 via-blue-500 to-cyan-600 dark:from-indigo-300 dark:via-blue-300 dark:to-cyan-300',
+
+      activeBorder: 'border-indigo-500 dark:border-indigo-400',
+      iconColor: 'text-indigo-500',
+      glow: 'shadow-[0_0_8px_rgba(99,102,241,1)]',
+      dropShadow: 'drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]',
+      bgGlow: 'bg-indigo-500',
+      analyzeBtn: {
+        border: 'border-indigo-500 dark:border-indigo-400',
+        smallIcon: 'text-indigo-500',
+        dot: 'linear-gradient(135deg, #818cf8, #3b82f6)'
+      }
+    },
+    angry: {
+      primaryGradient: 'linear-gradient(135deg, #f97316, #ef4444, #f43f5e)', // orange-500, red-500, rose-500
+      activeGradient: 'linear-gradient(90deg, #f97316, #ef4444, #f43f5e)',
+      iconBgGradient: 'linear-gradient(135deg, #f97316, #dc2626, #e11d48)',
+      iconGlowGradient: 'linear-gradient(135deg, #f97316, #dc2626)',
+
+      textGradientClass: 'from-orange-600 via-red-500 to-rose-600 dark:from-orange-300 dark:via-red-300 dark:to-rose-300',
+
+      activeBorder: 'border-orange-500 dark:border-orange-400',
+      iconColor: 'text-orange-500',
+      glow: 'shadow-[0_0_8px_rgba(249,115,22,1)]',
+      dropShadow: 'drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]',
+      bgGlow: 'bg-orange-500',
+      analyzeBtn: {
+        border: 'border-orange-500 dark:border-orange-400',
+        smallIcon: 'text-orange-500',
+        dot: 'linear-gradient(135deg, #fb923c, #ef4444)'
+      }
+    },
+    calm: {
+      primaryGradient: 'linear-gradient(135deg, #06b6d4, #14b8a6, #10b981)', // cyan-500, teal-500, emerald-500
+      activeGradient: 'linear-gradient(90deg, #06b6d4, #14b8a6, #10b981)',
+      iconBgGradient: 'linear-gradient(135deg, #06b6d4, #0d9488, #059669)',
+      iconGlowGradient: 'linear-gradient(135deg, #06b6d4, #0d9488)',
+
+      textGradientClass: 'from-cyan-600 via-teal-500 to-emerald-600 dark:from-cyan-300 dark:via-teal-300 dark:to-emerald-300',
+
+      activeBorder: 'border-cyan-500 dark:border-cyan-400',
+      iconColor: 'text-cyan-500',
+      glow: 'shadow-[0_0_8px_rgba(6,182,212,1)]',
+      dropShadow: 'drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]',
+      bgGlow: 'bg-cyan-500',
+      analyzeBtn: {
+        border: 'border-cyan-500 dark:border-cyan-400',
+        smallIcon: 'text-cyan-500',
+        dot: 'linear-gradient(135deg, #22d3ee, #14b8a6)'
+      }
+    },
+    manic: {
+      primaryGradient: 'linear-gradient(135deg, #eab308, #f59e0b, #f97316)', // yellow-500, amber-500, orange-500
+      activeGradient: 'linear-gradient(90deg, #eab308, #f59e0b, #f97316)',
+      iconBgGradient: 'linear-gradient(135deg, #eab308, #d97706, #ea580c)',
+      iconGlowGradient: 'linear-gradient(135deg, #eab308, #d97706)',
+
+      textGradientClass: 'from-yellow-600 via-amber-500 to-orange-600 dark:from-yellow-300 dark:via-amber-300 dark:to-orange-300',
+
+      activeBorder: 'border-yellow-500 dark:border-yellow-400',
+      iconColor: 'text-yellow-500',
+      glow: 'shadow-[0_0_8px_rgba(234,179,8,1)]',
+      dropShadow: 'drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]',
+      bgGlow: 'bg-yellow-500',
+      analyzeBtn: {
+        border: 'border-yellow-500 dark:border-yellow-400',
+        smallIcon: 'text-yellow-500',
+        dot: 'linear-gradient(135deg, #facc15, #f59e0b)'
+      }
+    }
+  };
+
+  const activeStyle = moodConfig[currentMood] || moodConfig.sad;
 
   // memoize profile image url
   const profileImage = useMemo(() => {
@@ -59,18 +163,26 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
               whileHover={{ scale: 1.1, rotate: 180 }}
               transition={{ duration: 0.8, type: "spring" }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 rounded-3xl blur-lg opacity-70 animate-pulse"></div>
-              <div className="relative w-full h-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden">
+              <motion.div
+                className="absolute inset-0 rounded-3xl blur-lg opacity-70 animate-pulse"
+                animate={{ background: activeStyle.primaryGradient }}
+                transition={{ duration: 1 }}
+              />
+              <motion.div
+                className="relative w-full h-full rounded-3xl flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden"
+                animate={{ background: activeStyle.primaryGradient }}
+                transition={{ duration: 1 }}
+              >
                 <img
                   src={logo}
                   alt="NeoRain Logo"
                   className="w-24 h-24 object-contain brightness-0 invert drop-shadow-md"
                 />
-              </div>
+              </motion.div>
             </motion.div>
             <div>
               <motion.h1
-                className="text-2xl font-black text-transparent bg-gradient-to-r from-purple-600 via-pink-500 to-indigo-600 dark:from-purple-300 dark:via-pink-300 dark:to-indigo-300 bg-clip-text leading-none bg-[length:200%_auto]"
+                className={`text-2xl font-black text-transparent bg-gradient-to-r ${activeStyle.textGradientClass} bg-clip-text leading-none bg-[length:200%_auto]`}
                 animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               >
@@ -103,11 +215,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                   <motion.div
                     layoutId="activeNavBorder"
                     className="absolute -inset-0.5 rounded-[1.6rem] opacity-60 blur-sm z-0"
-                    style={{
-                      background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
-                      backgroundSize: '200% 100%'
-                    }}
-                    transition={smoothTransition}
+                    animate={{ background: activeStyle.activeGradient }}
+                    style={{ backgroundSize: '200% 100%' }}
+                    transition={{ duration: 1 }}
                   />
                   <motion.div
                     layoutId="activeNav"
@@ -118,7 +228,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
               )}
 
               <motion.div
-                className={`relative w-full h-full bg-gradient-to-br dark:from-slate-900 dark:via-purple-900/10 dark:to-slate-900 from-white via-purple-50 to-white border-2 dark:border-purple-500/30 border-white/60 p-1 overflow-hidden ${activeTab === 'analyze' ? 'border-purple-500 dark:border-purple-400' : ''}`}
+                className={`relative w-full h-full bg-gradient-to-br dark:from-slate-900 dark:via-purple-900/10 dark:to-slate-900 from-white via-purple-50 to-white border-2 dark:border-purple-500/30 border-white/60 p-1 overflow-hidden ${activeTab === 'analyze' ? activeStyle.analyzeBtn.border : ''}`}
                 style={{ borderRadius: "1.5rem" }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-indigo-500/10 blur-sm"></div>
@@ -134,11 +244,19 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                       className="relative"
                       style={{ willChange: "transform" }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full blur-xl opacity-70"></div>
-                      <div className="relative p-3 bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-600 shadow-2xl"
-                        style={{ borderRadius: "45% 55% 50% 50%/50% 60% 40% 50%" }}>
+                      <motion.div
+                        className="absolute inset-0 rounded-full blur-xl opacity-70"
+                        animate={{ background: activeStyle.iconGlowGradient }}
+                        transition={{ duration: 1 }}
+                      />
+                      <motion.div
+                        className="relative p-3 shadow-2xl"
+                        style={{ borderRadius: "45% 55% 50% 50%/50% 60% 40% 50%" }}
+                        animate={{ background: activeStyle.iconBgGradient }}
+                        transition={{ duration: 1 }}
+                      >
                         <BrainCircuit className="w-3 h-3 text-white" strokeWidth={2.5} />
-                      </div>
+                      </motion.div>
                     </motion.div>
 
                     <div className="text-left">
@@ -149,7 +267,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                           transition={{ duration: 2, repeat: Infinity }}
                           style={{ willChange: "transform" }}
                         >
-                          <Zap className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" />
+                          <Zap className={`w-3.5 h-3.5 ${activeStyle.analyzeBtn.smallIcon}`} fill="currentColor" />
                         </motion.div>
                       </div>
                       <p className="text-xs dark:text-slate-400 text-slate-500 font-medium">
@@ -159,9 +277,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                   </div>
 
                   <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.5, 1, 0.5],
+                      background: activeStyle.analyzeBtn.dot
+                    }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="w-3 h-3 bg-gradient-to-br from-pink-400 to-purple-500 shadow-lg shadow-purple-500/50"
+                    className="w-3 h-3 shadow-lg shadow-purple-500/50"
                     style={{ borderRadius: "50% 50% 40% 60%" }}
                   />
                 </div>
@@ -180,7 +302,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                   {[...Array(3)].map((_, i) => (
                     <motion.div
                       key={i}
-                      className="absolute w-2 h-2 bg-purple-400 rounded-full"
+                      className={`absolute w-2 h-2 ${activeStyle.bgGlow} rounded-full`}
                       initial={{ x: 0, y: 0, opacity: 0 }}
                       animate={{
                         x: [0, (i - 1) * 30, 0],
@@ -224,14 +346,14 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                       layoutId="activeNavBorder"
                       className="absolute -inset-0.5 rounded-xl opacity-60 blur-sm"
                       style={{
-                        background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
+                        background: activeStyle.activeGradient,
                         backgroundSize: '200% 100%'
                       }}
                       transition={smoothTransition}
                     />
                     <motion.div
                       layoutId="activeNav"
-                      className="absolute inset-0 dark:bg-[#1e1b4b]/50 bg-white/60 rounded-xl border dark:border-purple-500/30 border-white/50"
+                      className={`absolute inset-0 dark:bg-[#1e1b4b]/50 bg-white/60 rounded-xl border ${activeStyle.activeBorder} border-white/50`}
                       transition={smoothTransition}
                     />
                   </>
@@ -242,7 +364,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
 
                   <item.icon
                     className={`w-[18px] h-[18px] transition-all duration-300 ${isActive
-                      ? 'text-pink-500 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]'
+                      ? `${activeStyle.iconColor} ${activeStyle.dropShadow}`
                       : 'group-hover:text-purple-500'
                       }`}
                     strokeWidth={isActive ? 2.5 : 2}
@@ -259,7 +381,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 500 }}
                     >
-                      <div className="w-1.5 h-1.5 bg-pink-500 rounded-full shadow-[0_0_8px_rgba(236,72,153,1)]" />
+                      <div className={`w-1.5 h-1.5 ${activeStyle.bgGlow} rounded-full ${activeStyle.glow}`} />
                     </motion.div>
                   )}
                 </div>

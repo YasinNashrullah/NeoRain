@@ -255,6 +255,7 @@ const App = () => {
             onLogout={handleLogout}
             userData={userData}
             theme={theme}
+            currentMood={currentMood}
           // Sidebar doesn't need toggleTheme anymore
           />
 
@@ -376,7 +377,7 @@ const App = () => {
 
             {activeTab !== 'chat' && (
               <div className="md:hidden">
-                <BottomNav activeTab={activeTab} setActiveTab={handleMenuNavigation} theme={theme} toggleTheme={toggleTheme} />
+                <BottomNav activeTab={activeTab} setActiveTab={handleMenuNavigation} theme={theme} toggleTheme={toggleTheme} currentMood={currentMood} />
               </div>
             )}
           </div>
