@@ -294,7 +294,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   };
 
   return (
-    <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white flex flex-col relative overflow-hidden">
+    <div className="w-full h-auto bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white flex flex-col relative overflow-hidden">
 
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-indigo-500/10 dark:bg-indigo-900/20 blur-[100px] pointer-events-none"></div>
 
