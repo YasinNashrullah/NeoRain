@@ -86,7 +86,7 @@ const WeeklyTab = ({
                     </div>
 
                     {/* content list scrollable */}
-                    <div className="flex-grow h-0 overflow-y-auto scrollbar-hide custom-scrollbar">
+                    <div className="flex-grow overflow-y-auto scrollbar-hide custom-scrollbar">
                         {displayDays.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-slate-400 p-10 opacity-60">
                                 <Filter className="w-10 h-10 mb-2" />
@@ -123,7 +123,7 @@ const WeeklyTab = ({
                                                             {/* Content */}
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex justify-between items-start mb-1">
-                                                                    <h5 className="font-bold text-slate-800 dark:text-white text-sm capitalize">
+                                                                    <h5 className="font-bold text-slate-800 mr-2 dark:text-white text-sm capitalize">
                                                                         {config.label}
                                                                     </h5>
                                                                     <span className="text-[10px] font-bold text-slate-400 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-white/50 dark:border-white/5">

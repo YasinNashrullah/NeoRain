@@ -212,12 +212,12 @@ const Analyze = ({ userData, onFinish }) => {
   };
 
   return (
-    <div className="pb-0 w-full h-full bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] dark:bg-none dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col relative overflow-hidden">
+    <div className="pb-0 w-full h-auto bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] dark:bg-none dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col relative overflow-hidden">
       {/* background glow */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,_rgba(88,28,135,0.2)_0%,_transparent_70%)] pointer-events-none"></div>
 
-      <div className="flex-1 w-full overflow-y-auto relative z-10 pb-32">
-        <div className="min-h-full flex flex-col items-center justify-center p-6">
+      <div className="flex-1 w-full overflow-y-auto relative z-10 pb-32 md:pb-0">
+        <div className="min-h-[85vh] flex flex-col items-center justify-center p-6">
           <AnimatePresence mode='wait'>
             {/* intro screen */}
             {step === 'intro' && (
@@ -226,7 +226,7 @@ const Analyze = ({ userData, onFinish }) => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="max-w-md text-center"
+                className="max-w-md text-center mx-auto"
               >
                 <div className="w-20 h-20 bg-gradient-to-tr from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-purple-500/30">
                   <CheckCircle className="w-10 h-10 text-white" />
@@ -273,7 +273,6 @@ const Analyze = ({ userData, onFinish }) => {
                   </h2>
                 </div>
 
-                {/* options */}
                 {/* options */}
                 <div className="grid gap-4 mb-8">
                   {options.map((opt) => (
