@@ -57,58 +57,90 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   };
 
   const calculateFrontendStats = (logs, range) => {
-    // Simple fallback use last 30 logs for trend
-    const sortedLogs = [...logs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    const recentLogs = sortedLogs.slice(-30); // Last 30 entries
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
 
-    if (recentLogs.length === 0) {
+    let filteredLogs = [];
+
+    // Filter based on range
+    if (range === 'daily') {
+      filteredLogs = logs.filter(l => new Date(l.created_at) >= todayStart);
+    } else if (range === 'weekly') {
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - 7);
+      filteredLogs = logs.filter(l => new Date(l.created_at) >= weekStart);
+    } else {
+      // monthly or default - last 30 days
+      const monthStart = new Date(now);
+      monthStart.setDate(now.getDate() - 30);
+      filteredLogs = logs.filter(l => new Date(l.created_at) >= monthStart);
+    }
+
+    const sortedLogs = filteredLogs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    if (sortedLogs.length === 0) {
       setStatsData({ average_score: 0, total_logs: 0, most_frequent_mood: null, trend: [], wellness_score: 0, insights: [] });
       return;
     }
 
-    const totalScore = recentLogs.reduce((acc, log) => {
+    const totalScore = sortedLogs.reduce((acc, log) => {
       const mood = moods.find(m => m.id === log.mood);
       return acc + (mood ? mood.score : 3);
     }, 0);
 
-    const avg = (totalScore / recentLogs.length).toFixed(1);
+    const avg = (totalScore / sortedLogs.length).toFixed(1);
 
     // Most Frequent
     const counts = {};
-    recentLogs.forEach(log => { counts[log.mood] = (counts[log.mood] || 0) + 1; });
+    sortedLogs.forEach(log => { counts[log.mood] = (counts[log.mood] || 0) + 1; });
     const mostFrequent = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
 
     // Trend Data for Chart
-    const trend = recentLogs.map(log => {
+    const trend = sortedLogs.map(log => {
       const mood = moods.find(m => m.id === log.mood);
+      let dateLabel;
+
+      if (range === 'daily') {
+        dateLabel = new Date(log.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        dateLabel = new Date(log.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+      }
+
       return {
-        date: new Date(log.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+        date: dateLabel,
         score: mood ? mood.score : 3,
         mood: log.mood
       };
     });
 
-    // Wellness Score Calculation
+    // Wellness Score Calculation (simplified for range)
     const moodScore = (parseFloat(avg) / 5) * 60;
-    const oneWeekAgo = new Date();
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-    const lastWeekLogs = logs.filter(l => new Date(l.created_at) >= oneWeekAgo);
-    const uniqueDays = new Set(lastWeekLogs.map(l => new Date(l.created_at).toDateString())).size;
-    const consistencyScore = Math.min((uniqueDays / 5) * 40, 40);
+    // Consistency: based on unique days in the selected range
+    const uniqueDays = new Set(sortedLogs.map(l => new Date(l.created_at).toDateString())).size;
+
+    // Adjust max consistency score based on range
+    let consistencyMax = 5;
+    if (range === 'daily') consistencyMax = 1;
+
+    let consistencyScore = Math.min((uniqueDays / consistencyMax) * 40, 40);
+    // For daily, if we have logs, maximum consistency for that view
+    if (range === 'daily' && sortedLogs.length > 0) consistencyScore = 40;
+
     const wellnessScore = Math.round(moodScore + consistencyScore);
 
-    // Smart Insights (Strictly 3 Useful Ones, No Emojis)
+    // Smart Insights
     const insights = [];
 
-    // Streak (Consistency)
+    // Streak (Consistency) - Calculate globally from all logs
     let streak = 0;
-    const today = new Date().setHours(0, 0, 0, 0);
+    const todayTimestamp = new Date().setHours(0, 0, 0, 0);
     const logDates = new Set(logs.map(l => new Date(l.created_at).setHours(0, 0, 0, 0)));
     for (let i = 0; i < 365; i++) {
-      const d = new Date(today);
+      const d = new Date(todayTimestamp);
       d.setDate(d.getDate() - i);
       if (logDates.has(d.getTime())) streak++;
-      else if (i === 0 && !logDates.has(today)) continue;
+      else if (i === 0 && !logDates.has(todayTimestamp)) continue;
       else break;
     }
     insights.push({
@@ -118,9 +150,9 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       bg: streak > 0 ? 'bg-orange-500/10' : 'bg-slate-500/10'
     });
 
-    // Stability (Mental Health Indicator)
-    if (recentLogs.length >= 3) {
-      const scores = recentLogs.map(l => moods.find(m => m.id === l.mood)?.score || 3);
+    // Stability
+    if (sortedLogs.length >= 2) {
+      const scores = sortedLogs.map(l => moods.find(m => m.id === l.mood)?.score || 3);
       const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
       const variance = scores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / scores.length;
 
@@ -128,13 +160,13 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       else if (variance > 1.5) insights.push({ icon: 'Activity', text: "Mood Swings", color: 'text-yellow-400', bg: 'bg-yellow-500/10' });
       else insights.push({ icon: 'Wind', text: "Balanced Flow", color: 'text-cyan-400', bg: 'bg-cyan-500/10' });
     } else {
-      insights.push({ icon: 'Activity', text: "Track more for stability", color: 'text-slate-400', bg: 'bg-slate-500/10' });
+      insights.push({ icon: 'Activity', text: "Track more data", color: 'text-slate-400', bg: 'bg-slate-500/10' });
     }
 
     // Trend (Progress)
-    if (recentLogs.length >= 2) {
-      const currentAvg = recentLogs.slice(-3).reduce((acc, l) => acc + (moods.find(m => m.id === l.mood)?.score || 3), 0) / Math.min(recentLogs.length, 3);
-      const prevAvg = recentLogs.length >= 6 ? recentLogs.slice(-6, -3).reduce((acc, l) => acc + (moods.find(m => m.id === l.mood)?.score || 3), 0) / 3 : currentAvg;
+    if (sortedLogs.length >= 2) {
+      const currentAvg = sortedLogs.slice(-3).reduce((acc, l) => acc + (moods.find(m => m.id === l.mood)?.score || 3), 0) / Math.min(sortedLogs.length, 3);
+      const prevAvg = sortedLogs.length >= 6 ? sortedLogs.slice(-6, -3).reduce((acc, l) => acc + (moods.find(m => m.id === l.mood)?.score || 3), 0) / 3 : currentAvg;
 
       if (currentAvg > prevAvg + 0.2) insights.push({ icon: 'TrendingUp', text: "Mood Improving", color: 'text-green-400', bg: 'bg-green-500/10' });
       else if (currentAvg < prevAvg - 0.2) insights.push({ icon: 'CloudRain', text: "Taking a Dip", color: 'text-indigo-400', bg: 'bg-indigo-500/10' });
@@ -145,7 +177,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
 
     setStatsData({
       average_score: avg,
-      total_logs: recentLogs.length,
+      total_logs: sortedLogs.length,
       most_frequent_mood: mostFrequent,
       trend: trend,
       wellness_score: wellnessScore,

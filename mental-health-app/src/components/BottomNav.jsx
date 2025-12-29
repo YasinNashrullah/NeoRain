@@ -102,7 +102,7 @@ const BottomNav = ({ activeTab, setActiveTab, theme, toggleTheme, currentMood })
 
 
       {/* Background Bar */}
-      <div className="bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-white/5 px-6 py-4 flex justify-between items-center rounded-t-3xl relative shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors duration-700 pb-6">
+      <div className="bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-white/5 px-6 py-2 flex justify-between items-center rounded-t-3xl relative shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-none transition-colors duration-700 pb-4">
 
         {navItems.map((item) => {
           // gap for floating button before action plan

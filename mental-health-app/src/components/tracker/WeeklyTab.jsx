@@ -75,7 +75,7 @@ const WeeklyTab = ({
 
             {/* right column timeline */}
             <div className="lg:col-span-5 self-stretch">
-                <div className="bg-gradient-to-b from-white/95 to-slate-50/95 dark:from-slate-900 dark:to-slate-900/95 border border-white/60 dark:border-white/10 rounded-[30px] flex flex-col shadow-sm dark:shadow-xl overflow-hidden h-full max-h-[500px] lg:max-h-full">
+                <div className="bg-gradient-to-b from-white/95 to-slate-50/95 dark:from-slate-900 dark:to-slate-900/95 border border-white/60 dark:border-white/10 rounded-[30px] flex flex-col shadow-sm dark:shadow-xl overflow-hidden h-full max-h-[500px] lg:max-h-[550px]">
 
                     {/* header */}
                     <div className="px-6 py-5 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white/50 dark:bg-white/5 backdrop-blur-sm shrink-0">
@@ -144,8 +144,7 @@ const WeeklyTab = ({
                             </div>
                         )}
                     </div>
-                    {/* fade effect at bottom */}
-                    <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white dark:from-slate-900 to-transparent pointer-events-none"></div>
+
                 </div>
             </div>
         </motion.div>
