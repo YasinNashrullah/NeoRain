@@ -437,6 +437,34 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
     }
   };
 
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAllChats = async () => {
+    if (!userData?.uid) return;
+
+    setIsDeleting(true);
+
+    // Wait for animation (800ms)
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    try {
+      await api.deleteAllChats(userData.uid);
+      setMessages([{
+        id: Date.now(),
+        text: "Riwayat chat telah dihapus.",
+        sender: 'system',
+        time: 'Info'
+      }]);
+      setPage(1);
+      setHasMore(false);
+    } catch (error) {
+      console.error("Failed to delete chats:", error);
+      // Optional: Show error toast
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const currentStyle = moodColors[currentMood] || moodColors.default;
 
   return (
@@ -458,17 +486,34 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         showHistoryMenu={showHistoryMenu}
         setShowHistoryMenu={setShowHistoryMenu}
         assessmentHistory={assessmentHistory}
+        onDeleteChat={handleDeleteAllChats}
       />
 
-      <MessageList
-        messages={messages}
-        currentStyle={currentStyle}
-        isTyping={isTyping}
-        messagesEndRef={messagesEndRef}
-        onLoadMore={loadMoreMessages}
-        hasMore={hasMore}
-        isLoadingMore={isLoadingMore}
-      />
+      <motion.div
+        className="flex-1 overflow-hidden relative flex flex-col"
+        animate={isDeleting ? {
+          scale: 0.9,
+          opacity: 0,
+          filter: 'blur(10px)',
+          y: -50
+        } : {
+          scale: 1,
+          opacity: 1,
+          filter: 'blur(0px)',
+          y: 0
+        }}
+        transition={{ duration: 0.8, ease: "easeInOut" }}
+      >
+        <MessageList
+          messages={messages}
+          currentStyle={currentStyle}
+          isTyping={isTyping}
+          messagesEndRef={messagesEndRef}
+          onLoadMore={loadMoreMessages}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+        />
+      </motion.div>
 
       <SuggestionChips
         suggestions={suggestions}

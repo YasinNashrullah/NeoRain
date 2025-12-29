@@ -13,6 +13,8 @@ import {
   limit,
   serverTimestamp,
   Timestamp,
+  writeBatch,
+
 } from "firebase/firestore";
 import { config } from "./config.js";
 
@@ -66,7 +68,7 @@ export const api = {
       return { id: docRef.id, ...moodData };
     } catch (error) {
       // return handleError("Save Mood", error);
-      throw error; 
+      throw error;
     }
   },
 
@@ -153,6 +155,41 @@ export const api = {
       return { data, hasMore: false }; // Firestore pagination butuh cursor, simplifikasi dulu
     } catch (error) {
       return handleError("Get Chats", error) || { data: [], hasMore: false };
+    }
+  },
+
+  // 6.5 Hapus Semua Chat
+  deleteAllChats: async (firebaseUid) => {
+    try {
+      const q = query(
+        collection(db, "chats"),
+        where("firebase_uid", "==", firebaseUid)
+      );
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) return { success: true, count: 0 };
+
+      // Firestore batch limit is 500
+      const batchSize = 500;
+      const chunks = [];
+      const docs = snapshot.docs;
+
+      for (let i = 0; i < docs.length; i += batchSize) {
+        chunks.push(docs.slice(i, i + batchSize));
+      }
+
+      // Execute batches sequentially
+      for (const chunk of chunks) {
+        const batch = writeBatch(db);
+        chunk.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+      }
+
+      return { success: true, count: snapshot.size };
+    } catch (error) {
+      return handleError("Delete All Chats", error);
     }
   },
 

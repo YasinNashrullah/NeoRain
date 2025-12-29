@@ -21,23 +21,32 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
         }
     }, [messages, prevScrollHeight]);
 
+    // Create a reversed copy for display (Newest at Bottom)
+    // We use flex-col-reverse so the scroll stays anchored to the bottom more naturally
+    const reversedMessages = [...messages].reverse();
+
     return (
         <div
             ref={containerRef}
             onScroll={handleScroll}
             className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative z-10"
         >
-            <div className="p-4 space-y-4 flex flex-col justify-end min-h-full">
-                {/* Loading Indicator for Pagination */}
-                {isLoadingMore && (
-                    <div className="w-full flex justify-center py-2">
-                        <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
+            <div className="p-4 flex flex-col-reverse min-h-full gap-4">
+                {/* Bottom Spacer */}
+                <div ref={messagesEndRef} className="h-1 flex-none" />
+
+                {/* Typing Indicator (Always at bottom if active) */}
+                {isTyping && (
+                    <div className="flex justify-start">
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center shadow-sm">
+                            <Loader2 className="w-4 h-4 text-indigo-500 dark:text-indigo-400 animate-spin" />
+                            <span className="text-xs text-slate-500 dark:text-slate-400">Mengetik...</span>
+                        </div>
                     </div>
                 )}
 
-                <div className="h-4 flex-none"></div>
-
-                {messages.map((msg) => (
+                {/* Messages */}
+                {reversedMessages.map((msg) => (
                     <div
                         key={msg.id}
                         className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -63,16 +72,15 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                     </div>
                 ))}
 
-                {isTyping && (
-                    <div className="flex justify-start">
-                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center shadow-sm">
-                            <Loader2 className="w-4 h-4 text-indigo-500 dark:text-indigo-400 animate-spin" />
-                            <span className="text-xs text-slate-500 dark:text-slate-400">Mengetik...</span>
-                        </div>
+                {/* Top Spacer */}
+                <div className="h-4 flex-none"></div>
+
+                {/* Loading Indicator for Pagination (At the very top) */}
+                {isLoadingMore && (
+                    <div className="w-full flex justify-center py-2">
+                        <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
                     </div>
                 )}
-                {/* Elemen target scroll */}
-                <div ref={messagesEndRef} className="h-1" />
             </div>
         </div>
     );
