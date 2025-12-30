@@ -157,7 +157,7 @@ const Statistics = ({ userData, onChatRequest, onNavigate }) => {
 
     return (
         <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-32 md:pb-6">
-            <div className="max-w-[1400px] mx-auto p-6 space-y-6">
+            <div className="w-full h-full p-4 md:p-6 lg:p-8 space-y-6">
                 <h1 className="text-3xl font-bold text-center mb-8 text-slate-800 dark:text-white">Analysis Your Report</h1>
 
                 {/* main dashboard layout */}

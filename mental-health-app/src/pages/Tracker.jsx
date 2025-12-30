@@ -355,7 +355,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
 
       {/* Container */}
       <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 md:pb-6 scrollbar-hide relative z-10">
-        <div className="max-w-6xl mx-auto min-h-full">
+        <div className="w-full h-full mx-auto min-h-full">
 
           <AnimatePresence mode='wait'>
 
