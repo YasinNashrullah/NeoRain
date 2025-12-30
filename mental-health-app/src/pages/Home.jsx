@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { checkStreak } from '../utils/gamification';
 import { api } from '../utils/api';
+import BreathingModal from '../components/BreathingModal';
 
 // static data constants
 const moods = [
@@ -65,6 +66,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
   const [streak, setStreak] = useState(0);
   const [isPlayingRain, setIsPlayingRain] = useState(false);
   const [gratitudeText, setGratitudeText] = useState('');
+  const [showBreathingModal, setShowBreathingModal] = useState(false);
 
   const rainAudioRef = useRef(new Audio('/rain.mp3'));
 
@@ -293,16 +295,25 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         </div>
 
         {/* breathing widget */}
-        <motion.div variants={itemVars} className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-white/40 to-white/60 dark:from-indigo-900/20 dark:to-purple-900/20 backdrop-blur-md border border-white/40 dark:border-white/5 p-6 flex items-center justify-between shadow-sm dark:shadow-none">
+        <motion.div
+          variants={itemVars}
+          onClick={() => setShowBreathingModal(true)}
+          className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-white/40 to-white/60 dark:from-indigo-900/20 dark:to-purple-900/20 backdrop-blur-md border border-white/40 dark:border-white/5 p-6 flex items-center justify-between shadow-sm dark:shadow-none cursor-pointer hover:bg-white/60 dark:hover:bg-indigo-900/30 transition-all group"
+        >
           <div className="relative z-10">
-            <h4 className="text-slate-800 dark:text-white font-bold mb-1">Tarik Napas</h4>
+            <h4 className="text-slate-800 dark:text-white font-bold mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Tarik Napas</h4>
             <p className="text-xs text-slate-500 max-w-[120px]">Ikuti lingkaran ini untuk menenangkan pikiranmu.</p>
           </div>
           <div className="relative w-16 h-16 flex items-center justify-center">
             <div className="absolute inset-0 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full animate-ping opacity-20"></div>
-            <div className="w-10 h-10 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)]"></div>
+            <div className="w-10 h-10 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)] group-hover:scale-110 transition-transform"></div>
           </div>
         </motion.div>
+
+        <BreathingModal
+          isOpen={showBreathingModal}
+          onClose={() => setShowBreathingModal(false)}
+        />
 
         {/* last statistics */}
         {lastAssessment && (
