@@ -4,7 +4,7 @@ import {
   CloudRain, Sun, Moon, MapPin,
   Smile, Frown, Zap, Wind, Cloud,
   ArrowRight, MessageCircle, Quote, Activity, Heart,
-  Flame, Music
+  Flame, Music,
 } from 'lucide-react';
 import { checkStreak } from '../utils/gamification';
 import { api } from '../utils/api';
@@ -306,7 +306,8 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           </div>
           <div className="relative w-16 h-16 flex items-center justify-center">
             <div className="absolute inset-0 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full animate-ping opacity-20"></div>
-            <div className="w-10 h-10 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)] group-hover:scale-110 transition-transform"></div>
+            {/* <div className="w-10 h-10 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)] group-hover:scale-110 transition-transform"></div> */}
+            <Wind className="w-10 h-10 text-indigo-500 group-hover:scale-110 transition-transform" />
           </div>
         </motion.div>
 

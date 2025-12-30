@@ -14,7 +14,6 @@ import {
   serverTimestamp,
   Timestamp,
   writeBatch,
-
 } from "firebase/firestore";
 import { config } from "./config.js";
 
@@ -181,7 +180,7 @@ export const api = {
       // Execute batches sequentially
       for (const chunk of chunks) {
         const batch = writeBatch(db);
-        chunk.forEach(doc => {
+        chunk.forEach((doc) => {
           batch.delete(doc.ref);
         });
         await batch.commit();
@@ -549,7 +548,9 @@ export const api = {
     userName = "Teman"
   ) => {
     try {
-      const { apiKey, baseUrl, model } = config.gemini;
+      const { apiKeys, baseUrl, model } = config.gemini;
+      const keysToTry =
+        apiKeys && apiKeys.length > 0 ? apiKeys : [config.gemini.apiKey];
 
       // 1. Construct System Prompt
       let systemPrompt = `
@@ -576,59 +577,95 @@ export const api = {
           - Kecemasan: ${contextData.scores.a} (Skala 0-42)
           - Stres: ${contextData.scores.s} (Skala 0-42)
           Ringkasan AI Sebelumnya: "${String(
-          contextData.ai_analysis || ""
-        ).substring(0, 200)}..."
+            contextData.ai_analysis || ""
+          ).substring(0, 200)}..."
           
           INSTRUKSI KHUSUS: User bertanya dalam konteks hasil tes ini. Validasi perasaan mereka berdasarkan data ini.
         `;
       }
 
-      // 3. Call Gemini API
-      const response = await fetch(
-        `${baseUrl}/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: "user",
-                parts: [{ text: systemPrompt + "\n\nUser: " + message }],
-              },
-            ],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 8192,
-              responseMimeType: "application/json",
-            },
-          }),
-        }
-      );
+      // 3. Round-Robin / Failover Logic
+      let parsedResponse = null;
+      let lastError = null;
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error("Quota exceeded. Please try again later.");
+      for (let i = 0; i < keysToTry.length; i++) {
+        const currentKey = keysToTry[i];
+        try {
+          // console.log(`Attempting with Key #${i + 1}...`);
+          const response = await fetch(
+            `${baseUrl}/${model}:generateContent?key=${currentKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    role: "user",
+                    parts: [{ text: systemPrompt + "\n\nUser: " + message }],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.7,
+                  maxOutputTokens: 8192,
+                  responseMimeType: "application/json",
+                },
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            if (response.status === 429) {
+              console.warn(
+                `Key #${i + 1} Rate Limited. Switching to next key...`
+              );
+              continue; // Try next key
+            }
+            throw new Error(`Gemini API Error: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+          parsedResponse = {
+            text: "Maaf, aku tidak bisa menjawab sekarang.",
+            mood: "default",
+            suggestions: [],
+          };
+
+          try {
+            if (rawText) {
+              parsedResponse = JSON.parse(rawText);
+            }
+          } catch (e) {
+            console.error("Failed to parse AI JSON:", e);
+            parsedResponse.text = rawText || parsedResponse.text;
+          }
+
+          // Success - break loop
+          lastError = null;
+          break;
+        } catch (error) {
+          console.error(`Error with Key #${i + 1}:`, error);
+          lastError = error;
+          // If it's a network error or 429 caught above, we continue.
+          // If it was a 429 that threw (if we changed logic), we'd continue.
+          // Here only continue if we haven't succeeded.
         }
-        throw new Error(`Gemini API Error: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      let parsedResponse = {
-        text: "Maaf, aku tidak bisa menjawab sekarang.",
-        mood: "default",
-        suggestions: [],
-      };
-
-      try {
-        if (rawText) {
-          parsedResponse = JSON.parse(rawText);
+      if (lastError && !parsedResponse) {
+        if (lastError.message && lastError.message.includes("429")) {
+          throw new Error(
+            "Maaf, semua server sibuk (Limit API). Coba lagi nanti ya! 😴"
+          );
         }
-      } catch (e) {
-        console.error("Failed to parse AI JSON:", e);
-        // Fallback cleanup if JSON fails but text exists
-        parsedResponse.text = rawText || parsedResponse.text;
+        throw lastError;
+      }
+
+      if (!parsedResponse) {
+        throw new Error(
+          "Gagal mendapatkan respons dari AI setelah mencoba semua key."
+        );
       }
 
       // 4. Save to Firestore (Async)
@@ -652,11 +689,6 @@ export const api = {
       return parsedResponse;
     } catch (error) {
       console.error("Chat With AI Error:", error);
-      if (error.message.includes("Quota exceeded")) {
-        throw new Error(
-          "Maaf, Neo sedang istirahat sebentar (Limit API). Coba 1 menit lagi ya! 😴"
-        );
-      }
       throw error;
     }
   },
