@@ -436,7 +436,6 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
                 <option value="" className="text-slate-800 dark:text-white dark:bg-slate-900">Pilih</option>
                 <option value="Laki-laki" className="text-slate-800 dark:text-white dark:bg-slate-900">Laki-laki</option>
                 <option value="Perempuan" className="text-slate-800 dark:text-white dark:bg-slate-900">Perempuan</option>
-                <option value="Femboy" className="text-slate-800 dark:text-white dark:bg-slate-900">Rafi</option>
               </select>
             </div>
             <div>
