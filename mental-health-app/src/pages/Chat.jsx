@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../utils/api';
 import { config } from '../utils/config';
 import '../App.css';
@@ -9,6 +9,8 @@ import ChatHeader from '../components/chat/ChatHeader';
 import MessageList from '../components/chat/MessageList';
 import SuggestionChips from '../components/chat/SuggestionChips';
 import ChatInput from '../components/chat/ChatInput';
+import EmotionDetector from '../components/chat/EmotionDetector';
+import { Camera } from 'lucide-react';
 
 // Mood color mapping
 const moodColors = {
@@ -79,6 +81,32 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   // Suggestions State
   const [suggestions, setSuggestions] = useState([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  // Camera & Emotion State
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [showCameraPermission, setShowCameraPermission] = useState(false);
+  const [detectedEmotion, setDetectedEmotion] = useState(null);
+
+  const handleToggleCamera = () => {
+    if (isCameraActive) {
+      setIsCameraActive(false);
+      setDetectedEmotion(null);
+    } else {
+      setShowCameraPermission(true);
+    }
+  };
+
+  const confirmCamera = () => {
+    setShowCameraPermission(false);
+    setIsCameraActive(true);
+  };
+
+  // Sync detected emotion with UI Mood
+  useEffect(() => {
+    if (detectedEmotion && moodColors[detectedEmotion]) {
+      setCurrentMood(detectedEmotion);
+    }
+  }, [detectedEmotion, setCurrentMood]);
 
   const messagesEndRef = useRef(null);
   const userName = userData?.name?.split(" ")[0] || "Teman";
@@ -282,6 +310,18 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         `;
       }
 
+      if (detectedEmotion) {
+        systemInstructionText += `
+        \n[DATA VISUAL REAL-TIME DARI KAMERA]
+        Sistem mendeteksi ekspresi wajah user: "${detectedEmotion}".
+        
+        INSTRUKSI:
+        1. JANGAN bilang "Aku tidak bisa melihatmu". Anggap data ini akurat.
+        2. Validasi perasaan user berdasarkan ekspresi ini.
+        3. Contoh: "Kulihat wajahmu tampak ${detectedEmotion}, ada yang bikin kepikiran?"
+        `;
+      }
+
       // 2. Map History to Gemini Format
       // Gemini "contents" array: each item is { role: "user" | "model", parts: [{ text: "..." }] }
       const historyForAI = messages
@@ -293,9 +333,19 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         }));
 
       // Add current message
+      // Add current message with Emotion Context if available
+      const currentMessageParts = [{ text: userMsg.text }];
+
+      if (detectedEmotion) {
+        // Prepend emotion context to the user's message to force attention
+        currentMessageParts.unshift({
+          text: `[SYSTEM DATA: User's Face Expression = "${detectedEmotion}"]\n(Please acknowledge this visual data in your response)\n\n`
+        });
+      }
+
       const chatContents = [
         ...historyForAI,
-        { role: "user", parts: [{ text: userMsg.text }] }
+        { role: "user", parts: currentMessageParts }
       ];
 
       // 3. Fetch Gemini API with Retry Logic
@@ -487,7 +537,62 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         setShowHistoryMenu={setShowHistoryMenu}
         assessmentHistory={assessmentHistory}
         onDeleteChat={handleDeleteAllChats}
+        isCameraActive={isCameraActive}
+        onToggleCamera={handleToggleCamera}
       />
+
+      <EmotionDetector
+        isActive={isCameraActive}
+        onEmotionDetected={setDetectedEmotion}
+        onClose={() => setIsCameraActive(false)}
+      />
+
+      {/* Camera Permission Modal */}
+      <AnimatePresence>
+        {showCameraPermission && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowCameraPermission(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden relative z-10 border border-slate-200 dark:border-white/10"
+            >
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-indigo-500 dark:text-indigo-400">
+                  <Camera className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Aktifkan Kamera?</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                  Aktifkan kamera agar Ai tau keadaanmu sekarang.
+                  <br />
+                  <span className="text-xs opacity-70 mt-2 block">(Privasi aman: Video tidak direkam/dikirim ke server)</span>
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCameraPermission(false)}
+                    className="flex-1 py-3 px-4 rounded-xl font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={confirmCamera}
+                    className="flex-1 py-3 px-4 rounded-xl font-semibold text-white bg-indigo-500 hover:bg-indigo-600 shadow-lg shadow-indigo-500/30 transition-all transform active:scale-95"
+                  >
+                    Setuju
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <motion.div
         className="flex-1 overflow-hidden relative flex flex-col"
@@ -520,6 +625,18 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         loadingSuggestions={loadingSuggestions}
         setInput={setInput}
       />
+
+      {/* Emotion Status Indicator */}
+      {isCameraActive && (
+        <div className="px-4 py-1 flex items-center justify-center">
+          <div className={`text-xs px-3 py-1 rounded-full backdrop-blur-md border ${detectedEmotion
+            ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-200'
+            : 'bg-slate-500/20 border-slate-500/30 text-slate-400'
+            }`}>
+            Status Kamera: {detectedEmotion ? `Terdeteksi ${detectedEmotion}` : 'Mencari wajah...'}
+          </div>
+        </div>
+      )}
 
       <ChatInput
         input={input}
