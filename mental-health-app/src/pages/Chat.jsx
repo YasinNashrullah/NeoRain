@@ -103,8 +103,16 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
   // Sync detected emotion with UI Mood
   useEffect(() => {
-    if (detectedEmotion && moodColors[detectedEmotion]) {
-      setCurrentMood(detectedEmotion);
+    if (detectedEmotion) {
+      let mappedMood = detectedEmotion;
+
+      // Map face-api expressions to app moods
+      if (detectedEmotion === 'neutral') mappedMood = 'calm';
+      if (detectedEmotion === 'surprised') mappedMood = 'manic';
+
+      if (moodColors[mappedMood]) {
+        setCurrentMood(mappedMood);
+      }
     }
   }, [detectedEmotion, setCurrentMood]);
 
