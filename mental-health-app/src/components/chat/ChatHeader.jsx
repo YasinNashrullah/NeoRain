@@ -12,7 +12,8 @@ const ChatHeader = ({
     assessmentHistory,
     onDeleteChat,
     isCameraActive,
-    onToggleCamera
+    onToggleCamera,
+    detectedEmotion
 }) => {
     const [showDeleteModal, setShowDeleteModal] = React.useState(false);
 
@@ -53,6 +54,28 @@ const ChatHeader = ({
 
                     {/* Actions */}
                     <div className="flex items-center gap-1">
+                        {/* Camera Status Indicator */}
+                        <AnimatePresence>
+                            {isCameraActive && (
+                                <motion.div
+                                    initial={{ opacity: 0, width: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, width: 'auto', scale: 1 }}
+                                    exit={{ opacity: 0, width: 0, scale: 0.8 }}
+                                    className="overflow-hidden mr-2"
+                                >
+                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md ${detectedEmotion
+                                        ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-300'
+                                        : 'bg-slate-500/10 border-slate-500/20 text-slate-500 dark:text-slate-400'
+                                        }`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${detectedEmotion ? 'bg-indigo-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                                        <span className="text-[10px] font-bold whitespace-nowrap">
+                                            {detectedEmotion ? `Terdeteksi: ${detectedEmotion}` : 'Mencari wajah...'}
+                                        </span>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         {/* Camera Toggle */}
                         <button
                             onClick={onToggleCamera}

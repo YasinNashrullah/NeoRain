@@ -75,7 +75,7 @@ const BottomNav = ({ activeTab, setActiveTab, theme, toggleTheme, currentMood })
       dropShadow: 'drop-shadow-[0_2px_4px_rgba(6,182,212,0.3)]',
       dot: 'bg-cyan-500 dark:bg-cyan-400'
     },
-    manic: {
+    energetic: {
       primary: 'bg-yellow-500',
       primaryHover: 'hover:bg-yellow-600',
       text: 'text-yellow-600',

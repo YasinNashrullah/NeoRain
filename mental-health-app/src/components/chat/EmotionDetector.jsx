@@ -5,6 +5,7 @@ import { Camera, X } from 'lucide-react';
 const EmotionDetector = ({ onEmotionDetected, isActive, onClose }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const streamRef = useRef(null); // Store stream independently
     const [isModelLoaded, setIsModelLoaded] = useState(false);
     const [initializationError, setInitializationError] = useState(null);
     const [detectedExpression, setDetectedExpression] = useState(null);
@@ -47,6 +48,7 @@ const EmotionDetector = ({ onEmotionDetected, isActive, onClose }) => {
         navigator.mediaDevices
             .getUserMedia({ video: {} })
             .then((stream) => {
+                streamRef.current = stream; // Store stream for cleanup
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
                 }
@@ -58,8 +60,17 @@ const EmotionDetector = ({ onEmotionDetected, isActive, onClose }) => {
     };
 
     const stopVideo = () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        // Stop all tracks from the stored stream
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+            });
+            streamRef.current = null;
+        }
+
+        // Clear video source
+        if (videoRef.current) {
             videoRef.current.srcObject = null;
         }
     };

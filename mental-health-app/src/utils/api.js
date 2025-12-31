@@ -373,7 +373,7 @@ export const api = {
       // Calculate Stats
       if (logs.length === 0) return null;
 
-      const moodScores = { happy: 5, calm: 4, manic: 3, sad: 2, angry: 1 };
+      const moodScores = { happy: 5, calm: 4, energetic: 3, sad: 2, angry: 1 };
 
       let totalScore = 0;
       const moodCounts = {};
@@ -562,7 +562,7 @@ export const api = {
         OUTPUT FORMAT (JSON ONLY):
         {
           "text": "Respon kamu ke user (gunakan emoji)",
-          "mood": "happy | sad | angry | manic | calm",
+          "mood": "happy | sad | angry | energetic | calm",
           "suggestions": ["Saran balasan singkat 1", "Saran balasan singkat 2", "Saran balasan singkat 3"] 
         }
       `;
@@ -577,8 +577,8 @@ export const api = {
           - Kecemasan: ${contextData.scores.a} (Skala 0-42)
           - Stres: ${contextData.scores.s} (Skala 0-42)
           Ringkasan AI Sebelumnya: "${String(
-            contextData.ai_analysis || ""
-          ).substring(0, 200)}..."
+          contextData.ai_analysis || ""
+        ).substring(0, 200)}..."
           
           INSTRUKSI KHUSUS: User bertanya dalam konteks hasil tes ini. Validasi perasaan mereka berdasarkan data ini.
         `;

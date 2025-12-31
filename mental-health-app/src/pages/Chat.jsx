@@ -30,7 +30,7 @@ const moodColors = {
     bgGradient: 'radial-gradient(circle at center, #0e2a35 0%, #020617 100%)',
     bgGradientLight: 'radial-gradient(circle at center, #cffafe 0%, #ecfeff 100%)'
   },
-  manic: {
+  energetic: {
     bubble1: 'rgba(250, 204, 21, 0.05)',
     bubble2: 'rgba(234, 179, 8, 0.04)',
     primary: 'bg-yellow-600',
@@ -108,7 +108,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
 
       // Map face-api expressions to app moods
       if (detectedEmotion === 'neutral') mappedMood = 'calm';
-      if (detectedEmotion === 'surprised') mappedMood = 'manic';
+      if (detectedEmotion === 'surprised') mappedMood = 'energetic';
 
       if (moodColors[mappedMood]) {
         setCurrentMood(mappedMood);
@@ -376,7 +376,7 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
                   type: "object",
                   properties: {
                     reply: { type: "string" },
-                    mood: { type: "string", enum: ["happy", "sad", "angry", "manic", "calm"] },
+                    mood: { type: "string", enum: ["happy", "sad", "angry", "energetic", "calm"] },
                     suggestions: { type: "array", items: { type: "string" } }
                   },
                   required: ["reply", "mood", "suggestions"]
@@ -547,6 +547,7 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         onDeleteChat={handleDeleteAllChats}
         isCameraActive={isCameraActive}
         onToggleCamera={handleToggleCamera}
+        detectedEmotion={detectedEmotion}
       />
 
       <EmotionDetector
@@ -634,17 +635,7 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         setInput={setInput}
       />
 
-      {/* Emotion Status Indicator */}
-      {isCameraActive && (
-        <div className="px-4 py-1 flex items-center justify-center">
-          <div className={`text-xs px-3 py-1 rounded-full backdrop-blur-md border ${detectedEmotion
-            ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-200'
-            : 'bg-slate-500/20 border-slate-500/30 text-slate-400'
-            }`}>
-            Status Kamera: {detectedEmotion ? `Terdeteksi ${detectedEmotion}` : 'Mencari wajah...'}
-          </div>
-        </div>
-      )}
+
 
       <ChatInput
         input={input}

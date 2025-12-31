@@ -14,7 +14,7 @@ import BreathingModal from '../components/BreathingModal';
 const moods = [
   { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50' },
   { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50' },
-  { id: 'manic', label: 'Manic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50' },
+  { id: 'energetic', label: 'Energetic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50' },
   { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50' },
   { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50' },
 ];
@@ -40,7 +40,7 @@ const quotesData = {
     "Api amarah bisa membakar atau menghangatkan. Pilih bijak.",
     "Tarik napas dalam. Jangan biarkan emosi sesaat merusak."
   ],
-  manic: [
+  energetic: [
     "Pelan-pelan. Kamu tidak harus menyelesaikan dunia hari ini.",
     "Satu langkah kecil lebih berharga daripada seribu langkah di pikiran.",
     "Pijakkan kakimu ke bumi. Rasakan napasmu."

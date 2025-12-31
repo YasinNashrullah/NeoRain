@@ -110,7 +110,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
         dot: 'linear-gradient(135deg, #22d3ee, #14b8a6)'
       }
     },
-    manic: {
+    energetic: {
       primaryGradient: 'linear-gradient(135deg, #eab308, #f59e0b, #f97316)', // yellow-500, amber-500, orange-500
       activeGradient: 'linear-gradient(90deg, #eab308, #f59e0b, #f97316)',
       iconBgGradient: 'linear-gradient(135deg, #eab308, #d97706, #ea580c)',

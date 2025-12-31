@@ -30,7 +30,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50', score: 5 },
     { id: 'grateful', label: 'Grateful', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-100 dark:bg-rose-500/20', border: 'border-rose-200 dark:border-rose-500/50', score: 5 },
     { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50', score: 3 },
-    { id: 'manic', label: 'Manic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50', score: 4 },
+    { id: 'energetic', label: 'Energetic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50', score: 4 },
     { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50', score: 1 },
     { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50', score: 2 },
   ];
