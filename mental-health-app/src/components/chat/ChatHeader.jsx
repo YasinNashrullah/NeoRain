@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Sparkles, MoreVertical, X, FileText, Trash2, Camera } from 'lucide-react';
+import { ArrowLeft, Sparkles, MoreVertical, X, FileText, Trash2, Camera, Eye, EyeOff } from 'lucide-react';
 
 const ChatHeader = ({
     onBack,
@@ -13,7 +13,9 @@ const ChatHeader = ({
     onDeleteChat,
     isCameraActive,
     onToggleCamera,
-    detectedEmotion
+    detectedEmotion,
+    showPreview,
+    setShowPreview
 }) => {
     const [showDeleteModal, setShowDeleteModal] = React.useState(false);
 
@@ -47,13 +49,13 @@ const ChatHeader = ({
                                     </button>
                                 </div>
                             ) : (
-                                <p className={`${currentStyle.text} text-[10px] font-medium`}>Teman Curhat</p>
+                                <p className={`${currentStyle.text} text-[10px] font-medium transition-colors duration-[1500ms]`}>Teman Curhat</p>
                             )}
                         </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-3">
                         {/* Camera Status Indicator */}
                         <AnimatePresence>
                             {isCameraActive && (
@@ -63,16 +65,35 @@ const ChatHeader = ({
                                     exit={{ opacity: 0, width: 0, scale: 0.8 }}
                                     className="overflow-hidden mr-2"
                                 >
-                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md ${detectedEmotion
+                                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border backdrop-blur-md transition-colors duration-[1500ms] ${detectedEmotion
                                         ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-300'
                                         : 'bg-slate-500/10 border-slate-500/20 text-slate-500 dark:text-slate-400'
                                         }`}>
                                         <div className={`w-1.5 h-1.5 rounded-full ${detectedEmotion ? 'bg-indigo-500 animate-pulse' : 'bg-slate-400'}`}></div>
                                         <span className="text-[10px] font-bold whitespace-nowrap">
-                                            {detectedEmotion ? `Terdeteksi: ${detectedEmotion}` : 'Mencari wajah...'}
+                                            {detectedEmotion ? `${detectedEmotion}` : 'Mencari wajah...'}
                                         </span>
                                     </div>
                                 </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Preview Toggle (Only visible when camera is active) */}
+                        <AnimatePresence>
+                            {isCameraActive && (
+                                <motion.button
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    onClick={() => setShowPreview(!showPreview)}
+                                    className={`p-2 rounded-full transition-all duration-300 ${showPreview
+                                        ? 'text-indigo-500 bg-indigo-500/10'
+                                        : 'text-slate-400 bg-slate-500/10 dark:bg-white/5 hover:text-slate-600 dark:hover:text-white hover:bg-slate-500/20 dark:hover:bg-white/10'
+                                        }`}
+                                    title={showPreview ? "Sembunyikan Preview" : "Tampilkan Preview"}
+                                >
+                                    {showPreview ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                                </motion.button>
                             )}
                         </AnimatePresence>
 

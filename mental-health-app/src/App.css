@@ -68,7 +68,7 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(60px);
-  transition: background 1s ease-in-out;
+  transition: background 1.5s ease-in-out;
 }
 
 .chat-bubble-1 {

@@ -59,7 +59,7 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                                 </span>
                             </div>
                         ) : (
-                            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap break-words ${msg.sender === 'user'
+                            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap break-words transition-colors duration-[1500ms] ${msg.sender === 'user'
                                 ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
                                 : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-sm border border-slate-200 dark:border-white/5 text-left'
                                 }`}>

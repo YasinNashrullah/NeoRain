@@ -104,14 +104,11 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   // Sync detected emotion with UI Mood
   useEffect(() => {
     if (detectedEmotion) {
-      let mappedMood = detectedEmotion;
+      // EmotionDetector now returns mapped values directly:
+      // 'calm', 'energetic', 'happy', 'sad', 'angry'
 
-      // Map face-api expressions to app moods
-      if (detectedEmotion === 'neutral') mappedMood = 'calm';
-      if (detectedEmotion === 'surprised') mappedMood = 'energetic';
-
-      if (moodColors[mappedMood]) {
-        setCurrentMood(mappedMood);
+      if (moodColors[detectedEmotion]) {
+        setCurrentMood(detectedEmotion);
       }
     }
   }, [detectedEmotion, setCurrentMood]);
@@ -523,13 +520,15 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
     }
   };
 
+  const [showPreview, setShowPreview] = useState(false);
+
   const currentStyle = moodColors[currentMood] || moodColors.default;
 
   return (
     <motion.div
       className="flex flex-col w-full h-full relative overflow-hidden"
       animate={{ background: theme === 'light' ? currentStyle.bgGradientLight : currentStyle.bgGradient }}
-      transition={{ duration: 1, ease: "easeInOut" }}
+      transition={{ duration: 1.5, ease: "easeInOut" }}
     >
       <div className="chat-bubbles-container">
         <div className="chat-bubble chat-bubble-1" style={{ background: currentStyle.bubble1 }}></div>
@@ -548,12 +547,15 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         isCameraActive={isCameraActive}
         onToggleCamera={handleToggleCamera}
         detectedEmotion={detectedEmotion}
+        showPreview={showPreview}
+        setShowPreview={setShowPreview}
       />
 
       <EmotionDetector
         isActive={isCameraActive}
         onEmotionDetected={setDetectedEmotion}
         onClose={() => setIsCameraActive(false)}
+        showPreview={showPreview}
       />
 
       {/* Camera Permission Modal */}

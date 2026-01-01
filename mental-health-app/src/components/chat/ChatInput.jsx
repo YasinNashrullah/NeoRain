@@ -30,10 +30,11 @@ const ChatInput = ({ input, setInput, handleSend, isTyping, userName, currentSty
                 <button
                     onClick={handleSend}
                     disabled={!input.trim() || isTyping}
-                    className={`p-3 rounded-full transition-all duration-300 shadow-md ${input.trim()
-                            ? `${currentStyle.primary} text-white hover:scale-110 active:scale-95`
-                            : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600'
+                    className={`p-3 rounded-full shadow-md ${input.trim()
+                        ? `${currentStyle.primary} text-white hover:scale-110 active:scale-95`
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600'
                         }`}
+                    style={{ transition: 'background-color 1500ms ease-in-out, transform 300ms ease-in-out, opacity 300ms' }}
                 >
                     <Send className="w-5 h-5" />
                 </button>
