@@ -349,7 +349,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
         <button onClick={onLogout} className="text-red-500 dark:text-red-400 font-bold text-sm hover:text-red-600 dark:hover:text-red-300 flex items-center justify-center gap-2 mx-auto mb-4 hover:scale-105 transition-transform">
           <LogOut className="w-4 h-4" /> Keluar Akun
         </button>
-        <p className="text-[10px] text-slate-500">NeoRain v1.0.0 • Build 2025</p>
+        <p className="text-[10px] text-slate-500">NeoRain v1.0.0 • Build date: {new Date().getFullYear()}</p>
       </div>
 
     </motion.div>
@@ -700,7 +700,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
             <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-white/5">
               <h4 className="font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2"><MessageSquare className="w-4 h-4 text-indigo-500 dark:text-indigo-400" /> Feedback & Saran</h4>
               <p className="text-sm text-slate-500 dark:text-slate-400">Punya ide untuk NeoRain? Kirim email ke:</p>
-              <p className="text-indigo-600 dark:text-indigo-400 font-medium mt-1">support@neorain.app</p>
+              <p className="text-indigo-600 dark:text-indigo-400 font-medium mt-1">neorain.app@gmail.com</p>
             </div>
           </div>
         </div>
