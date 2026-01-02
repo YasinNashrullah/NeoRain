@@ -6,7 +6,6 @@ import {
     Quote, Zap, Crown, Sparkles, BrainCircuit
 } from 'lucide-react';
 import { api } from '../utils/api';
-import { config } from '../utils/config';
 import confetti from 'canvas-confetti';
 import { ACHIEVEMENTS_LIST } from '../utils/achievements';
 
@@ -32,8 +31,6 @@ const ActionPlan = ({ userData, onNavigate }) => {
             if (!userData?.uid) return;
 
             try {
-                const today = new Date().toDateString();
-
                 // load gamification data
                 const savedGamification = (await api.getGamification(userData.uid)) || {
                     score: 0,
@@ -42,33 +39,49 @@ const ActionPlan = ({ userData, onNavigate }) => {
                     history: []
                 };
 
-                // load daily plan
+                // load latest assessment
+                const assessment = await api.getLatestAssessment(userData.uid);
+                setAssessmentId(assessment?.id);
+
+                // load current stored plan
                 let currentPlan = await api.getDailyPlan(userData.uid);
                 let actions = [];
 
-                // check if plan is for today
-                if (currentPlan && currentPlan.date === today) {
-                    actions = currentPlan.actions;
-                } else if (!fetchingRef.current) {
-                    fetchingRef.current = true;
-                    const assessment = await api.getLatestAssessment(userData.uid);
-                    const moods = await api.getMoods(userData.uid);
+                // LOGIC: Sync with Assessment
+                // If we have a new assessment that is different from what we based our current plan on
+                if (assessment && assessment.ai_analysis?.actions) {
 
-                    const lastPlan = currentPlan || { actions: [], date: 'never' };
-                    const lastCompletedCount = savedGamification.completedIndices?.length || 0;
+                    // Check if we need to update (Different source assessment ID)
+                    if (currentPlan?.source_assessment_id !== assessment.id) {
+                        // NEW PLAN FROM ASSESSMENT
+                        actions = assessment.ai_analysis.actions;
 
-                    actions = await generateDailyMissions(assessment, lastPlan, lastCompletedCount, moods);
+                        // Filter out "Professional Help" generic advice if possible, to keep it actionable
+                        actions = actions.filter(a =>
+                            !a.toLowerCase().includes("konsultasi") &&
+                            !a.toLowerCase().includes("profesional")
+                        );
 
-                    // save new plan
-                    await api.saveDailyPlan(userData.uid, {
-                        date: today,
-                        actions: actions
-                    });
+                        // Fallback if filter removes everything
+                        if (actions.length === 0) actions = assessment.ai_analysis.actions;
 
-                    savedGamification.completedIndices = [];
-                    await api.saveGamification(userData.uid, savedGamification);
+                        // Save this new plan
+                        await api.saveDailyPlan(userData.uid, {
+                            source_assessment_id: assessment.id,
+                            updated_at: new Date().toISOString(),
+                            actions: actions
+                        });
 
-                    fetchingRef.current = false;
+                        // Reset progress for new plan
+                        savedGamification.completedIndices = [];
+                        await api.saveGamification(userData.uid, savedGamification);
+                    } else {
+                        // EXISTING PLAN (Match)
+                        actions = currentPlan.actions || [];
+                    }
+                } else {
+                    // No assessment available yet, or no actions in it
+                    actions = [];
                 }
 
                 setActionItems(actions);
@@ -88,68 +101,6 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
         init();
     }, [userData]);
-
-    // ai generator
-    const generateDailyMissions = async (assessment, lastPlan, lastCompletedCount, moods) => {
-        try {
-            const { apiKey, baseUrl, model } = config.gemini;
-            if (!apiKey) throw new Error("API Key missing");
-
-            const scores = assessment ? {
-                depression: assessment.depression_score,
-                anxiety: assessment.anxiety_score,
-                stress: assessment.stress_score
-            } : { depression: 0, anxiety: 0, stress: 0 };
-
-            // process moods
-            const recentMoods = moods && moods.length > 0
-                ? moods.slice(0, 5).map(m => m.mood).join(", ")
-                : "Tidak ada data mood";
-
-            const prompt = `
-                Role: Life Coach Gen Z.
-                User: DASS-21(D:${scores.depression},A:${scores.anxiety},S:${scores.stress}). Mood:${recentMoods}.
-                History: "${lastPlan.actions.join(', ')}". Done:${lastCompletedCount}/${lastPlan.actions.length}.
-
-                Task: 5 NEW Daily Missions.
-                Adapt:
-                - Done < 2: Easier, supportive.
-                - Done >= 3: Slightly harder.
-                - Must be different.
-                
-                Style:
-                - No prefixes (e.g. "Journaling:"). Just the action.
-                - Descriptive, chill, aesthetic, persuasive sentences.
-                - Bahasa Indonesia gaul/santai.
-
-                JSON Output: { "actions": ["Action 1", "Action 2", "Action 3", "Action 4", "Action 5"] }
-            `;
-
-            const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-
-            const data = await response.json();
-            const result = JSON.parse(data.candidates[0].content.parts[0].text);
-            return result.actions || ["Istirahat sejenak", "Minum air putih", "Tarik napas dalam", "Dengar lagu favorit", "Tidur lebih awal"];
-
-        } catch (e) {
-            console.error("AI Generation Failed", e);
-            // fallback actions
-            return [
-                "Coba jalan santai sore ini sambil dengerin playlist favoritmu biar pikiran lebih fresh.",
-                "Luangkan waktu 5 menit untuk menumpahkan semua isi kepalamu ke kertas agar pikiran lebih lega.",
-                "Lepas HP dulu selama 15 menit sebelum tidur, seduh teh hangat, dan nikmati ketenangan.",
-                "Rapikan kasur atau meja belajarmu sedikit saja, ruang yang rapi bisa bikin mood lebih baik.",
-                "Minum segelas air hangat, tarik napas dalam-dalam, dan izinkan tubuhmu rileks sejenak."
-            ];
-        }
-    };
 
     // save data effect
     useEffect(() => {
@@ -211,11 +162,10 @@ const ActionPlan = ({ userData, onNavigate }) => {
             completedCount: completedCount,
             streak: streak,
             score: currentScore,
-            // Add other necessary data if needed by shared conditions
-            moodCount: 0, // Placeholder if needed, or fetch from context/props
-            hasLocation: true, // Placeholder
-            hasGender: true, // Placeholder
-            hasCustomPhoto: true // Placeholder
+            moodCount: 0,
+            hasLocation: true,
+            hasGender: true,
+            hasCustomPhoto: true
         };
 
         ACHIEVEMENTS_LIST.forEach(badge => {
