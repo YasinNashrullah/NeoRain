@@ -359,8 +359,10 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
   const renderAchievements = () => {
     const unlockedList = ACHIEVEMENTS_LIST.filter(ach => unlockedAchievements.includes(ach.id));
     const lockedList = ACHIEVEMENTS_LIST.filter(ach => !unlockedAchievements.includes(ach.id));
-    const completionPercentage = Math.round((unlockedList.length / ACHIEVEMENTS_LIST.length) * 100);
     const currentLevel = getLevel(userData?.score || 0);
+
+    // Data for Spotlight (Latest Achievement)
+    const latestAchievement = unlockedList.length > 0 ? unlockedList[unlockedList.length - 1] : null;
 
     return (
       <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full pb-20">
@@ -370,104 +372,146 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
         </button>
 
         <div className="space-y-6">
-          {/* Header & Stats Bar */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-1">Pencapaian Kamu</h2>
-              <p className="text-slate-500 dark:text-slate-400">Kumpulkan semua lencana untuk menjadi master!</p>
-            </div>
-            <div className="flex items-center gap-4 md:gap-8 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                <div className="p-2 bg-yellow-100 dark:bg-yellow-500/20 rounded-xl text-yellow-600 dark:text-yellow-400"><Trophy className="w-5 h-5" /></div>
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Total</p>
-                  <p className="text-xl font-black text-slate-800 dark:text-white">{unlockedList.length} <span className="text-sm text-slate-400 font-medium">/ {ACHIEVEMENTS_LIST.length}</span></p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                <div className="p-2 bg-green-100 dark:bg-green-500/20 rounded-xl text-green-600 dark:text-green-400"><Target className="w-5 h-5" /></div>
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Progress</p>
-                  <p className="text-xl font-black text-slate-800 dark:text-white">{completionPercentage}%</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
-                <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-xl text-purple-600 dark:text-purple-400"><currentLevel.icon className="w-5 h-5" /></div>
-                <div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Rank</p>
-                  <p className="text-xl font-black text-slate-800 dark:text-white">{currentLevel.label}</p>
-                </div>
-              </div>
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-1">Dashboard Pencapaian</h2>
+              <p className="text-slate-500 dark:text-slate-400">Pantau progress dan koleksi lencanamu.</p>
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6 h-full">
+          {/* NEW BENTO GRID LAYOUT */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
-            {/* 1. TROPHY CASE (Unlocked) - Left */}
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[30px] p-6 sm:p-8 shadow-2xl relative overflow-hidden h-full">
-              <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            {/* 1. SPOTLIGHT CARD (Hero) - 2x2 on Desktop */}
+            <div className="md:col-span-2 lg:col-span-2 row-span-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[30px] p-8 relative overflow-hidden shadow-xl group flex flex-col justify-center items-center text-center">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+
               <div className="relative z-10">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Trophy className="w-6 h-6 text-yellow-300" /> Koleksi Lencana ({unlockedList.length})
-                </h3>
+                <div className="mb-4">
+                  <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-bold uppercase tracking-wider border border-white/20">
+                    Latest Unlock
+                  </span>
+                </div>
 
-                {unlockedList.length === 0 ? (
-                  <div className="text-center py-10 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
-                    <Lock className="w-12 h-12 text-white/30 mx-auto mb-3" />
-                    <p className="text-white/60">Belum ada lencana yang terbuka. Semangat!</p>
-                  </div>
+                {latestAchievement ? (
+                  <>
+                    <div className="w-32 h-32 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 mx-auto shadow-2xl group-hover:scale-110 transition-transform duration-500 border border-white/20">
+                      <latestAchievement.icon className="w-16 h-16 text-white drop-shadow-lg" />
+                    </div>
+                    <h3 className="text-white font-black text-3xl mb-2">{latestAchievement.label}</h3>
+                    <p className="text-indigo-100 text-sm max-w-xs mx-auto leading-relaxed">{latestAchievement.desc}</p>
+                  </>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {unlockedList.map((ach) => (
-                      <button
-                        key={ach.id}
-                        onClick={() => setSelectedAchievement({ ...ach, unlocked: true })}
-                        className="group relative bg-white/10 hover:bg-white/20 border border-white/10 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all overflow-hidden backdrop-blur-sm"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                          <ach.icon className="w-7 h-7 text-white drop-shadow-sm" />
-                        </div>
-
-                        <span className="text-xs font-bold text-white/90 text-center leading-tight px-1">{ach.label}</span>
-
-                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Star className="w-3 h-3 text-yellow-300 fill-yellow-300" />
-                        </div>
-                      </button>
-                    ))}
+                  <div className="flex flex-col items-center justify-center opacity-60">
+                    <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mb-4">
+                      <Lock className="w-10 h-10 text-white" />
+                    </div>
+                    <p className="text-white font-medium">Belum ada lencana</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* 2. LOCKED LIST (Locked) - Right */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 sm:p-8 shadow-xl h-full">
-              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-                <Lock className="w-6 h-6 text-slate-400" /> Lencana Terkunci ({lockedList.length})
-              </h3>
+            {/* 2. STATS CARDS - Stacked on right */}
+            <div className="md:col-span-1 lg:col-span-2 grid grid-cols-2 gap-6">
+              {/* Total Badges */}
+              <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl flex flex-col justify-center items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full blur-xl"></div>
+                <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-3 text-yellow-600 dark:text-yellow-400 group-hover:rotate-12 transition-transform">
+                  <Trophy className="w-6 h-6" />
+                </div>
+                <p className="text-4xl font-black text-slate-800 dark:text-white mb-1">{unlockedList.length}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Lencana</p>
+              </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {lockedList.map((ach) => (
-                  <button
-                    key={ach.id}
-                    onClick={() => setSelectedAchievement({ ...ach, unlocked: false })}
-                    className="group relative bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
-                      <ach.icon className="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500" />
-                    </div>
-
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center leading-tight px-1 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">{ach.label}</span>
-
-                    <div className="absolute top-3 right-3">
-                      <Lock className="w-3 h-3 text-slate-400" />
-                    </div>
-                  </button>
-                ))}
+              {/* Current Rank */}
+              <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl flex flex-col justify-center items-center text-center relative overflow-hidden group hover:scale-[1.02] transition-transform">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-xl"></div>
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-500/20 rounded-2xl flex items-center justify-center mb-3 text-purple-600 dark:text-purple-400 group-hover:rotate-12 transition-transform">
+                  <currentLevel.icon className="w-6 h-6" />
+                </div>
+                <p className="text-lg font-black text-slate-800 dark:text-white line-clamp-1">{currentLevel.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Current Rank</p>
               </div>
             </div>
+
+            {/* 3. LEVEL PROGRESS (Full Width in this section) */}
+            <div className="md:col-span-1 lg:col-span-2 bg-gradient-to-r from-slate-800 to-slate-900 dark:from-slate-800 dark:to-slate-950 rounded-[30px] p-6 relative overflow-hidden shadow-xl border border-slate-700/50 flex flex-col justify-center">
+              <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+              <div className="relative z-10">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="text-white font-bold text-lg">Level Progress</h3>
+                    <p className="text-slate-400 text-xs">Keep going!</p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                    <span className="text-yellow-400 font-black text-sm">{userData?.score || 0} XP</span>
+                  </div>
+                </div>
+
+                <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden backdrop-blur-sm mb-2">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-1000"
+                    style={{ width: `${Math.min((userData?.score || 0) / 10, 100)}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <span>Level {Math.floor((userData?.score || 0) / 100) + 1}</span>
+                  <span>Next: 1000 XP</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. ALL ACHIEVEMENTS GRID (Full Width) */}
+            <div className="col-span-full bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                <Award className="w-6 h-6 text-indigo-500" /> Semua Pencapaian
+              </h3>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {ACHIEVEMENTS_LIST.map((ach) => {
+                  const isUnlocked = unlockedAchievements.includes(ach.id);
+                  return (
+                    <button
+                      key={ach.id}
+                      onClick={() => setSelectedAchievement({ ...ach, unlocked: isUnlocked })}
+                      className={`group relative aspect-square rounded-2xl p-4 flex flex-col items-center justify-center gap-3 transition-all duration-300 border
+                        ${isUnlocked
+                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-transparent shadow-[0_0_15px_rgba(99,102,241,0.5)] hover:scale-105 hover:shadow-[0_0_25px_rgba(99,102,241,0.7)]'
+                          : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-white/5 opacity-70 hover:opacity-100'
+                        }`}
+                    >
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
+                        ${isUnlocked
+                          ? 'bg-white/20 backdrop-blur-sm text-white shadow-inner group-hover:scale-110 group-hover:rotate-3'
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-400 grayscale'
+                        }`}>
+                        <ach.icon className="w-6 h-6" />
+                      </div>
+
+                      <span className={`text-xs font-bold text-center leading-tight line-clamp-2
+                        ${isUnlocked ? 'text-white text-shadow-sm' : 'text-slate-400 dark:text-slate-500'}
+                      `}>
+                        {ach.label}
+                      </span>
+
+                      {isUnlocked && (
+                        <div className="absolute top-3 right-3 animate-pulse">
+                          <Star className="w-3 h-3 text-yellow-300 fill-yellow-300 drop-shadow-md" />
+                        </div>
+                      )}
+                      {!isUnlocked && (
+                        <div className="absolute top-3 right-3">
+                          <Lock className="w-3 h-3 text-slate-300 dark:text-slate-600" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
         </div>
 

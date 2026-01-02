@@ -7,22 +7,22 @@ export const ACHIEVEMENTS_LIST = [
     // --- ONBOARDING & PROFILE ---
     {
         id: 'langkah_awal',
-        label: 'Langkah Awal',
-        desc: 'Bergabung dengan NeoRain',
+        label: 'NeoRain Initiate',
+        desc: 'Langkah pertama menuju versi terbaik dirimu.',
         icon: Rocket,
         condition: () => true
     },
     {
         id: 'supporter',
-        label: 'Supporter',
-        desc: 'Melengkapi profil data diri',
+        label: 'Profile Completed',
+        desc: 'Identitasmu kini lengkap dan siap melangkah.',
         icon: HeartHandshake,
         condition: (data) => data.hasLocation && data.hasGender
     },
     {
         id: 'verified',
-        label: 'Verified',
-        desc: 'Memiliki foto profil custom',
+        label: 'Identity Verified',
+        desc: 'Tampil beda dengan foto profil unikmu.',
         icon: Camera,
         condition: (data) => data.hasCustomPhoto
     },
@@ -30,22 +30,22 @@ export const ACHIEVEMENTS_LIST = [
     // --- STREAKS (CONSISTENCY) ---
     {
         id: 'on_fire',
-        label: 'On Fire',
-        desc: 'Login 3 hari berturut-turut',
+        label: 'Streak Ignited',
+        desc: 'Konsistensi 3 hari! Api semangat mulai menyala.',
         icon: Flame,
         condition: (data) => (data.streak || 0) >= 3
     },
     {
         id: 'pejuang_minggu',
-        label: 'Pejuang Minggu',
-        desc: 'Login 7 hari berturut-turut',
+        label: 'Week Warrior',
+        desc: 'Satu minggu penuh dedikasi tanpa putus.',
         icon: Calendar,
         condition: (data) => (data.streak || 0) >= 7
     },
     {
         id: 'konsisten_sejati',
-        label: 'Konsisten Sejati',
-        desc: 'Login 30 hari berturut-turut',
+        label: 'Consistency Master',
+        desc: '30 Hari! Kamu adalah definisi ketekunan.',
         icon: Crown,
         condition: (data) => (data.streak || 0) >= 30
     },
@@ -53,22 +53,22 @@ export const ACHIEVEMENTS_LIST = [
     // --- TASKS & ACTION PLAN ---
     {
         id: 'first_step',
-        label: 'First Action',
-        desc: 'Selesaikan 1 tugas pertamamu',
+        label: 'Action Taker',
+        desc: 'Satu tugas selesai, ribuan langkah maju.',
         icon: Star,
         condition: (data) => (data.completedCount || 0) >= 1
     },
     {
         id: 'task_hunter',
         label: 'Task Hunter',
-        desc: 'Selesaikan 10 tugas',
+        desc: '10 Misi terselesaikan dengan gemilang.',
         icon: Target,
         condition: (data) => (data.completedCount || 0) >= 10
     },
     {
         id: 'productivity_king',
         label: 'Productivity King',
-        desc: 'Selesaikan 50 tugas',
+        desc: '50 Misi! Produktivitasmu tak terbendung.',
         icon: Zap,
         condition: (data) => (data.completedCount || 0) >= 50
     },
@@ -77,21 +77,21 @@ export const ACHIEVEMENTS_LIST = [
     {
         id: 'novice_earner',
         label: 'Novice Earner',
-        desc: 'Kumpulkan 100 poin',
+        desc: '100 Poin pertama. Perjalanan baru dimulai.',
         icon: Trophy,
         condition: (data) => (data.score || 0) >= 100
     },
     {
         id: 'pro_earner',
         label: 'Pro Earner',
-        desc: 'Kumpulkan 500 poin',
+        desc: '500 Poin! Kamu semakin ahli.',
         icon: Medal,
         condition: (data) => (data.score || 0) >= 500
     },
     {
         id: 'elite_earner',
         label: 'Elite Earner',
-        desc: 'Kumpulkan 1000 poin',
+        desc: '1000 Poin! Legenda baru telah lahir.',
         icon: Award,
         condition: (data) => (data.score || 0) >= 1000
     },
@@ -99,23 +99,23 @@ export const ACHIEVEMENTS_LIST = [
     // --- MOOD TRACKING ---
     {
         id: 'mood_starter',
-        label: 'Mood Starter',
-        desc: 'Mencatat mood pertama kali',
+        label: 'Mood Aware',
+        desc: 'Mulai menyadari dan mencatat perasaanmu.',
         icon: Smile,
         condition: (data) => (data.moodCount || 0) >= 1
     },
     {
         id: 'mood_master',
         label: 'Mood Master',
-        desc: 'Mencatat mood 20 kali',
+        desc: '20 Catatan mood. Pemahaman diri meningkat.',
         icon: BookOpen,
         condition: (data) => (data.moodCount || 0) >= 20
     },
     {
         id: 'self_aware',
-        label: 'Self Aware',
-        desc: 'Mencatat mood 50 kali',
-        icon: BrainCircuit, // Assuming BrainCircuit is imported or available, else use another
+        label: 'Self Discovery',
+        desc: '50 Catatan. Kamu benar-benar mengenal dirimu.',
+        icon: BrainCircuit,
         condition: (data) => (data.moodCount || 0) >= 50
     },
 
@@ -123,7 +123,7 @@ export const ACHIEVEMENTS_LIST = [
     {
         id: 'early_bird',
         label: 'Early Bird',
-        desc: 'Login di pagi hari (05:00 - 09:00)',
+        desc: 'Menyapa dunia dengan semangat pagi.',
         icon: Sun,
         condition: (data) => {
             const hour = new Date().getHours();
@@ -133,7 +133,7 @@ export const ACHIEVEMENTS_LIST = [
     {
         id: 'night_owl',
         label: 'Night Owl',
-        desc: 'Login di malam hari (20:00 - 23:59)',
+        desc: 'Menjaga ketenangan di keheningan malam.',
         icon: Moon,
         condition: (data) => {
             const hour = new Date().getHours();
