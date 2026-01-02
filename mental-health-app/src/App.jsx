@@ -23,6 +23,7 @@ import Sidebar from './components/Sidebar';
 import PageTransition from './components/PageTransition';
 import { AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { ToastProvider } from './components/ui/ToastProvider';
 
 const App = () => {
   // State Management
@@ -387,44 +388,46 @@ const App = () => {
   };
 
   return (
-    <AnimatePresence mode='wait'>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={
-          <PageTransition>
-            <LandingPage onLogin={() => navigate('/login')} onRegister={() => navigate('/register')} theme={theme} toggleTheme={toggleTheme} />
-          </PageTransition>
-        } />
-
-        <Route
-          path="/login"
-          element={!user ? (
+    <ToastProvider>
+      <AnimatePresence mode='wait'>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={
             <PageTransition>
-              <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => navigate('/register')} />
+              <LandingPage onLogin={() => navigate('/login')} onRegister={() => navigate('/register')} theme={theme} toggleTheme={toggleTheme} />
             </PageTransition>
-          ) : <Navigate to="/dashboard" />}
-        />
+          } />
 
-        <Route
-          path="/register"
-          element={!user ? (
-            <PageTransition>
-              <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => navigate('/login')} />
-            </PageTransition>
-          ) : <Navigate to="/dashboard" />}
-        />
+          <Route
+            path="/login"
+            element={!user ? (
+              <PageTransition>
+                <Login onLoginSuccess={handleAuthSuccess} onSwitchToRegister={() => navigate('/register')} />
+              </PageTransition>
+            ) : <Navigate to="/dashboard" />}
+          />
 
-        <Route
-          path="/dashboard/*"
-          element={user ? (
-            <PageTransition>
-              {renderDashboard()}
-            </PageTransition>
-          ) : <Navigate to="/login" />}
-        />
+          <Route
+            path="/register"
+            element={!user ? (
+              <PageTransition>
+                <Register onRegisterSuccess={handleAuthSuccess} onSwitchToLogin={() => navigate('/login')} />
+              </PageTransition>
+            ) : <Navigate to="/dashboard" />}
+          />
 
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </AnimatePresence>
+          <Route
+            path="/dashboard/*"
+            element={user ? (
+              <PageTransition>
+                {renderDashboard()}
+              </PageTransition>
+            ) : <Navigate to="/login" />}
+          />
+
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </AnimatePresence>
+    </ToastProvider>
   );
 };
 
