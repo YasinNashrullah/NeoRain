@@ -271,10 +271,10 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                         <BrainCircuit className="w-12 h-12 text-slate-400 dark:text-slate-600" />
                                         <div className="absolute inset-0 bg-indigo-500/10 rounded-full blur-xl animate-pulse"></div>
                                     </div>
-                                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-3">Your Action Plan is Empty</h3>
+                                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-3">Belum Ada Data Action Plan</h3>
                                     <p className="text-slate-500 dark:text-slate-400 max-w-md mb-8 leading-relaxed">
-                                        It looks like you haven't completed an AI Analysis yet.
-                                        Start a diagnosis to receive your personalized mental health action plan.
+                                        Sepertinya Anda belum menyelesaikan Analisis AI.
+                                        Mulai diagnosis untuk mendapatkan rencana kesehatan mental yang dipersonalisasi.
                                     </p>
                                     <button
                                         onClick={() => onNavigate && onNavigate('analyze')}
