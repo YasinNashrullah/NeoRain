@@ -10,7 +10,7 @@ import { updateProfile, updatePassword, deleteUser } from "firebase/auth";
 import { auth } from '../firebase';
 import { api } from '../utils/api';
 
-import { ACHIEVEMENTS_LIST } from '../utils/achievements';
+import { ACHIEVEMENTS_LIST, getLevel } from '../utils/achievements';
 
 const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
   // Force rebuild timestamp: 2026-01-02
@@ -359,84 +359,114 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
   const renderAchievements = () => {
     const unlockedList = ACHIEVEMENTS_LIST.filter(ach => unlockedAchievements.includes(ach.id));
     const lockedList = ACHIEVEMENTS_LIST.filter(ach => !unlockedAchievements.includes(ach.id));
+    const completionPercentage = Math.round((unlockedList.length / ACHIEVEMENTS_LIST.length) * 100);
+    const currentLevel = getLevel(userData?.score || 0);
 
     return (
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-4xl mx-auto pb-20">
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full pb-20">
         <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
           <div className="p-1 bg-slate-200 dark:bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
           <span className="font-bold">Kembali</span>
         </button>
 
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Pencapaian Kamu</h2>
-            <p className="text-slate-500 dark:text-slate-400">Kumpulkan semua lencana untuk menjadi master kesehatan mental!</p>
-          </div>
-
-          {/* 1. TROPHY CASE (Unlocked) */}
-          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[30px] p-8 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-            <div className="relative z-10">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Trophy className="w-6 h-6 text-yellow-300" /> Koleksi Lencana ({unlockedList.length})
-              </h3>
-
-              {unlockedList.length === 0 ? (
-                <div className="text-center py-10 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
-                  <Lock className="w-12 h-12 text-white/30 mx-auto mb-3" />
-                  <p className="text-white/60">Belum ada lencana yang terbuka. Semangat!</p>
+        <div className="space-y-6">
+          {/* Header & Stats Bar */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-1">Pencapaian Kamu</h2>
+              <p className="text-slate-500 dark:text-slate-400">Kumpulkan semua lencana untuk menjadi master!</p>
+            </div>
+            <div className="flex items-center gap-4 md:gap-8 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-500/20 rounded-xl text-yellow-600 dark:text-yellow-400"><Trophy className="w-5 h-5" /></div>
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Total</p>
+                  <p className="text-xl font-black text-slate-800 dark:text-white">{unlockedList.length} <span className="text-sm text-slate-400 font-medium">/ {ACHIEVEMENTS_LIST.length}</span></p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {unlockedList.map((ach) => (
-                    <button
-                      key={ach.id}
-                      onClick={() => setSelectedAchievement({ ...ach, unlocked: true })}
-                      className="group relative bg-white/10 hover:bg-white/20 border border-white/10 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all overflow-hidden backdrop-blur-sm"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                        <ach.icon className="w-7 h-7 text-white drop-shadow-sm" />
-                      </div>
-
-                      <span className="text-xs font-bold text-white/90 text-center leading-tight px-1">{ach.label}</span>
-
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Star className="w-3 h-3 text-yellow-300 fill-yellow-300" />
-                      </div>
-                    </button>
-                  ))}
+              </div>
+              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                <div className="p-2 bg-green-100 dark:bg-green-500/20 rounded-xl text-green-600 dark:text-green-400"><Target className="w-5 h-5" /></div>
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Progress</p>
+                  <p className="text-xl font-black text-slate-800 dark:text-white">{completionPercentage}%</p>
                 </div>
-              )}
+              </div>
+              <div className="flex items-center gap-3 px-4 py-2 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5">
+                <div className="p-2 bg-purple-100 dark:bg-purple-500/20 rounded-xl text-purple-600 dark:text-purple-400"><currentLevel.icon className="w-5 h-5" /></div>
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase">Rank</p>
+                  <p className="text-xl font-black text-slate-800 dark:text-white">{currentLevel.label}</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 2. LOCKED LIST (Grid) */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 sm:p-8 shadow-xl">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
-              <Lock className="w-6 h-6 text-slate-400" /> Lencana Terkunci ({lockedList.length})
-            </h3>
+          <div className="grid lg:grid-cols-2 gap-6 h-full">
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {lockedList.map((ach) => (
-                <button
-                  key={ach.id}
-                  onClick={() => setSelectedAchievement({ ...ach, unlocked: false })}
-                  className="group relative bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
-                    <ach.icon className="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500" />
+            {/* 1. TROPHY CASE (Unlocked) - Left */}
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[30px] p-6 sm:p-8 shadow-2xl relative overflow-hidden h-full">
+              <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+              <div className="relative z-10">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <Trophy className="w-6 h-6 text-yellow-300" /> Koleksi Lencana ({unlockedList.length})
+                </h3>
+
+                {unlockedList.length === 0 ? (
+                  <div className="text-center py-10 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
+                    <Lock className="w-12 h-12 text-white/30 mx-auto mb-3" />
+                    <p className="text-white/60">Belum ada lencana yang terbuka. Semangat!</p>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {unlockedList.map((ach) => (
+                      <button
+                        key={ach.id}
+                        onClick={() => setSelectedAchievement({ ...ach, unlocked: true })}
+                        className="group relative bg-white/10 hover:bg-white/20 border border-white/10 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all overflow-hidden backdrop-blur-sm"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center leading-tight px-1 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">{ach.label}</span>
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                          <ach.icon className="w-7 h-7 text-white drop-shadow-sm" />
+                        </div>
 
-                  <div className="absolute top-3 right-3">
-                    <Lock className="w-3 h-3 text-slate-400" />
+                        <span className="text-xs font-bold text-white/90 text-center leading-tight px-1">{ach.label}</span>
+
+                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Star className="w-3 h-3 text-yellow-300 fill-yellow-300" />
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                </button>
-              ))}
+                )}
+              </div>
+            </div>
+
+            {/* 2. LOCKED LIST (Locked) - Right */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 sm:p-8 shadow-xl h-full">
+              <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                <Lock className="w-6 h-6 text-slate-400" /> Lencana Terkunci ({lockedList.length})
+              </h3>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {lockedList.map((ach) => (
+                  <button
+                    key={ach.id}
+                    onClick={() => setSelectedAchievement({ ...ach, unlocked: false })}
+                    className="group relative bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
+                      <ach.icon className="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500" />
+                    </div>
+
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center leading-tight px-1 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">{ach.label}</span>
+
+                    <div className="absolute top-3 right-3">
+                      <Lock className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -636,7 +666,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
 
   return (
     <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-16 md:pb-6">
-      <div className="max-w-6xl mx-auto p-6 md:p-8">
+      <div className="w-full max-w-[1600px] mx-auto p-6 md:p-8">
         <AnimatePresence mode='wait'>
           {activeView === 'main' && renderMain()}
           {activeView === 'edit' && renderEdit()}
