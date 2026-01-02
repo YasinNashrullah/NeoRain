@@ -11,8 +11,10 @@ import { auth } from '../firebase';
 import { api } from '../utils/api';
 
 import { ACHIEVEMENTS_LIST, getLevel } from '../utils/achievements';
+import { useToast } from '../components/ui/ToastProvider';
 
 const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
+  const toast = useToast();
   // Force rebuild timestamp: 2026-01-02
   const [activeView, setActiveView] = useState('main');
   const [streak, setStreak] = useState(0);
@@ -99,27 +101,27 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
 
     // validasi ukuran max 2mb
     if (file.size > 2 * 1024 * 1024) {
-      return alert("Ukuran file terlalu besar! Maksimal 2MB.");
+      return toast.error("Ukuran file terlalu besar! Maksimal 2MB.");
     }
 
     try {
       const res = await api.uploadProfilePhoto(userData.uid, file);
 
       if (res && res.url) {
-        alert("Foto berhasil diupdate!");
+        toast.success("Foto berhasil diupdate!");
         if (onUpdateProfile) onUpdateProfile();
       } else {
-        alert("Gagal upload foto.");
+        toast.error("Gagal upload foto.");
       }
     } catch (error) {
       console.error(error);
-      alert("Gagal upload foto. Cek koneksi.");
+      toast.error("Gagal upload foto. Cek koneksi.");
     }
   };
 
   // simpan profil
   const handleSaveProfile = async () => {
-    if (!formData.name.trim()) return alert("Nama tidak boleh kosong!");
+    if (!formData.name.trim()) return toast.error("Nama tidak boleh kosong!");
 
     try {
       await api.updateUserProfile({
@@ -133,7 +135,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, { displayName: formData.name });
       }
-      alert("Profil berhasil disimpan!");
+      toast.success("Profil berhasil disimpan!");
 
       if (onUpdateProfile) {
         await onUpdateProfile();
@@ -143,20 +145,20 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
 
     } catch (error) {
       console.error("Save Error:", error);
-      alert("Gagal update profil. Pastikan server Laravel berjalan.");
+      toast.error("Gagal update profil.");
     }
   };
 
   // change password firebase
   const handleChangePassword = async () => {
-    if (passData.newPass.length < 6) return alert("Password minimal 6 karakter!");
-    if (passData.newPass !== passData.confirmPass) return alert("Password konfirmasi tidak cocok!");
+    if (passData.newPass.length < 6) return toast.error("Password minimal 6 karakter!");
+    if (passData.newPass !== passData.confirmPass) return toast.error("Password konfirmasi tidak cocok!");
 
     try {
       await updatePassword(auth.currentUser, passData.newPass);
-      alert("Password berhasil diubah. Silakan login ulang.");
+      toast.success("Password berhasil diubah. Silakan login ulang.");
       onLogout();
-    } catch (e) { alert("Gagal: " + e.message); }
+    } catch (e) { toast.error("Gagal: " + e.message); }
   };
 
   // delete account
@@ -165,7 +167,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
       try {
         await deleteUser(auth.currentUser);
         onLogout();
-      } catch (e) { alert("Login ulang dulu untuk menghapus akun."); }
+      } catch (e) { toast.error("Login ulang dulu untuk menghapus akun."); }
     }
   };
 

@@ -3,28 +3,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, CheckCircle, AlertCircle, BrainCircuit } from 'lucide-react';
 import { api } from '../utils/api';
 import { config } from '../utils/config';
+import { useToast } from '../components/ui/ToastProvider';
 
 // data pertanyaan dass-21
 const questions = [
-  { id: 1, type: 'S', text: "Saya merasa susah untuk beristirahat" },
+  { id: 1, type: 'S', text: "Saya sulit untuk ditenangkan" },
   { id: 2, type: 'A', text: "Saya merasa mulut saya kering" },
-  { id: 3, type: 'D', text: "Saya merasa tidak ada hal yang positif di masa depan" },
-  { id: 4, type: 'A', text: "Saya mengalami kesulitan bernapas (misal: terengah-engah)" },
-  { id: 5, type: 'D', text: "Saya merasa sedih dan tertekan" },
-  { id: 6, type: 'S', text: "Saya cenderung bereaksi berlebihan terhadap situasi" },
-  { id: 7, type: 'A', text: "Saya merasa gemetar (misal: pada tangan)" },
-  { id: 8, type: 'S', text: "Saya merasa sulit untuk bersantai" },
-  { id: 9, type: 'A', text: "Saya berada dalam situasi yang membuat saya cemas berlebih" },
-  { id: 10, type: 'D', text: "Saya merasa tidak ada harapan" },
-  { id: 11, type: 'S', text: "Saya merasa mudah gelisah" },
-  { id: 12, type: 'S', text: "Saya merasa sulit untuk mentoleransi gangguan" },
+  { id: 3, type: 'D', text: "Saya tidak dapat merasakan perasaan yang positif" },
+  { id: 4, type: 'A', text: "Saya mengalami kesulitan bernafas (misalnya: sering terengah-engah meski tidak melakukan aktivitas fisik sebelumnya)" },
+  { id: 5, type: 'D', text: "Saya sulit mendapatkan semangat untuk melakukan sesuatu" },
+  { id: 6, type: 'S', text: "Saya cenderung bereaksi berlebihan terhadap suatu situasi" },
+  { id: 7, type: 'A', text: "Saya mengalami gemetaran pada tangan" },
+  { id: 8, type: 'S', text: "Saya merasakan menggunakan banyak energi untuk cemas" },
+  { id: 9, type: 'A', text: "Saya merasa khawatir terhadap situasi dimana saya mungkin menjadi panik dan mempermalukan diri sendiri" },
+  { id: 10, type: 'D', text: "Saya merasa tidak memiliki masa depan" },
+  { id: 11, type: 'S', text: "Saya merasa semakin gelisah" },
+  { id: 12, type: 'S', text: "Saya sulit untuk bersantai" },
   { id: 13, type: 'D', text: "Saya merasa sedih dan murung" },
-  { id: 14, type: 'S', text: "Saya tidak bisa memaklumi hal apapun yang menghalangi saya" },
-  { id: 15, type: 'A', text: "Saya merasa panik" },
-  { id: 16, type: 'D', text: "Saya kehilangan minat pada segala hal" },
-  { id: 17, type: 'D', text: "Saya merasa tidak berharga sebagai seseorang" },
-  { id: 18, type: 'S', text: "Saya merasa mudah tersinggung" },
-  { id: 19, type: 'A', text: "Saya menyadari detak jantung saya walau tidak habis olahraga" },
+  { id: 14, type: 'S', text: "Saya sulit untuk sabar dalam menghadapi gangguan terhadap hal yang sedang saya lakukan" },
+  { id: 15, type: 'A', text: "Saya mudah menjadi panik" },
+  { id: 16, type: 'D', text: "Saya tidak antusias terhadap sesuatu" },
+  { id: 17, type: 'D', text: "Saya merasa tidak berharga" },
+  { id: 18, type: 'S', text: "Saya merasa bahwa diri saya menjadi marah karena hal-hal sepele" },
+  { id: 19, type: 'A', text: "Saya menyadari perubahan detak jantung, walaupun tidak sehabis melakukan aktivitas fisik (misalnya: merasa detak jantung meningkat atau melemah)" },
   { id: 20, type: 'A', text: "Saya merasa takut tanpa alasan yang jelas" },
   { id: 21, type: 'D', text: "Saya merasa hidup ini tidak berarti" },
 ];
@@ -37,6 +38,7 @@ const options = [
 ];
 
 const Analyze = ({ userData, onFinish }) => {
+  const toast = useToast();
   const [step, setStep] = useState('intro'); // intro, quiz, processing
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -204,8 +206,7 @@ const Analyze = ({ userData, onFinish }) => {
 
     } catch (error) {
       console.error("CRITICAL ERROR:", error);
-      alert(`Gagal memproses: ${error.message}. Cek Console untuk detail.`);
-      alert(`Gagal memproses: ${error.message}. Cek Console untuk detail.`);
+      toast.error(`Gagal memproses: ${error.message}.`);
       setStep('intro');
       setIsSubmitting(false);
     }

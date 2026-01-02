@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  Smile, Wind, Zap, Frown, CloudRain, Heart
+  Smile, Wind, Zap, Frown, CloudRain, Heart,
+  Briefcase, BookOpen, Users, Moon, Utensils, Dumbbell, Coffee, Car
 } from 'lucide-react';
 import { api } from '../utils/api';
 import DailyTab from '../components/tracker/DailyTab';
 import WeeklyTab from '../components/tracker/WeeklyTab';
 import StatsTab from '../components/tracker/StatsTab';
 import AnalysisTab from '../components/tracker/AnalysisTab';
+import { useToast } from '../components/ui/ToastProvider';
 
 const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState(initialTab || 'daily');
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // state data
@@ -33,6 +37,17 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     { id: 'energetic', label: 'Energetic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50', score: 4 },
     { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50', score: 1 },
     { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50', score: 2 },
+  ];
+
+  const activities = [
+    { id: 'work', label: 'Work', icon: Briefcase },
+    { id: 'study', label: 'Study', icon: BookOpen },
+    { id: 'family', label: 'Family', icon: Users },
+    { id: 'sleep', label: 'Sleep', icon: Moon },
+    { id: 'eat', label: 'Eat', icon: Utensils },
+    { id: 'sport', label: 'Sport', icon: Dumbbell },
+    { id: 'relax', label: 'Relax', icon: Coffee },
+    { id: 'travel', label: 'Travel', icon: Car },
   ];
 
   // fetch data
@@ -197,23 +212,25 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
 
   // save mood
   const handleSaveMood = async () => {
-    if (!selectedMood) return alert("Pilih mood dulu ya!");
+    if (!selectedMood) return toast.error("Pilih mood dulu ya!");
     setIsSaving(true);
 
     const payload = {
       firebase_uid: userData?.uid,
       mood: selectedMood,
       note: note,
+      activities: selectedTags,
     };
 
     try {
       await api.saveMood(payload);
       setNote('');
       setSelectedMood(null);
+      setSelectedTags([]);
       await fetchData();
-      alert("Mood berhasil disimpan!");
+      toast.success("Mood berhasil disimpan!");
     } catch (error) {
-      alert("Gagal menyimpan mood.");
+      toast.error("Gagal menyimpan mood.");
     } finally {
       setIsSaving(false);
     }
@@ -347,7 +364,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
-              <span className="relative z-10 capitalize">{tab === 'daily' ? 'Daily' : tab === 'weekly' ? 'Weekly' : tab === 'stats' ? 'Statistics' : 'AI Analysis'}</span>
+              <span className="relative z-10 capitalize">{tab === 'daily' ? 'Journey' : tab === 'weekly' ? 'History' : tab === 'stats' ? 'Statistics' : 'AI Analysis'}</span>
             </button>
           ))}
         </div>
@@ -367,6 +384,9 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
                 setSelectedMood={setSelectedMood}
                 note={note}
                 setNote={setNote}
+                selectedTags={selectedTags}
+                setSelectedTags={setSelectedTags}
+                activities={activities}
                 isSaving={isSaving}
                 handleSaveMood={handleSaveMood}
                 todayLogs={todayLogs}

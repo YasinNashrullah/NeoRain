@@ -12,8 +12,18 @@ const DailyTab = ({
     handleSaveMood,
     todayLogs,
     getMoodConfig,
-    formatTime
+    formatTime,
+    selectedTags,
+    setSelectedTags,
+    activities
 }) => {
+    const toggleTag = (tagId) => {
+        if (selectedTags.includes(tagId)) {
+            setSelectedTags(selectedTags.filter(id => id !== tagId));
+        } else {
+            setSelectedTags([...selectedTags, tagId]);
+        }
+    };
     return (
         <motion.div
             key="daily"
@@ -51,6 +61,29 @@ const DailyTab = ({
                                     </span>
                                 </button>
                             ))}
+                        </div>
+
+                        {/* Activity Selector */}
+                        <div className="mb-6">
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 block">Thinking about...</label>
+                            <div className="flex flex-wrap gap-3">
+                                {activities.map((activity) => {
+                                    const isSelected = selectedTags?.includes(activity.id);
+                                    return (
+                                        <button
+                                            key={activity.id}
+                                            onClick={() => toggleTag(activity.id)}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${isSelected
+                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-indigo-500/30 shadow-lg'
+                                                : 'bg-white/50 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:bg-white dark:hover:bg-white/10'
+                                                }`}
+                                        >
+                                            <activity.icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`} />
+                                            {activity.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 mb-6 border border-slate-200 dark:border-white/5 focus-within:border-indigo-500/50 transition-colors">
@@ -92,25 +125,49 @@ const DailyTab = ({
                             <p>No mood recorded yet.</p>
                         </div>
                     ) : (
-                        <div className="space-y-4 overflow-y-auto max-h-[600px] scrollbar-hide pr-2">
+                        <div className="relative pl-8 border-l-2 border-indigo-100 dark:border-white/10 ml-4 space-y-8 py-2">
                             {todayLogs.map((log) => {
                                 const config = getMoodConfig(log.mood);
                                 return (
-                                    <div key={log.id} className={`p-4 rounded-3xl border ${config.border} ${config.bg} relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-sm`}>
-                                        <div className="flex items-start gap-4 relative z-10">
-                                            <div className="w-12 h-12 rounded-2xl bg-white/40 dark:bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                                                <config.icon className="w-6 h-6 text-slate-700 dark:text-white" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start">
-                                                    <span className="text-sm font-bold text-slate-800 dark:text-white capitalize">{config.label}</span>
-                                                    <span className="text-[10px] text-slate-600 dark:text-white/70 bg-white/50 dark:bg-black/20 px-2 py-1 rounded-lg">
-                                                        {formatTime(log.created_at)}
-                                                    </span>
+                                    <div key={log.id} className="relative group">
+                                        {/* Timeline Dot */}
+                                        <div className={`absolute -left-[41px] top-0 w-5 h-5 rounded-full border-4 border-white dark:border-slate-900 transition-colors ${config.bg.replace('/20', '')} ${config.color.replace('text-', 'bg-')}`}></div>
+
+                                        {/* Content */}
+                                        <div className={`p-4 rounded-3xl border ${config.border} ${config.bg} relative overflow-hidden transition-all hover:scale-[1.02] shadow-sm`}>
+                                            <div className="flex items-start gap-4 relative z-10">
+                                                <div className="w-10 h-10 rounded-2xl bg-white/40 dark:bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                                                    <config.icon className="w-5 h-5 text-slate-700 dark:text-white" />
                                                 </div>
-                                                <p className="text-xs text-slate-600 dark:text-white/90 mt-2 line-clamp-2 ml-2 flex italic">
-                                                    "{log.note || 'No notes'}"
-                                                </p>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="text-sm font-bold text-slate-800 dark:text-white capitalize">{config.label}</span>
+                                                        <span className="text-[10px] bg-white/50 dark:bg-black/20 px-2 py-1 rounded-lg text-slate-600 dark:text-white/70 font-mono">
+                                                            {formatTime(log.created_at)}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Tags if any */}
+                                                    {log.activities && log.activities.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mb-2">
+                                                            {log.activities.map(tagId => {
+                                                                const act = activities.find(a => a.id === tagId);
+                                                                if (!act) return null;
+                                                                return (
+                                                                    <span key={tagId} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-white/40 dark:bg-black/20 text-slate-700 dark:text-white/80">
+                                                                        <act.icon className="w-3 h-3" /> {act.label}
+                                                                    </span>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    )}
+
+                                                    {log.note && (
+                                                        <p className="text-xs text-slate-600 dark:text-white/90 italic bg-white/30 dark:bg-black/10 p-2 rounded-xl">
+                                                            "{log.note}"
+                                                        </p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
