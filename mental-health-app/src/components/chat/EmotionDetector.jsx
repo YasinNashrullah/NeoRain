@@ -6,13 +6,12 @@ import { Camera, X } from 'lucide-react';
 const EmotionDetector = ({ onEmotionDetected, isActive, showPreview }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
-    const streamRef = useRef(null); // Store stream independently
+    const streamRef = useRef(null);
     const [isModelLoaded, setIsModelLoaded] = useState(false);
     const [initializationError, setInitializationError] = useState(null);
     const [detectedExpression, setDetectedExpression] = useState(null);
     const [videoFilter, setVideoFilter] = useState('none');
 
-    // Load models
     useEffect(() => {
         const loadModels = async () => {
             try {
@@ -35,7 +34,6 @@ const EmotionDetector = ({ onEmotionDetected, isActive, showPreview }) => {
         }
     }, [isActive]);
 
-    // Start Video
     useEffect(() => {
         if (isActive && isModelLoaded) {
             startVideo();

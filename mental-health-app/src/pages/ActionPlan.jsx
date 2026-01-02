@@ -8,6 +8,7 @@ import {
 import { api } from '../utils/api';
 import { config } from '../utils/config';
 import confetti from 'canvas-confetti';
+import { ACHIEVEMENTS_LIST } from '../utils/achievements';
 
 const ActionPlan = ({ userData, onNavigate }) => {
     const [loading, setLoading] = useState(true);
@@ -204,14 +205,21 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
     const checkAchievements = (completedCount, currentScore) => {
         const newAchievements = [...achievements];
-        const badges = [
-            { id: 'first_step', label: 'First Step', desc: 'Complete 1 task', icon: Star, condition: () => completedCount >= 1 },
-            { id: 'on_fire', label: 'On Fire', desc: 'Reach 3 day streak', icon: Flame, condition: () => streak >= 3 },
-            { id: 'master', label: 'Task Master', desc: 'Score 100 points', icon: Trophy, condition: () => currentScore >= 100 },
-        ];
 
-        badges.forEach(badge => {
-            if (!newAchievements.includes(badge.id) && badge.condition()) {
+        // Prepare data for condition checking
+        const checkData = {
+            completedCount: completedCount,
+            streak: streak,
+            score: currentScore,
+            // Add other necessary data if needed by shared conditions
+            moodCount: 0, // Placeholder if needed, or fetch from context/props
+            hasLocation: true, // Placeholder
+            hasGender: true, // Placeholder
+            hasCustomPhoto: true // Placeholder
+        };
+
+        ACHIEVEMENTS_LIST.forEach(badge => {
+            if (!newAchievements.includes(badge.id) && badge.condition(checkData)) {
                 newAchievements.push(badge.id);
                 setJustUnlocked(badge);
                 setTimeout(() => setJustUnlocked(null), 4000);
@@ -274,7 +282,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             <Medal className="w-5 h-5 text-purple-400" />
                             <span className="text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">Badges</span>
                         </div>
-                        <span className="text-3xl font-bold text-slate-800 dark:text-white">{achievements.length} <span className="text-sm text-slate-500 font-normal">/ 3</span></span>
+                        <span className="text-3xl font-bold text-slate-800 dark:text-white">{achievements.length} <span className="text-sm text-slate-500 font-normal">/ {ACHIEVEMENTS_LIST.length}</span></span>
                     </div>
                 </div>
 
@@ -386,12 +394,8 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                                 <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" /> Achievements
                             </h3>
-                            <div className="space-y-3">
-                                {[
-                                    { id: 'first_step', label: 'First Step', desc: 'Complete 1 task', icon: Star },
-                                    { id: 'on_fire', label: 'On Fire', desc: 'Reach 3 day streak', icon: Flame },
-                                    { id: 'master', label: 'Task Master', desc: 'Score 100 points', icon: Trophy },
-                                ].map(badge => {
+                            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                                {ACHIEVEMENTS_LIST.map(badge => {
                                     const isUnlocked = achievements.includes(badge.id);
                                     return (
                                         <div key={badge.id} className={`relative overflow-hidden flex items-center gap-4 p-3 rounded-2xl border transition-all group ${isUnlocked

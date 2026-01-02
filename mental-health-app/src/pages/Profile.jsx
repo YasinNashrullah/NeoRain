@@ -3,15 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Lock, HelpCircle, LogOut, Camera, ChevronRight,
   MapPin, Calendar, Mail, Flame, Award, Phone, MessageSquare,
-  HeartHandshake, Save, X, Star, ShieldCheck, Sun, Moon, Smartphone, Clock
+  HeartHandshake, Save, X, Star, ShieldCheck, Sun, Moon, Smartphone, Clock,
+  Trophy, Target
 } from 'lucide-react';
 import { updateProfile, updatePassword, deleteUser } from "firebase/auth";
 import { auth } from '../firebase';
 import { api } from '../utils/api';
 
+import { ACHIEVEMENTS_LIST } from '../utils/achievements';
+
 const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
+  // Force rebuild timestamp: 2026-01-02
   const [activeView, setActiveView] = useState('main');
   const [streak, setStreak] = useState(0);
+  const [unlockedAchievements, setUnlockedAchievements] = useState([]);
 
   // State untuk Modal Achievement
   const [selectedAchievement, setSelectedAchievement] = useState(null);
@@ -36,35 +41,55 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
         location: userData.location || ''
       });
 
-      // load streak firestore
-      api.getGamification(userData.uid).then(data => {
-        setStreak(data?.streak || 0);
-      });
+      const checkAndSaveAchievements = async () => {
+        try {
+          // load gamification firestore
+          let gamification = await api.getGamification(userData.uid);
+          if (!gamification) gamification = { streak: 0, achievements: [] };
+
+          setStreak(gamification.streak || 0);
+
+          const currentUnlocked = gamification.achievements || [];
+          let hasNewUnlock = false;
+
+          // Prepare data for condition checking
+          const checkData = {
+            streak: gamification.streak || 0,
+            score: gamification.score || 0,
+            moodCount: userData.mood_count || 0,
+            hasLocation: !!userData.location && userData.location !== 'Belum diisi',
+            hasGender: !!userData.gender,
+            hasCustomPhoto: !!userData.photo_url && !userData.photo_url.includes('dicebear')
+          };
+
+          // Check all achievements
+          ACHIEVEMENTS_LIST.forEach(ach => {
+            if (!currentUnlocked.includes(ach.id)) {
+              if (ach.condition(checkData)) {
+                currentUnlocked.push(ach.id);
+                hasNewUnlock = true;
+              }
+            }
+          });
+
+          setUnlockedAchievements(currentUnlocked);
+
+          // Save if new unlocks found
+          if (hasNewUnlock) {
+            await api.saveGamification(userData.uid, {
+              ...gamification,
+              achievements: currentUnlocked
+            });
+          }
+
+        } catch (error) {
+          console.error("Failed to sync achievements:", error);
+        }
+      };
+
+      checkAndSaveAchievements();
     }
   }, [userData]);
-
-  const achievementsList = [
-    {
-      id: 1, label: 'Langkah Awal', desc: 'Bergabung dengan NeoRain', icon: '🚀',
-      unlocked: true
-    },
-    {
-      id: 2, label: 'Pejuang Minggu', desc: 'Login berturut-turut selama 7 hari', icon: '🔥',
-      unlocked: parseInt(streak) >= 7
-    },
-    {
-      id: 3, label: 'Mood Master', desc: 'Mencatat mood minimal 20 kali', icon: '🎭',
-      unlocked: (userData?.mood_count || 0) >= 20
-    },
-    {
-      id: 4, label: 'Supporter', desc: 'Melengkapi profil data diri (Lokasi & Gender)', icon: '🤝',
-      unlocked: userData?.location && userData?.gender && userData.location !== 'Belum diisi'
-    },
-    {
-      id: 5, label: 'Verified', desc: 'Memiliki foto profil custom', icon: '📸',
-      unlocked: userData?.photo_url && !userData.photo_url.includes('dicebear')
-    }
-  ];
 
   // handlers
   // upload foto
@@ -230,8 +255,8 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
               <div className="flex items-center gap-3">
                 <Award className="w-10 h-10 text-yellow-400 fill-yellow-400/20" />
                 <span className="text-4xl font-black text-slate-800 dark:text-white">
-                  {achievementsList.filter(a => a.unlocked).length}
-                  <span className="text-lg font-medium text-slate-500"> / {achievementsList.length}</span>
+                  {unlockedAchievements.length}
+                  <span className="text-lg font-medium text-slate-500"> / {ACHIEVEMENTS_LIST.length}</span>
                 </span>
               </div>
             </div>
@@ -331,77 +356,125 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
   );
 
   // achievement view
-  const renderAchievements = () => (
-    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-4xl mx-auto">
-      <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
-        <div className="p-1 bg-slate-200 dark:bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
-        <span className="font-bold">Kembali</span>
-      </button>
+  const renderAchievements = () => {
+    const unlockedList = ACHIEVEMENTS_LIST.filter(ach => unlockedAchievements.includes(ach.id));
+    const lockedList = ACHIEVEMENTS_LIST.filter(ach => !unlockedAchievements.includes(ach.id));
 
-      <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-2xl">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Pencapaian Kamu</h2>
-          <p className="text-slate-500 dark:text-slate-400">Kumpulkan semua lencana untuk menjadi master kesehatan mental!</p>
-        </div>
+    return (
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-4xl mx-auto pb-20">
+        <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
+          <div className="p-1 bg-slate-200 dark:bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
+          <span className="font-bold">Kembali</span>
+        </button>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-          {achievementsList.map((ach) => (
-            <button
-              key={ach.id}
-              onClick={() => setSelectedAchievement(ach)}
-              className={`relative p-6 rounded-2xl border flex flex-col items-center text-center transition-all group ${ach.unlocked
-                ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-500/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 hover:scale-105'
-                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-white/5 opacity-60 grayscale hover:opacity-80'
-                }`}
-            >
-              <div className="text-4xl mb-3 drop-shadow-lg">{ach.icon}</div>
-              <h4 className={`font-bold text-sm mb-1 ${ach.unlocked ? 'text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>{ach.label}</h4>
-              <p className="text-[10px] text-slate-500">{ach.unlocked ? 'Tercapai' : 'Terkunci'}</p>
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-2">Pencapaian Kamu</h2>
+            <p className="text-slate-500 dark:text-slate-400">Kumpulkan semua lencana untuk menjadi master kesehatan mental!</p>
+          </div>
 
-              {ach.unlocked && (
-                <div className="absolute top-2 right-2">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+          {/* 1. TROPHY CASE (Unlocked) */}
+          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[30px] p-8 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <div className="relative z-10">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-yellow-300" /> Koleksi Lencana ({unlockedList.length})
+              </h3>
+
+              {unlockedList.length === 0 ? (
+                <div className="text-center py-10 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
+                  <Lock className="w-12 h-12 text-white/30 mx-auto mb-3" />
+                  <p className="text-white/60">Belum ada lencana yang terbuka. Semangat!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {unlockedList.map((ach) => (
+                    <button
+                      key={ach.id}
+                      onClick={() => setSelectedAchievement({ ...ach, unlocked: true })}
+                      className="group relative bg-white/10 hover:bg-white/20 border border-white/10 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all overflow-hidden backdrop-blur-sm"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        <ach.icon className="w-7 h-7 text-white drop-shadow-sm" />
+                      </div>
+
+                      <span className="text-xs font-bold text-white/90 text-center leading-tight px-1">{ach.label}</span>
+
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Star className="w-3 h-3 text-yellow-300 fill-yellow-300" />
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* achievement */}
-      <AnimatePresence>
-        {selectedAchievement && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-slate-900 border border-white/60 dark:border-white/10 p-8 rounded-[30px] max-w-sm w-full text-center relative shadow-2xl"
-            >
-              <button onClick={() => setSelectedAchievement(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-white">
-                <X className="w-6 h-6" />
-              </button>
-
-              <div className="w-24 h-24 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-6xl shadow-inner">
-                {selectedAchievement.icon}
-              </div>
-
-              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{selectedAchievement.label}</h3>
-              <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-4 ${selectedAchievement.unlocked ? 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                }`}>
-                {selectedAchievement.unlocked ? 'UNLOCKED' : 'LOCKED'}
-              </div>
-
-              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                {selectedAchievement.desc}
-              </p>
-            </motion.div>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
 
-    </motion.div>
-  );
+          {/* 2. LOCKED LIST (Grid) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 sm:p-8 shadow-xl">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+              <Lock className="w-6 h-6 text-slate-400" /> Lencana Terkunci ({lockedList.length})
+            </h3>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {lockedList.map((ach) => (
+                <button
+                  key={ach.id}
+                  onClick={() => setSelectedAchievement({ ...ach, unlocked: false })}
+                  className="group relative bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/5 rounded-3xl p-4 aspect-square flex flex-col items-center justify-center gap-3 transition-all hover:bg-slate-100 dark:hover:bg-slate-800"
+                >
+                  <div className="w-14 h-14 rounded-2xl bg-slate-200 dark:bg-slate-700 flex items-center justify-center grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300">
+                    <ach.icon className="w-7 h-7 text-slate-500 dark:text-slate-400 group-hover:text-indigo-500" />
+                  </div>
+
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center leading-tight px-1 group-hover:text-slate-800 dark:group-hover:text-white transition-colors">{ach.label}</span>
+
+                  <div className="absolute top-3 right-3">
+                    <Lock className="w-3 h-3 text-slate-400" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* achievement modal */}
+        <AnimatePresence>
+          {selectedAchievement && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-slate-900 border border-white/60 dark:border-white/10 p-8 rounded-[30px] max-w-sm w-full text-center relative shadow-2xl"
+              >
+                <button onClick={() => setSelectedAchievement(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+
+                <div className="w-24 h-24 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                  <selectedAchievement.icon className="w-12 h-12 text-indigo-500 dark:text-indigo-400" />
+                </div>
+
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{selectedAchievement.label}</h3>
+                <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-4 ${selectedAchievement.unlocked ? 'bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                  }`}>
+                  {selectedAchievement.unlocked ? 'UNLOCKED' : 'LOCKED'}
+                </div>
+
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {selectedAchievement.desc}
+                </p>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    );
+  };
 
   // edit profile view
   const renderEdit = () => (
