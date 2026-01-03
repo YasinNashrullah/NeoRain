@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-Calendar as CalendarIcon, ChevronLeft, ChevronRight,
+    Calendar as CalendarIcon, ChevronLeft, ChevronRight,
     Trash2, Filter, Clock, Briefcase, BookOpen, Users,
     Moon, Utensils, Dumbbell, Coffee, Car
 } from 'lucide-react';
@@ -49,7 +49,7 @@ const WeeklyTab = ({
                             <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
                                 <CalendarIcon className="w-6 h-6 text-indigo-500 dark:text-indigo-400" />
                                 <span className="capitalize">
-                                    {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                    {currentDate.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}
                                 </span>
                             </h3>
                             <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/50 p-1.5 rounded-xl border border-white/20">
@@ -59,7 +59,7 @@ const WeeklyTab = ({
                         </div>
 
                         <div className="grid grid-cols-7 text-center mb-4">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                            {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
                                 <div key={d} className="text-xs text-slate-400 dark:text-slate-500 uppercase font-extrabold tracking-widest">{d}</div>
                             ))}
                         </div>

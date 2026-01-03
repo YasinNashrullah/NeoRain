@@ -41,25 +41,38 @@ const DailyTab = ({
                             Apa yang kamu rasakan? <span className="text-xl">✨</span>
                         </h2>
 
-                        {/* container scroll */}
+                        {/* mood scroll */}
                         <div className="flex gap-2 overflow-x-auto py-4 pb-4 -mx-6 px-6 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                             {moods.map((m) => (
-                                <button
+                                <motion.button
                                     key={m.id}
                                     onClick={() => setSelectedMood(m.id)}
+                                    whileHover={{
+                                        scale: 1.05,
+                                        y: -5,
+                                        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                                    }}
+                                    whileTap={{ scale: 0.95 }}
                                     className={`relative flex-1 min-w-[85px] mx-1 my-2 flex flex-col items-center justify-center gap-3 py-4 rounded-2xl border transition-all duration-300 group ${selectedMood === m.id
-                                        ? `${m.bg} ${m.border} shadow-md scale-105`
-                                        : 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:scale-[1.02]'
+                                        ? `${m.bg} ${m.border} shadow-lg ring-2 ring-offset-2 ring-indigo-500/20 dark:ring-offset-slate-900`
+                                        : 'bg-white/80 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-500/30'
                                         }`}
                                 >
-                                    <div className={`p-2 rounded-full transition-colors duration-300 ${selectedMood === m.id ? 'bg-white/60 dark:bg-white/10 shadow-sm' : 'bg-transparent group-hover:bg-white/50'}`}>
-                                        <m.icon className={`w-8 h-8 md:w-10 md:h-10 transition-transform duration-300 ${m.color} ${selectedMood === m.id ? 'scale-110' : ''}`} />
-                                    </div>
+                                    <motion.div
+                                        className={`p-2 rounded-full transition-colors duration-300 ${selectedMood === m.id ? 'bg-white/60 dark:bg-white/10 shadow-inner' : 'bg-transparent group-hover:bg-white dark:group-hover:bg-white/5'}`}
+                                        animate={selectedMood === m.id ? {
+                                            rotate: [0, -10, 10, -5, 5, 0],
+                                            scale: [1, 1.1, 1]
+                                        } : { rotate: 0, scale: 1 }}
+                                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                                    >
+                                        <m.icon className={`w-8 h-8 md:w-10 md:h-10 transition-colors duration-300 ${m.color}`} />
+                                    </motion.div>
 
                                     <span className={`text-[10px] md:text-xs font-bold transition-colors ${selectedMood === m.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700'}`}>
                                         {m.label}
                                     </span>
-                                </button>
+                                </motion.button>
                             ))}
                         </div>
 

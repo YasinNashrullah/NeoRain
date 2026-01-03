@@ -12,11 +12,11 @@ import BreathingModal from '../components/BreathingModal';
 
 // static data constants
 const moods = [
-  { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50' },
-  { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50' },
-  { id: 'energetic', label: 'Energetic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50' },
-  { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50' },
-  { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50' },
+  { id: 'happy', label: 'Senang', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50' },
+  { id: 'calm', label: 'Tenang', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50' },
+  { id: 'energetic', label: 'Energi', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50' },
+  { id: 'angry', label: 'Marah', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50' },
+  { id: 'sad', label: 'Sedih', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50' },
 ];
 
 const quotesData = {
@@ -199,22 +199,35 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         <motion.div variants={itemVars} className={`md:col-span-2 ${cardBaseStyle}`}>
           <div className="flex items-center justify-between w-full overflow-x-auto pb-2 scrollbar-hide gap-2">
             {moods.map((m) => (
-              <button
+              <motion.button
                 key={m.id}
                 onClick={() => setCurrentMood(m.id)}
-                className={`relative flex-1 min-w-[80px] mx-2 my-2 flex flex-col items-center justify-center gap-3 py-4 rounded-2xl border transition-all duration-300 group ${displayMood === m.id
-                  ? `${m.bg} ${m.border} shadow-md scale-105`
-                  : 'bg-white/50 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:scale-[1.02]'
+                whileHover={{
+                  scale: 1.05,
+                  y: -5,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                }}
+                whileTap={{ scale: 0.95 }}
+                className={`relative flex-1 min-w-[85px] mx-1 my-2 flex flex-col items-center justify-center gap-3 py-4 rounded-2xl border transition-all duration-300 group ${displayMood === m.id
+                  ? `${m.bg} ${m.border} shadow-lg ring-2 ring-offset-2 ring-indigo-500/20 dark:ring-offset-slate-900`
+                  : 'bg-white/80 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-500/30'
                   }`}
               >
-                <div className={`p-2 rounded-full transition-colors duration-300 ${displayMood === m.id ? 'bg-white/60 dark:bg-white/10 shadow-sm' : 'bg-transparent group-hover:bg-white/50'}`}>
-                  <m.icon className={`w-8 h-8 md:w-10 md:h-10 transition-transform duration-300 ${m.color} ${displayMood === m.id ? 'scale-110' : ''}`} />
-                </div>
+                <motion.div
+                  className={`p-2 rounded-full transition-colors duration-300 ${displayMood === m.id ? 'bg-white/60 dark:bg-white/10 shadow-inner' : 'bg-transparent group-hover:bg-white dark:group-hover:bg-white/5'}`}
+                  animate={displayMood === m.id ? {
+                    rotate: [0, -10, 10, -5, 5, 0],
+                    scale: [1, 1.1, 1]
+                  } : { rotate: 0, scale: 1 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                >
+                  <m.icon className={`w-8 h-8 md:w-10 md:h-10 transition-colors duration-300 ${m.color}`} />
+                </motion.div>
 
                 <span className={`text-[10px] md:text-xs font-bold transition-colors ${displayMood === m.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700'}`}>
                   {m.label}
                 </span>
-              </button>
+              </motion.button>
             ))}
           </div>
         </motion.div>

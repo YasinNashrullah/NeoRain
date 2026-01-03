@@ -238,10 +238,10 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
           {/* streak card */}
           <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl flex items-center justify-between relative overflow-hidden h-full">
             <div className="relative z-10">
-              <h3 className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider mb-1">Your Streak</h3>
+              <h3 className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider mb-1 text-left">Streak</h3>
               <div className="flex items-center gap-3">
                 <Flame className="w-10 h-10 text-orange-500 animate-pulse" />
-                <span className="text-4xl font-black text-slate-800 dark:text-white">{streak} <span className="text-lg font-medium text-slate-500">Days</span></span>
+                <span className="text-4xl font-black text-slate-800 dark:text-white">{streak} <span className="text-lg font-medium text-slate-500">Hari</span></span>
               </div>
             </div>
             <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-orange-500/10 rounded-full blur-2xl"></div>
@@ -255,7 +255,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
             <div className="relative z-10 text-left">
               <h3 className="text-slate-500 dark:text-slate-400 font-bold text-sm uppercase tracking-wider mb-1">Achievements</h3>
               <div className="flex items-center gap-3">
-                <Award className="w-10 h-10 text-yellow-400 fill-yellow-400/20" />
+                <Award className="w-10 h-10 text-yellow-400 fill-yellow-400/20 animate-pulse" />
                 <span className="text-4xl font-black text-slate-800 dark:text-white">
                   {unlockedAchievements.length}
                   <span className="text-lg font-medium text-slate-500"> / {ACHIEVEMENTS_LIST.length}</span>
@@ -272,18 +272,15 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
 
       {/* bottom menu list */}
       <div className="grid grid-cols-1 gap-4">
-        {/* Toggle Theme */}
-        {/* Theme Selector */}
-        {/* Theme Selector Compact */}
         <div className="bg-white/80 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center justify-between shadow-sm backdrop-blur-sm">
           <div className="flex items-center gap-4">
             <div className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400">
               {theme === 'dark' ? <Moon className="w-6 h-6" /> : theme === 'light' ? <Sun className="w-6 h-6" /> : <Clock className="w-6 h-6" />}
             </div>
             <div className="text-left">
-              <p className="font-bold text-slate-800 dark:text-white text-lg">Appearance</p>
+              <p className="font-bold text-slate-800 dark:text-white text-lg">Tampilan</p>
               <p className="text-xs text-slate-500">
-                {theme === 'auto' ? 'Auto' : theme === 'dark' ? 'Dark' : 'Light'}
+                {theme === 'auto' ? 'Otomatis' : theme === 'dark' ? 'Gelap' : 'Terang'}
               </p>
             </div>
           </div>
@@ -296,7 +293,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
                 ? 'bg-white dark:bg-slate-600 text-orange-500 shadow-sm'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
-              title="Light Mode"
+              title="Mode Terang"
             >
               <Sun className="w-5 h-5" />
             </button>
@@ -306,7 +303,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
                 ? 'bg-white dark:bg-slate-600 text-indigo-400 shadow-sm'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
-              title="Dark Mode"
+              title="Mode Gelap"
             >
               <Moon className="w-5 h-5" />
             </button>
@@ -316,7 +313,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
                 ? 'bg-white dark:bg-slate-600 text-blue-500 shadow-sm'
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                 }`}
-              title="Auto Mode"
+              title="Mode Otomatis"
             >
               <Clock className="w-5 h-5" />
             </button>
@@ -327,8 +324,8 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
           <div className="flex items-center gap-4">
             <div className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 group-hover:bg-indigo-500/20 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"><Lock className="w-6 h-6" /></div>
             <div className="text-left">
-              <p className="font-bold text-slate-800 dark:text-white text-lg">Privacy & Security</p>
-              <p className="text-xs text-slate-500">Manage password & data</p>
+              <p className="font-bold text-slate-800 dark:text-white text-lg">Privasi & Keamanan</p>
+              <p className="text-xs text-slate-500">Atur kata sandi & data</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-600" />
@@ -338,8 +335,8 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
           <div className="flex items-center gap-4">
             <div className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-500 dark:text-slate-400 group-hover:bg-green-500/20 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors"><HelpCircle className="w-6 h-6" /></div>
             <div className="text-left">
-              <p className="font-bold text-slate-800 dark:text-white text-lg">Help & Support</p>
-              <p className="text-xs text-slate-500">Crisis center & guide</p>
+              <p className="font-bold text-slate-800 dark:text-white text-lg">Bantuan & Dukungan</p>
+              <p className="text-xs text-slate-500">Pusat krisis & panduan</p>
             </div>
           </div>
           <ChevronRight className="w-5 h-5 text-slate-400 dark:text-slate-600" />
@@ -367,7 +364,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
     const latestAchievement = unlockedList.length > 0 ? unlockedList[unlockedList.length - 1] : null;
 
     return (
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full pb-20">
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full pb-8">
         <button onClick={() => setActiveView('main')} className="mb-6 flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
           <div className="p-1 bg-slate-200 dark:bg-white/10 rounded-lg"><ChevronRight className="w-5 h-5 rotate-180" /></div>
           <span className="font-bold">Kembali</span>
@@ -434,7 +431,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
                   <currentLevel.icon className="w-6 h-6" />
                 </div>
                 <p className="text-lg font-black text-slate-800 dark:text-white line-clamp-1">{currentLevel.label}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Current Rank</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Peringkat Saat Ini</p>
               </div>
             </div>
 
@@ -445,7 +442,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="text-white font-bold text-lg">Level Progress</h3>
-                    <p className="text-slate-400 text-xs">Keep going!</p>
+                    <p className="text-slate-400 text-xs">Terus semangat!</p>
                   </div>
                   <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
                     <span className="text-yellow-400 font-black text-sm">{userData?.score || 0} XP</span>
@@ -465,7 +462,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
               </div>
             </div>
 
-            {/* 4. ALL ACHIEVEMENTS GRID (Full Width) */}
+            {/* 4. ALL ACHIEVEMENTS GRID */}
             <div className="col-span-full bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl">
               <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
                 <Award className="w-6 h-6 text-indigo-500" /> Semua Pencapaian
@@ -484,12 +481,12 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
                           : 'bg-slate-50 dark:bg-slate-900/50 border-slate-100 dark:border-white/5 opacity-70 hover:opacity-100'
                         }`}
                     >
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
+                      <div className={`w-16 h-16 rounded-xl flex items-center justify-center transition-all duration-300
                         ${isUnlocked
                           ? 'bg-white/20 backdrop-blur-sm text-white shadow-inner group-hover:scale-110 group-hover:rotate-3'
                           : 'bg-slate-200 dark:bg-slate-800 text-slate-400 grayscale'
                         }`}>
-                        <ach.icon className="w-6 h-6" />
+                        <ach.icon className="w-8 h-8" />
                       </div>
 
                       <span className={`text-xs font-bold text-center leading-tight line-clamp-2
@@ -711,8 +708,8 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
   );
 
   return (
-    <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-16 md:pb-6">
-      <div className="w-full max-w-[1600px] mx-auto p-6 md:p-8">
+    <div className="w-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white">
+      <div className="w-full max-w-[1200px] mx-auto p-5 md:p-6 pb-24 md:pb-0">
         <AnimatePresence mode='wait'>
           {activeView === 'main' && renderMain()}
           {activeView === 'edit' && renderEdit()}

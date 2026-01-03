@@ -183,10 +183,10 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                             </div>
                         </div>
                         <div className="text-md text-center font-bold mb-4 text-slate-600 dark:text-slate-300">
-                            {selectedDate.toLocaleString("default", { month: "long", year: "numeric" })}
+                            {selectedDate.toLocaleString("id-ID", { month: "long", year: "numeric" })}
                         </div>
                         <div className="grid grid-cols-7 text-center mb-2 text-[10px] text-slate-500 font-bold uppercase">
-                            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (<div key={d}>{d}</div>))}
+                            {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map((d) => (<div key={d}>{d}</div>))}
                         </div>
                         <div className="grid grid-cols-7 gap-1 place-items-center">
                             {renderCalendar()}
