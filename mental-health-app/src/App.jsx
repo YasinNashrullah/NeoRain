@@ -262,9 +262,8 @@ const App = () => {
 
           <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
 
-            {/* Mobile Chat Overlay */}
             {activeTab === 'chat' && (
-              <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
+              <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-white dark:bg-slate-950">
                 <Chat
                   onBack={() => setActiveTab('home')}
                   userData={userData}

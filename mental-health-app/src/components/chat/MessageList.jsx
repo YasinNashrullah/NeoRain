@@ -61,7 +61,7 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                         ) : (
                             <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap break-words transition-colors duration-[1500ms] ${msg.sender === 'user'
                                 ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
-                                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-sm border border-slate-200 dark:border-white/5 text-left'
+                                : 'bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm text-slate-800 dark:text-slate-200 rounded-tl-sm border border-white/50 dark:border-white/5 shadow-sm text-left'
                                 }`}>
                                 {typeof msg.text === 'string' ? msg.text.replace(/\\n/g, '\n') : msg.text}
                                 <div className={`text-[10px] mt-1 text-right ${msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'}`}>

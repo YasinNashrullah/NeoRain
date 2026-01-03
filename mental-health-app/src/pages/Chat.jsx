@@ -15,52 +15,52 @@ import { Camera } from 'lucide-react';
 // Mood color mapping
 const moodColors = {
   happy: {
-    bubble1: 'rgba(236, 72, 153, 0.05)',
-    bubble2: 'rgba(244, 114, 182, 0.04)',
-    primary: 'bg-pink-600',
-    text: 'text-pink-400',
+    bubble1: 'rgba(236, 72, 153, 0.15)',
+    bubble2: 'rgba(244, 114, 182, 0.1)',
+    primary: 'bg-gradient-to-br from-pink-600 to-rose-600 shadow-pink-500/30',
+    text: 'text-pink-700',
     bgGradient: 'radial-gradient(circle at center, #3f1a28 0%, #020617 100%)',
-    bgGradientLight: 'radial-gradient(circle at center, #fce7f3 0%, #fff1f2 100%)'
+    bgGradientLight: 'linear-gradient(135deg, #fff0f7 0%, #ffeef2 100%)'
   },
   calm: {
-    bubble1: 'rgba(34, 211, 238, 0.05)',
-    bubble2: 'rgba(6, 182, 212, 0.04)',
-    primary: 'bg-cyan-600',
-    text: 'text-cyan-400',
+    bubble1: 'rgba(34, 211, 238, 0.15)',
+    bubble2: 'rgba(6, 182, 212, 0.1)',
+    primary: 'bg-gradient-to-br from-cyan-600 to-blue-600 shadow-cyan-500/30',
+    text: 'text-cyan-700',
     bgGradient: 'radial-gradient(circle at center, #0e2a35 0%, #020617 100%)',
-    bgGradientLight: 'radial-gradient(circle at center, #cffafe 0%, #ecfeff 100%)'
+    bgGradientLight: 'linear-gradient(135deg, #f0faff 0%, #e6f6ff 100%)'
   },
   energetic: {
-    bubble1: 'rgba(250, 204, 21, 0.05)',
-    bubble2: 'rgba(234, 179, 8, 0.04)',
-    primary: 'bg-yellow-600',
-    text: 'text-yellow-400',
+    bubble1: 'rgba(250, 204, 21, 0.15)',
+    bubble2: 'rgba(234, 179, 8, 0.1)',
+    primary: 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-500/30',
+    text: 'text-yellow-700',
     bgGradient: 'radial-gradient(circle at center, #2e2408 0%, #020617 100%)',
-    bgGradientLight: 'radial-gradient(circle at center, #fef9c3 0%, #fefce8 100%)'
+    bgGradientLight: 'linear-gradient(135deg, #fffff0 0%, #fffde7 100%)'
   },
   angry: {
-    bubble1: 'rgba(251, 146, 60, 0.05)',
-    bubble2: 'rgba(249, 115, 22, 0.04)',
-    primary: 'bg-orange-600',
-    text: 'text-orange-400',
+    bubble1: 'rgba(251, 146, 60, 0.15)',
+    bubble2: 'rgba(249, 115, 22, 0.1)',
+    primary: 'bg-gradient-to-br from-orange-600 to-red-600 shadow-orange-500/30',
+    text: 'text-orange-800',
     bgGradient: 'radial-gradient(circle at center, #331408 0%, #020617 100%)',
-    bgGradientLight: 'radial-gradient(circle at center, #ffedd5 0%, #fff7ed 100%)'
+    bgGradientLight: 'linear-gradient(135deg, #fff8f0 0%, #ffefd6 100%)'
   },
   sad: {
-    bubble1: 'rgba(99, 102, 241, 0.05)',
-    bubble2: 'rgba(79, 70, 229, 0.04)',
-    primary: 'bg-indigo-600',
-    text: 'text-indigo-400',
+    bubble1: 'rgba(99, 102, 241, 0.15)',
+    bubble2: 'rgba(79, 70, 229, 0.1)',
+    primary: 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-500/30',
+    text: 'text-indigo-700',
     bgGradient: 'radial-gradient(circle at center, #141430 0%, #020617 100%)',
-    bgGradientLight: 'radial-gradient(circle at center, #e0e7ff 0%, #eef2ff 100%)'
+    bgGradientLight: 'linear-gradient(135deg, #f5f7ff 0%, #eef0ff 100%)'
   },
   default: {
-    bubble1: 'rgba(99, 102, 241, 0.05)',
-    bubble2: 'rgba(139, 92, 246, 0.04)',
-    primary: 'bg-indigo-600',
-    text: 'text-indigo-400',
+    bubble1: 'rgba(99, 102, 241, 0.15)',
+    bubble2: 'rgba(139, 92, 246, 0.1)',
+    primary: 'bg-gradient-to-br from-indigo-600 to-blue-700 shadow-indigo-500/30',
+    text: 'text-indigo-700',
     bgGradient: 'radial-gradient(circle at center, #0f172a 0%, #020617 100%)',
-    bgGradientLight: 'radial-gradient(circle at center, #f1f5f9 0%, #f8fafc 100%)'
+    bgGradientLight: 'linear-gradient(135deg, #f8faff 0%, #f1f4f9 100%)'
   }
 };
 
@@ -526,7 +526,7 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
 
   return (
     <motion.div
-      className="flex flex-col w-full h-full relative overflow-hidden"
+      className="flex flex-col w-full h-[100dvh] md:h-full relative overflow-hidden"
       animate={{ background: theme === 'light' ? currentStyle.bgGradientLight : currentStyle.bgGradient }}
       transition={{ duration: 1.5, ease: "easeInOut" }}
     >

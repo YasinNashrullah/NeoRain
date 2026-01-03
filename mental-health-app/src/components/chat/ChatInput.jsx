@@ -5,7 +5,7 @@ const ChatInput = ({ input, setInput, handleSend, isTyping, userName, currentSty
     return (
         <div className="flex-none w-full bg-transparent border-t border-slate-200 dark:border-white/5 p-4 pb-6 z-20 backdrop-blur-sm">
             <div className="flex items-end gap-2">
-                <div className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[24px] flex items-end px-2 py-2 shadow-sm focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                <div className="flex-1 bg-white/90 dark:bg-slate-900/90 border border-white/50 dark:border-white/10 rounded-[24px] flex items-end px-2 py-2 shadow-lg dark:shadow-none focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all backdrop-blur-xl">
                     <textarea
                         value={input}
                         onChange={(e) => {

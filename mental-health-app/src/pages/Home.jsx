@@ -97,11 +97,9 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         firebase_uid: userData.uid,
         mood: displayMood,
         note: gratitudeText,
-        intensity: 5 // Default intensity for gratitude
+        intensity: 5 
       });
       setGratitudeText('');
-      // Optional: Show success feedback (toast/alert) if needed, 
-      // but for now just clearing input is enough visual feedback.
     } catch (error) {
       console.error("Failed to save gratitude:", error);
     }
