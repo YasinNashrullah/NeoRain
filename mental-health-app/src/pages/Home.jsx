@@ -95,7 +95,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     try {
       await api.saveMood({
         firebase_uid: userData.uid,
-        mood: 'grateful',
+        mood: displayMood,
         note: gratitudeText,
         intensity: 5 // Default intensity for gratitude
       });
