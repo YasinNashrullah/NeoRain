@@ -31,34 +31,42 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
 
   // config mood
   const moods = [
-    { id: 'happy', label: 'Happy', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50', score: 5 },
-    { id: 'grateful', label: 'Grateful', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-100 dark:bg-rose-500/20', border: 'border-rose-200 dark:border-rose-500/50', score: 5 },
-    { id: 'calm', label: 'Calm', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50', score: 3 },
-    { id: 'energetic', label: 'Energetic', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50', score: 4 },
-    { id: 'angry', label: 'Angry', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50', score: 1 },
-    { id: 'sad', label: 'Sad', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50', score: 2 },
+    { id: 'happy', label: 'Senang', icon: Smile, color: 'text-pink-500', bg: 'bg-pink-100 dark:bg-pink-500/20', border: 'border-pink-200 dark:border-pink-500/50', score: 5 },
+    { id: 'grateful', label: 'Bersyukur', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-100 dark:bg-rose-500/20', border: 'border-rose-200 dark:border-rose-500/50', score: 5 },
+    { id: 'calm', label: 'Tenang', icon: Wind, color: 'text-cyan-500', bg: 'bg-cyan-100 dark:bg-cyan-500/20', border: 'border-cyan-200 dark:border-cyan-500/50', score: 3 },
+    { id: 'energetic', label: 'Semangat', icon: Zap, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-500/20', border: 'border-yellow-200 dark:border-yellow-500/50', score: 4 },
+    { id: 'angry', label: 'Marah', icon: Frown, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-500/20', border: 'border-orange-200 dark:border-orange-500/50', score: 1 },
+    { id: 'sad', label: 'Sedih', icon: CloudRain, color: 'text-indigo-500', bg: 'bg-indigo-100 dark:bg-indigo-500/20', border: 'border-indigo-200 dark:border-indigo-500/50', score: 2 },
   ];
 
   const activities = [
-    { id: 'work', label: 'Work', icon: Briefcase },
-    { id: 'study', label: 'Study', icon: BookOpen },
-    { id: 'family', label: 'Family', icon: Users },
-    { id: 'sleep', label: 'Sleep', icon: Moon },
-    { id: 'eat', label: 'Eat', icon: Utensils },
-    { id: 'sport', label: 'Sport', icon: Dumbbell },
-    { id: 'relax', label: 'Relax', icon: Coffee },
-    { id: 'travel', label: 'Travel', icon: Car },
+    { id: 'work', label: 'Kerja', icon: Briefcase },
+    { id: 'study', label: 'Belajar', icon: BookOpen },
+    { id: 'family', label: 'Keluarga', icon: Users },
+    { id: 'sleep', label: 'Tidur', icon: Moon },
+    { id: 'eat', label: 'Makan', icon: Utensils },
+    { id: 'sport', label: 'Olahraga', icon: Dumbbell },
+    { id: 'relax', label: 'Santai', icon: Coffee },
+    { id: 'travel', label: 'Jalan-jalan', icon: Car },
   ];
 
   // fetch data
+  const [loading, setLoading] = useState(true);
+
   const fetchData = async () => {
     if (userData?.uid) {
-      const allData = await api.getMoods(userData.uid);
-      // Filter out auto-saved mood scanner updates
-      const filteredData = allData.filter(log => log.note !== "Mood Scanner Update");
-      setHistoryLogs(filteredData);
-      setWeeklyLogs(filteredData);
-      fetchStats(userData.uid, statsRange, filteredData);
+      try {
+        const allData = await api.getMoods(userData.uid);
+        // Filter out auto-saved mood scanner updates
+        const filteredData = allData.filter(log => log.note !== "Mood Scanner Update");
+        setHistoryLogs(filteredData);
+        setWeeklyLogs(filteredData);
+        await fetchStats(userData.uid, statsRange, filteredData);
+      } catch (error) {
+        console.error("Failed to load data", error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -364,7 +372,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
                   transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                 />
               )}
-              <span className="relative z-10 capitalize">{tab === 'daily' ? 'Journey' : tab === 'weekly' ? 'History' : tab === 'stats' ? 'Statistics' : 'AI Analysis'}</span>
+              <span className="relative z-10 capitalize">{tab === 'daily' ? 'Jurnal' : tab === 'weekly' ? 'Riwayat' : tab === 'stats' ? 'Statistik' : 'Analisis AI'}</span>
             </button>
           ))}
         </div>
@@ -374,63 +382,73 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 md:pb-6 scrollbar-hide relative z-10">
         <div className="w-full h-full mx-auto min-h-full">
 
-          <AnimatePresence mode='wait'>
+          {loading ? (
+            <div className="animate-pulse space-y-8">
+              <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-[30px] w-full"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-7 h-96 bg-slate-200 dark:bg-slate-800 rounded-[30px]"></div>
+                <div className="lg:col-span-5 h-96 bg-slate-200 dark:bg-slate-800 rounded-[30px]"></div>
+              </div>
+            </div>
+          ) : (
+            <AnimatePresence mode='wait'>
 
-            {/* Daily */}
-            {activeTab === 'daily' && (
-              <DailyTab
-                moods={moods.filter(m => m.id !== 'grateful')}
-                selectedMood={selectedMood}
-                setSelectedMood={setSelectedMood}
-                note={note}
-                setNote={setNote}
-                selectedTags={selectedTags}
-                setSelectedTags={setSelectedTags}
-                activities={activities}
-                isSaving={isSaving}
-                handleSaveMood={handleSaveMood}
-                todayLogs={todayLogs}
-                getMoodConfig={getMoodConfig}
-                formatTime={formatTime}
-              />
-            )}
+              {/* Daily */}
+              {activeTab === 'daily' && (
+                <DailyTab
+                  moods={moods.filter(m => m.id !== 'grateful')}
+                  selectedMood={selectedMood}
+                  setSelectedMood={setSelectedMood}
+                  note={note}
+                  setNote={setNote}
+                  selectedTags={selectedTags}
+                  setSelectedTags={setSelectedTags}
+                  activities={activities}
+                  isSaving={isSaving}
+                  handleSaveMood={handleSaveMood}
+                  todayLogs={todayLogs}
+                  getMoodConfig={getMoodConfig}
+                  formatTime={formatTime}
+                />
+              )}
 
-            {/* Weekly & calendar */}
-            {activeTab === 'weekly' && (
-              <WeeklyTab
-                currentDate={currentDate}
-                changeMonth={changeMonth}
-                renderCalendar={renderCalendar}
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                filteredWeeklyLogs={filteredWeeklyLogs}
-                groupLogsByDate={groupLogsByDate}
-                getMoodConfig={getMoodConfig}
-                formatTime={formatTime}
-              />
-            )}
+              {/* Weekly & calendar */}
+              {activeTab === 'weekly' && (
+                <WeeklyTab
+                  currentDate={currentDate}
+                  changeMonth={changeMonth}
+                  renderCalendar={renderCalendar}
+                  dateRange={dateRange}
+                  setDateRange={setDateRange}
+                  filteredWeeklyLogs={filteredWeeklyLogs}
+                  groupLogsByDate={groupLogsByDate}
+                  getMoodConfig={getMoodConfig}
+                  formatTime={formatTime}
+                />
+              )}
 
-            {/* Statistic chart */}
-            {activeTab === 'stats' && (
-              <StatsTab
-                statsRange={statsRange}
-                setStatsRange={setStatsRange}
-                statsData={statsData}
-                onNavigate={onNavigate}
-                getMoodConfig={getMoodConfig}
-              />
-            )}
+              {/* Statistic chart */}
+              {activeTab === 'stats' && (
+                <StatsTab
+                  statsRange={statsRange}
+                  setStatsRange={setStatsRange}
+                  statsData={statsData}
+                  onNavigate={onNavigate}
+                  getMoodConfig={getMoodConfig}
+                />
+              )}
 
-            {/* Analysis Tab */}
-            {activeTab === 'analysis' && (
-              <AnalysisTab
-                userData={userData}
-                onChatRequest={onChatRequest}
-                onNavigate={onNavigate}
-              />
-            )}
+              {/* Analysis Tab */}
+              {activeTab === 'analysis' && (
+                <AnalysisTab
+                  userData={userData}
+                  onChatRequest={onChatRequest}
+                  onNavigate={onNavigate}
+                />
+              )}
 
-          </AnimatePresence>
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </div>

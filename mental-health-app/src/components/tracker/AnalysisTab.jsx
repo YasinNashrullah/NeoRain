@@ -166,7 +166,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     {/* Calendar */}
                     <div className="order-1 lg:col-span-4 lg:order-3 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 text-slate-800 dark:text-white shadow-sm dark:shadow-xl h-fit">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="font-bold text-md md:text-lg">Calendar</h3>
+                            <h3 className="font-bold text-md md:text-lg">Kalender</h3>
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() - 1)))}
@@ -196,7 +196,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     {/* History List */}
                     <div className="order-2 lg:col-span-4 lg:order-5 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-3 shadow-sm dark:shadow-xl h-fit max-h-[500px] flex flex-col">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white my-2 text-center capitalize flex items-center justify-center gap-2">
-                            <FileText className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Analysis History
+                            <FileText className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Riwayat Analisis
                         </h3>
 
                         <div className="w-full py-3 flex-1 overflow-y-auto space-y-2 scrollbar-hide">
@@ -326,7 +326,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     <div className="order-4 lg:col-span-5 lg:order-2 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-2xl relative overflow-hidden min-h-[350px]">
                         <div className="absolute top-0 left-0 w-full h-full bg-indigo-500/5 rounded-full blur-3xl"></div>
                         <div className="w-full h-full relative z-10">
-                            <h3 className="text-slate-500 dark:text-slate-400 font-bold text-center mb-2 absolute top-0 w-full text-sm uppercase tracking-widest">Chart Analysis</h3>
+                            <h3 className="text-slate-500 dark:text-slate-400 font-bold text-center mb-2 absolute top-0 w-full text-sm uppercase tracking-widest">Analisis Grafik</h3>
                             <AnimatePresence mode="wait">
                                 {selectedAssessment && (
                                     <motion.div
@@ -368,7 +368,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                     <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl min-h-[250px] relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl"></div>
                                         <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 relative z-10">
-                                            <Target className="w-6 h-6 text-green-500 dark:text-green-400" /> Action Plan
+                                            <Target className="w-6 h-6 text-green-500 dark:text-green-400" /> Rencana Aksi
                                         </h3>
                                         <div className="grid gap-4 relative z-10">
                                             {aiData?.actions?.filter(action =>
@@ -389,7 +389,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                     <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-xl relative overflow-hidden">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl"></div>
                                         <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2 relative z-10">
-                                            <BookOpen className="w-6 h-6 text-blue-500 dark:text-blue-400" /> Insight & Education
+                                            <BookOpen className="w-6 h-6 text-blue-500 dark:text-blue-400" /> Wawasan & Edukasi
                                         </h3>
                                         <div className="space-y-4 relative z-10">
                                             <p className="text-slate-600 dark:text-slate-300 text-left p-4 font-medium text-lg leading-relaxed">"{aiData?.summary}"</p>

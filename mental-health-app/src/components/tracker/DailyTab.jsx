@@ -30,15 +30,15 @@ const DailyTab = ({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-5"
         >
             {/* Input Card */}
-            <div className="lg:col-span-7 space-y-8">
-                <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-2xl relative overflow-hidden h-full flex flex-col justify-center">
+            <div className="lg:col-span-7 space-y-8 h-fit">
+                <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-2xl relative overflow-hidden flex flex-col justify-center">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl"></div>
                     <div className="relative z-10">
                         <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-3">
-                            How are you feeling? <span className="text-xl">✨</span>
+                            Apa yang kamu rasakan? <span className="text-xl">✨</span>
                         </h2>
 
                         {/* container scroll */}
@@ -65,7 +65,7 @@ const DailyTab = ({
 
                         {/* Activity Selector */}
                         <div className="mb-6">
-                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 block">Thinking about...</label>
+                            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 block">Sedang memikirkan...</label>
                             <div className="flex flex-wrap gap-3">
                                 {activities.map((activity) => {
                                     const isSelected = selectedTags?.includes(activity.id);
@@ -88,12 +88,12 @@ const DailyTab = ({
 
                         <div className="bg-slate-50 dark:bg-slate-800/50 rounded-3xl p-6 mb-6 border border-slate-200 dark:border-white/5 focus-within:border-indigo-500/50 transition-colors">
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
-                                <Edit3 className="w-4 h-4" /> Add Notes (Optional)
+                                <Edit3 className="w-4 h-4" /> Catatan Tambahan (Opsional)
                             </label>
                             <textarea
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                placeholder="How do you feel right now?"
+                                placeholder="Ceritakan perasaanmu..."
                                 className="w-full bg-transparent text-slate-700 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none resize-none h-32"
                             />
                         </div>
@@ -106,35 +106,32 @@ const DailyTab = ({
                                 : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/25'
                                 }`}
                         >
-                            {isSaving ? "Saving..." : "Catat Mood"}
+                            {isSaving ? "Menyimpan..." : "Simpan Mood"}
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* Today History */}
-            <div className="md:w-auto lg:col-span-5 flex flex-col h-full">
-                <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 h-full backdrop-blur-md">
+            <div className="md:w-auto lg:col-span-5 flex flex-col h-[500px] lg:h-0 lg:min-h-full">
+                <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 h-full backdrop-blur-md flex flex-col">
                     <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-6 flex items-center justify-between">
-                        Mood Today <span className="bg-slate-100 dark:bg-white/10 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300">{todayLogs.length}</span>
+                        Mood Hari Ini <span className="bg-slate-100 dark:bg-white/10 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300">{todayLogs.length}</span>
                     </h3>
 
                     {todayLogs.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60">
                             <Clock className="w-12 h-12 mb-3" />
-                            <p>No mood recorded yet.</p>
+                            <p>Belum ada mood yang tercatat.</p>
                         </div>
                     ) : (
-                        <div className="relative pl-8 border-l-2 border-indigo-100 dark:border-white/10 ml-4 space-y-8 py-2">
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
                             {todayLogs.map((log) => {
                                 const config = getMoodConfig(log.mood);
                                 return (
                                     <div key={log.id} className="relative group">
-                                        {/* Timeline Dot */}
-                                        <div className={`absolute -left-[41px] top-0 w-5 h-5 rounded-full border-4 border-white dark:border-slate-900 transition-colors ${config.bg.replace('/20', '')} ${config.color.replace('text-', 'bg-')}`}></div>
-
                                         {/* Content */}
-                                        <div className={`p-4 rounded-3xl border ${config.border} ${config.bg} relative overflow-hidden transition-all hover:scale-[1.02] shadow-sm`}>
+                                        <div className={`p-3 m-1 rounded-3xl border ${config.border} ${config.bg} relative overflow-hidden transition-all hover:scale-[1.02] shadow-sm`}>
                                             <div className="flex items-start gap-4 relative z-10">
                                                 <div className="w-10 h-10 rounded-2xl bg-white/40 dark:bg-white/20 flex items-center justify-center backdrop-blur-sm">
                                                     <config.icon className="w-5 h-5 text-slate-700 dark:text-white" />
@@ -177,7 +174,7 @@ const DailyTab = ({
                     )}
                 </div>
             </div>
-        </motion.div>
+        </motion.div >
     );
 };
 

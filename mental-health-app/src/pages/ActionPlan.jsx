@@ -191,8 +191,29 @@ const ActionPlan = ({ userData, onNavigate }) => {
     const levelProgress = Math.min(100, (score / currentLevel.next) * 100);
 
     if (loading) return (
-        <div className="flex items-center justify-center h-full text-zinc-900 dark:text-white">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <div className="w-full h-full p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 relative z-10 animate-pulse">
+            {/* Header Stats Skeleton */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="col-span-2 bg-slate-200 dark:bg-slate-800 rounded-[30px] h-40"></div>
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-[30px] h-40"></div>
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-[30px] h-40"></div>
+            </div>
+
+            {/* Main Grid Skeleton */}
+            <div className="grid lg:grid-cols-12 gap-8">
+                <div className="lg:col-span-8 space-y-6">
+                    <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-[20px]"></div>
+                    <div className="space-y-4">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-20 bg-slate-200 dark:bg-slate-800 rounded-2xl"></div>
+                        ))}
+                    </div>
+                </div>
+                <div className="lg:col-span-4 space-y-6">
+                    <div className="h-48 bg-slate-200 dark:bg-slate-800 rounded-[30px]"></div>
+                    <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-[30px]"></div>
+                </div>
+            </div>
         </div>
     );
 
@@ -207,7 +228,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                     <div className="col-span-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[30px] p-6 flex items-center justify-between shadow-lg shadow-indigo-500/20 relative overflow-hidden group">
                         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="relative z-10">
-                            <p className="text-indigo-100 font-medium mb-1">Total Score</p>
+                            <p className="text-indigo-100 font-medium mb-1">Total Skor</p>
                             <h2 className="text-4xl font-bold text-white">{score}</h2>
                             <div className="flex items-center gap-2 mt-2 bg-white/20 w-fit px-3 py-1 rounded-full backdrop-blur-md">
                                 <currentLevel.icon className="w-3 h-3 text-white" />
@@ -247,9 +268,9 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             <div className="flex justify-between items-end mb-3">
                                 <div>
                                     <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                        <Target className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Mission Progress
+                                        <Target className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Progres Misi
                                     </h3>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Complete tasks to boost your wellness score.</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Selesaikan misi untuk meningkatkan skor kesehatanmu.</p>
                                 </div>
                                 <span className="text-2xl font-bold text-indigo-500 dark:text-indigo-400">{Math.round(progressPercent)}%</span>
                             </div>
@@ -332,17 +353,17 @@ const ActionPlan = ({ userData, onNavigate }) => {
                         <div className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-orange-500/10 dark:to-purple-500/10 border border-orange-200 dark:border-orange-500/20 rounded-[30px] p-6 relative overflow-hidden shadow-sm">
                             <Quote className="absolute top-4 right-4 w-12 h-12 text-orange-500/10 rotate-12" />
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
-                                <Zap className="w-5 h-5 text-orange-400" /> Daily Boost
+                                <Zap className="w-5 h-5 text-orange-400" /> Motivasi Harian
                             </h3>
                             <p className="text-slate-600 dark:text-slate-300 italic font-medium leading-relaxed relative z-10">
-                                "Small steps every day add up to big results. Keep moving forward!"
+                                "Langkah kecil setiap hari membawa hasil besar. Teruslah melangkah!"
                             </p>
                         </div>
 
                         {/* achievements list */}
                         <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-                                <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" /> Achievements
+                                <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" /> Pencapaian
                             </h3>
                             <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
                                 {ACHIEVEMENTS_LIST.map(badge => {
@@ -378,8 +399,8 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             <div className={`absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-20 ${currentLevel.bg.replace('/10', '')}`}></div>
 
                             <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Current Level</h3>
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Rank {Math.floor(score / 50) + 1}</span>
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Level Saat Ini</h3>
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Peringkat {Math.floor(score / 50) + 1}</span>
                             </div>
 
                             <div className="flex flex-col items-center text-center relative z-10">
@@ -398,7 +419,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                 </div>
                                 <h4 className={`text-2xl font-black ${currentLevel.color} mb-1 tracking-tight`}>{currentLevel.label}</h4>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                    {score} / {currentLevel.next} XP to next rank
+                                    {score} / {currentLevel.next} XP lagi untuk naik level
                                 </p>
                             </div>
                         </div>
