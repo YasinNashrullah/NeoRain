@@ -188,12 +188,12 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
           <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 dark:bg-indigo-500/10 rounded-full blur-3xl"></div>
 
           <div className="flex items-center gap-6 mb-8 relative z-10">
-            <div className="relative group">
+            <div className="relative group shrink-0">
               {/* foto profile dari database */}
               <img
                 src={userData?.photo_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`}
                 alt="Profile"
-                className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 object-cover shadow-md"
+                className="w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 object-cover shadow-md shrink-0"
               />
               <label className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full cursor-pointer hover:bg-indigo-500 transition-colors shadow-lg group-hover:scale-105">
                 <Camera className="w-4 h-4 text-white" />
@@ -201,7 +201,7 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
               </label>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-white capitalize">{formData.name || "User"}</h2>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white capitalize line-clamp-1">{formData.name || "User"}</h2>
               <button
                 onClick={() => setActiveView('edit')}
                 className="mt-2 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-full transition-colors shadow-lg shadow-indigo-500/30"
