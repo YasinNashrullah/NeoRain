@@ -9,6 +9,7 @@ import {
 import { checkStreak } from '../utils/gamification';
 import { api } from '../utils/api';
 import BreathingModal from '../components/BreathingModal';
+import { useToast } from '../components/ui/ToastProvider';
 
 // static data constants
 const moods = [
@@ -67,6 +68,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
   const [isPlayingRain, setIsPlayingRain] = useState(false);
   const [gratitudeText, setGratitudeText] = useState('');
   const [showBreathingModal, setShowBreathingModal] = useState(false);
+  const toast = useToast();
 
   const rainAudioRef = useRef(new Audio('/rain.mp3'));
 
@@ -97,11 +99,14 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         firebase_uid: userData.uid,
         mood: displayMood,
         note: gratitudeText,
-        intensity: 5 
+        intensity: 5
       });
       setGratitudeText('');
+      toast.success("Jurnal rasa syukur berhasil disimpan! ✨");
+      checkStreak(userData.uid).then(s => setStreak(s));
     } catch (error) {
       console.error("Failed to save gratitude:", error);
+      toast.error("Gagal menyimpan jurnal. Coba lagi ya.");
     }
   };
 

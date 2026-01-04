@@ -218,10 +218,10 @@ const ActionPlan = ({ userData, onNavigate }) => {
     );
 
     return (
-        <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white overflow-y-auto scrollbar-hide pb-24 relative">
+        <div className="w-full h-full bg-transparent dark:bg-slate-950 text-slate-800 dark:text-white flex flex-col relative overflow-hidden">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[300px] bg-indigo-500/10 dark:bg-indigo-900/20 blur-[100px] pointer-events-none"></div>
 
-            <div className="w-full h-full p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 relative z-10">
+            <div className="flex-1 w-full overflow-y-auto overflow-x-hidden scrollbar-hide pb-24 p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 relative z-10 max-w-full">
 
                 {/* header stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -258,21 +258,23 @@ const ActionPlan = ({ userData, onNavigate }) => {
                 </div>
 
                 {/* main content grid */}
-                <div className="grid lg:grid-cols-12 gap-8">
+                {/* main content grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-full">
 
                     {/* left column missions */}
-                    <div className="lg:col-span-8 space-y-6">
+                    <div className="lg:col-span-8 space-y-6 w-full min-w-0">
 
                         {/* progress bar */}
-                        <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[20px] p-6 backdrop-blur-sm shadow-sm dark:shadow-none">
-                            <div className="flex justify-between items-end mb-3">
-                                <div>
+                        <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[20px] p-6 backdrop-blur-sm shadow-sm dark:shadow-none w-full">
+                            <div className="flex flex-wrap justify-between items-end mb-3 gap-2">
+                                <div className="max-w-full">
                                     <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                        <Target className="w-5 h-5 text-indigo-500 dark:text-indigo-400" /> Progres Misi
+                                        <Target className="w-5 h-5 text-indigo-500 dark:text-indigo-400 shrink-0" />
+                                        <span>Progres Misi</span>
                                     </h3>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Selesaikan misi untuk meningkatkan skor kesehatanmu.</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 break-words">Selesaikan misi untuk meningkatkan skor kesehatanmu.</p>
                                 </div>
-                                <span className="text-2xl font-bold text-indigo-500 dark:text-indigo-400">{Math.round(progressPercent)}%</span>
+                                <span className="text-2xl font-bold text-indigo-500 dark:text-indigo-400 shrink-0">{Math.round(progressPercent)}%</span>
                             </div>
                             <div className="w-full h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                 <motion.div
@@ -315,20 +317,20 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.1 }}
                                             onClick={() => handleToggleTask(idx)}
-                                            className={`group relative p-5 rounded-2xl border transition-all cursor-pointer overflow-hidden shadow-sm ${isCompleted
+                                            className={`group relative p-5 rounded-2xl border transition-all cursor-pointer overflow-hidden shadow-sm w-full max-w-full ${isCompleted
                                                 ? 'bg-green-50 dark:bg-green-500/5 border-green-200 dark:border-green-500/30'
                                                 : 'bg-white/60 dark:bg-slate-900 border-white/60 dark:border-white/10 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800'
                                                 }`}
                                         >
-                                            <div className="flex items-start gap-4 relative z-10">
+                                            <div className="flex items-start gap-4 relative z-10 w-full">
                                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all mt-0.5 flex-shrink-0 ${isCompleted
                                                     ? 'bg-green-500 border-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
                                                     : 'border-slate-300 dark:border-slate-500 text-transparent group-hover:border-indigo-400'
                                                     }`}>
                                                     <CheckCircle2 className="w-4 h-4" />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <p className={`text-base font-medium transition-all leading-relaxed ${isCompleted ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-base font-medium transition-all leading-relaxed break-words ${isCompleted ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'
                                                         }`}>
                                                         {item}
                                                     </p>

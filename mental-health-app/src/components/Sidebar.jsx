@@ -255,7 +255,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
 
                     <div className="text-left">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="text-base font-black dark:text-white text-slate-800 leading-none">Analyze AI</p>
+                        <p className="text-base font-black dark:text-white text-slate-800 leading-none">Analisis AI</p>
                         <motion.div
                           animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
                           transition={{ duration: 2, repeat: Infinity }}
@@ -265,7 +265,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                         </motion.div>
                       </div>
                       <p className="text-xs dark:text-slate-400 text-slate-500 font-medium">
-                        Start AI Diagnosis Now
+                        Mulai Diagnosis Sekarang
                       </p>
                     </div>
                   </div>

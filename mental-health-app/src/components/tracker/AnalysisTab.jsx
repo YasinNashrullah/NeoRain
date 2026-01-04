@@ -10,6 +10,7 @@ import {
     Activity, TrendingUp, TrendingDown, FileText, Loader2, MessageCircle
 } from 'lucide-react';
 import { api } from '../../utils/api';
+import Skeleton from '../ui/Skeleton';
 
 const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
     const [allHistory, setAllHistory] = useState([]);
@@ -98,12 +99,82 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
         return days;
     };
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-white">
-            <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
-            <p className="text-slate-400 animate-pulse">Memuat data statistik...</p>
+    // Skeleton Loading Component
+    const AnalysisSkeleton = () => (
+        <div className="w-full min-h-full pb-20 fade-in">
+            <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
+                {/* 1. Score Cards Skeleton */}
+                <div className="order-3 lg:order-1 lg:col-span-3 flex flex-col gap-4 h-full">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="rounded-2xl border border-slate-200 dark:border-white/10 p-5 h-[120px] flex flex-col justify-between bg-white/50 dark:bg-slate-900/50">
+                            <div className="flex justify-between items-start">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-8 w-12" />
+                            </div>
+                            <Skeleton className="h-4 w-16 self-end" />
+                        </div>
+                    ))}
+                </div>
+
+                {/* 2. Radar Chart Skeleton */}
+                <div className="order-4 lg:order-2 lg:col-span-5 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 h-[350px]">
+                    <Skeleton className="h-4 w-32 mx-auto mb-8" />
+                    <Skeleton className="h-60 w-60 rounded-full mx-auto" />
+                </div>
+
+                {/* 3. Calendar Skeleton */}
+                <div className="order-1 lg:order-3 lg:col-span-4 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 h-full flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                        <Skeleton className="h-6 w-24" />
+                        <div className="flex gap-2">
+                            <Skeleton className="h-6 w-6 rounded" />
+                            <Skeleton className="h-6 w-6 rounded" />
+                        </div>
+                    </div>
+                    <Skeleton className="h-4 w-32 mx-auto" />
+                    <div className="grid grid-cols-7 gap-3 mt-2">
+                        {[...Array(35)].map((_, i) => (
+                            <Skeleton key={i} className="h-8 w-8 rounded-full" />
+                        ))}
+                    </div>
+                </div>
+
+                {/* 4. Trend Chart Skeleton */}
+                <div className="order-5 lg:order-4 lg:col-span-8 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 min-h-[350px]">
+                    <Skeleton className="h-6 w-48 mb-6" />
+                    <Skeleton className="h-[250px] w-full rounded-2xl" />
+                </div>
+
+                {/* 5. History List Skeleton */}
+                <div className="order-2 lg:order-5 lg:col-span-4 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[30px] p-4 min-h-[400px] flex flex-col gap-4">
+                    <Skeleton className="h-6 w-40 mx-auto mb-2" />
+                    {[1, 2, 3, 4].map((i) => (
+                        <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+                    ))}
+                </div>
+
+                {/* 6. AI Summary Skeleton */}
+                <div className="order-6 lg:order-6 lg:col-span-6 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 min-h-[200px] flex flex-col gap-4">
+                    <Skeleton className="h-6 w-40" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </div>
+                    <Skeleton className="h-8 w-40 mt-auto" />
+                </div>
+
+                {/* 7. Insight Skeleton */}
+                <div className="order-7 lg:order-7 lg:col-span-6 bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-[30px] p-6 min-h-[200px] flex flex-col gap-4">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-4 w-1/2 ml-auto" />
+                </div>
+            </div>
         </div>
     );
+
+    if (loading) return <AnalysisSkeleton />;
 
     if (!loading && allHistory.length === 0) return (
         <div className="w-full h-full flex flex-col items-center justify-center p-6 min-h-[400px]">
