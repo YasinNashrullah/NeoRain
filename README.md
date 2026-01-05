@@ -5,6 +5,7 @@
 ![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-11.0-FFCA28?logo=firebase&logoColor=black)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Image_CDN-3448C5?logo=cloudinary&logoColor=white)
 
 **NeoRain** adalah aplikasi pelacak kesehatan mental modern yang didukung oleh kecerdasan buatan (AI). Aplikasi ini dirancang untuk membantu pengguna memantau suasana hati, mendapatkan analisis mendalam, dan berinteraksi dengan asisten virtual yang empatik.
 
@@ -50,6 +51,7 @@ Aplikasi ini dibangun menggunakan teknologi web modern untuk performa dan pengal
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **Backend & Auth**: [Firebase](https://firebase.google.com/) (Auth, Firestore)
+- **Image Storage**: [Cloudinary](https://cloudinary.com/) (Profile Photos)
 - **AI Integration**: [Google Generative AI (Gemini)](https://ai.google.dev/)
 - **Charts**: [Recharts](https://recharts.org/)
 - **Icons**: [Lucide React](https://lucide.dev/)
@@ -71,7 +73,6 @@ Pastikan kamu sudah menginstall:
 
 ```bash
 git clone https://github.com/username/mental-health-app.git
-cd mental-health-app
 ```
 
 ### 2. Install Dependencies
@@ -87,7 +88,15 @@ Buat file `.env` di root folder project, lalu copy konfigurasi berikut:
 > **Note**: Kamu perlu API Key Firebase sendiri jika ingin menggunakan database pribadi.
 
 ```env
-VITE_FIREBASE_API_KEY=your_firebase_api_key_here
+# Google AI Studio (Gemini) - Untuk fitur Chatbot & Analisis Analisis
+VITE_GEMINI_API_KEY=your_gemini_api_key
+
+# Firebase Configuration - Untuk Autentikasi & Database
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+
+# Cloudinary - Untuk penyimpanan foto profil user
+VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 ```
 
 ### 4. Jalankan Project (Development)
@@ -103,19 +112,33 @@ Buka browser dan akses `http://localhost:5173`.
 ## 📂 Struktur Project
 
 ```
-mental-health-app/
+.
 ├── public/              # Aset statis (gambar, icon, dll)
 ├── src/
-│   ├── components/      # Komponen UI reusable (Button, Card, dll)
-│   │   ├── chat/        # Komponen khusus fitur Chat
-│   │   ├── tracker/     # Komponen khusus fitur Tracker
-│   │   └── ui/          # Komponen UI dasar
-│   ├── pages/           # Halaman utama (Tracker, Profile, Chat, dll)
-│   ├── utils/           # Fungsi helper dan konfigurasi API
-│   ├── App.jsx          # Root component & Routing
-│   └── main.jsx         # Entry point aplikasi
+│   ├── components/      # Komponen UI reusable
+│   │   ├── chat/        # Komponen Chat (Input, MessageList, dll)
+│   │   ├── tracker/     # Komponen Tracker (Daily, Weekly, Stats, Analysis)
+│   │   ├── ui/          # Komponen UI dasar (Skeleton, Toast)
+│   │   └── ...          # Komponen global (Navbar, Sidebar, dll)
+│   ├── pages/           # Halaman utama aplikasi
+│   │   ├── ActionPlan.jsx
+│   │   ├── Analyze.jsx
+│   │   ├── Chat.jsx
+│   │   ├── Home.jsx
+│   │   ├── Profile.jsx
+│   │   ├── Register.jsx
+│   │   ├── Statistics.jsx
+│   │   ├── Tracker.jsx
+│   │   └── ...
+│   ├── utils/           # Helper functions & API configs
+│   │   ├── achievements.js
+│   │   ├── api.js
+│   │   ├── config.js
+│   │   └── gamification.js
+│   ├── App.jsx          # Main Router
+│   └── main.jsx         # Entry point
 ├── .env                 # Environment variables
-└── package.json         # Konfigurasi project & dependencies
+└── package.json         # Dependencies
 ```
 
 ---
@@ -129,7 +152,3 @@ Tertarik untuk berkontribusi? Kami sangat terbuka!
 3. Commit perubahanmu (`git commit -m 'Menambahkan fitur keren'`).
 4. Push ke branch (`git push origin fitur-keren`).
 5. Buat Pull Request.
-
----
-
-Dibuat dengan ❤️ untuk Lomba Web Development.
