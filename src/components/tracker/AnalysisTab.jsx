@@ -11,28 +11,35 @@ import {
 } from 'lucide-react';
 import { api } from '../../utils/api';
 import Skeleton from '../ui/Skeleton';
+import PageTransition from '../PageTransition';
 
-const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
-    const [allHistory, setAllHistory] = useState([]);
-    const [selectedAssessment, setSelectedAssessment] = useState(null);
-    const [selectedDate, setSelectedDate] = useState(new Date());
-    const [loading, setLoading] = useState(true);
+const AnalysisTab = ({ userData, onChatRequest, onNavigate, assessmentHistory = [], loading = false }) => {
+    // Initialize state directly from props to avoid re-render flash
+    const [selectedAssessment, setSelectedAssessment] = useState(() =>
+        assessmentHistory.length > 0 ? assessmentHistory[0] : null
+    );
+    const [selectedDate, setSelectedDate] = useState(() =>
+        assessmentHistory.length > 0 ? new Date(assessmentHistory[0].created_at) : new Date()
+    );
 
-    // Data Load
+    // Track first render to disable initial internal animations
+    const [isFirstRender, setIsFirstRender] = useState(true);
+
     useEffect(() => {
-        const loadData = async () => {
-            if (userData?.uid) {
-                const history = await api.getAssessmentHistory(userData.uid);
-                setAllHistory(history);
-                if (history.length > 0) {
-                    setSelectedAssessment(history[0]);
-                    setSelectedDate(new Date(history[0].created_at));
-                }
-            }
-            setLoading(false);
-        };
-        loadData();
-    }, [userData]);
+        if (isFirstRender) {
+            // Allow animations after mount
+            const timer = setTimeout(() => setIsFirstRender(false), 500);
+            return () => clearTimeout(timer);
+        }
+    }, []);
+
+    // Sync if props change significantly (e.g. fresh data fetch override)
+    useEffect(() => {
+        if (assessmentHistory.length > 0 && !selectedAssessment) {
+            setSelectedAssessment(assessmentHistory[0]);
+            setSelectedDate(new Date(assessmentHistory[0].created_at));
+        }
+    }, [assessmentHistory]);
 
     // AI & Helpers
     const getAIReport = (data) => {
@@ -52,7 +59,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
         return { label: 'Sangat Parah', color: 'text-red-700 dark:text-red-500', bg: 'bg-red-200 dark:bg-red-500/20', border: 'border-red-300 dark:border-red-500/50' };
     };
 
-    const logsOnSelectedDate = allHistory.filter(log =>
+    const logsOnSelectedDate = assessmentHistory.filter(log =>
         new Date(log.created_at).toDateString() === selectedDate.toDateString()
     );
 
@@ -78,7 +85,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
             const thisDate = new Date(year, month, day);
             thisDate.setHours(0, 0, 0, 0);
 
-            const hasLog = allHistory.some(log => new Date(log.created_at).setHours(0, 0, 0, 0) === thisDate.getTime());
+            const hasLog = assessmentHistory.some(log => new Date(log.created_at).setHours(0, 0, 0, 0) === thisDate.getTime());
             const isSelected = thisDate.getTime() === new Date(selectedDate).setHours(0, 0, 0, 0);
 
             let bgClass = "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5";
@@ -176,7 +183,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
 
     if (loading) return <AnalysisSkeleton />;
 
-    if (!loading && allHistory.length === 0) return (
+    if (!loading && assessmentHistory.length === 0) return (
         <div className="w-full h-full flex flex-col items-center justify-center p-6 min-h-[400px]">
             <div className="max-w-md w-full bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-xl dark:shadow-2xl text-center relative overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>
@@ -203,13 +210,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
     );
 
     return (
-        <motion.div
-            key="analysis"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full min-h-full text-white"
-        >
+        <PageTransition className="w-full min-h-full text-white">
             <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
 
                 {/* 1. Score Cards (Desktop: #1, Row 1 Left) */}
@@ -218,10 +219,10 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                         {selectedAssessment && (
                             <motion.div
                                 key={selectedAssessment.id + "-scores"}
-                                initial={{ opacity: 0, x: -20 }}
+                                initial={isFirstRender ? false : { opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                transition={{ duration: 0.4 }}
+                                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                                 className="flex flex-col gap-4 h-full"
                             >
                                 {[
@@ -258,10 +259,10 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                             {selectedAssessment && (
                                 <motion.div
                                     key={selectedAssessment.id + "-chart"}
-                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    initial={isFirstRender ? false : { opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.5 }}
+                                    transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                                     className="w-full h-[300px]"
                                 >
                                     <ResponsiveContainer width="100%" height={300} minWidth={0}>
@@ -319,7 +320,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
 
                     <div className="w-full h-[250px] relative z-10">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={[...allHistory].reverse().slice(-7)}>
+                            <LineChart data={[...assessmentHistory].reverse().slice(-7)}>
                                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} />
                                 <XAxis
                                     dataKey="created_at"
@@ -364,6 +365,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                                         className="relative w-[95%] p-2 rounded-2xl group outline-none"
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.3, delay: 0.05, ease: "easeOut" }}
                                         whileHover={{ x: 4 }}
                                         whileTap={{ scale: 0.98 }}
                                     >
@@ -441,8 +443,8 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                     </h3>
 
                     {(() => {
-                        const currentIndex = allHistory.findIndex(h => h.id === selectedAssessment?.id);
-                        const prevAssessment = allHistory[currentIndex + 1];
+                        const currentIndex = assessmentHistory.findIndex(h => h.id === selectedAssessment?.id);
+                        const prevAssessment = assessmentHistory[currentIndex + 1];
 
                         if (!prevAssessment || !selectedAssessment) {
                             return <p className="text-slate-500 text-sm">Ini adalah analisis pertamamu. Lakukan lebih banyak tes untuk melihat perbandingan!</p>;
@@ -473,7 +475,7 @@ const AnalysisTab = ({ userData, onChatRequest, onNavigate }) => {
                 </div>
 
             </div>
-        </motion.div>
+        </PageTransition>
     );
 };
 

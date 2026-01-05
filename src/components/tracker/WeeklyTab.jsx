@@ -5,6 +5,7 @@ import {
     Trash2, Filter, Clock, Briefcase, BookOpen, Users,
     Moon, Utensils, Dumbbell, Coffee, Car
 } from 'lucide-react';
+import PageTransition from '../PageTransition';
 
 const WeeklyTab = ({
     currentDate,
@@ -33,14 +34,7 @@ const WeeklyTab = ({
     const displayDays = Object.entries(filteredLogs);
 
     return (
-        <motion.div
-            key="weekly"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            // items start ensures columns do not stretch vertically
-            className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-0 items-start mb-5"
-        >
+        <PageTransition className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-0 items-start mb-5">
             {/* left column calendar */}
             <div className="lg:col-span-7">
                 <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 lg:p-8 shadow-sm dark:shadow-xl relative overflow-hidden">
@@ -181,7 +175,7 @@ const WeeklyTab = ({
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </PageTransition>
     );
 };
 

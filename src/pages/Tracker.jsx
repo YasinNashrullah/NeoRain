@@ -24,6 +24,9 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   const [weeklyLogs, setWeeklyLogs] = useState([]);
   const [statsData, setStatsData] = useState(null);
   const [statsRange, setStatsRange] = useState('monthly');
+  // Analysis state lifted
+  const [analysisLogs, setAnalysisLogs] = useState([]);
+  const [isAnalysisLoading, setIsAnalysisLoading] = useState(true);
 
   // state calendar & filter
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -60,12 +63,29 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
         const filteredData = allData.filter(log => log.note !== "Mood Scanner Update");
         setHistoryLogs(filteredData);
         setWeeklyLogs(filteredData);
-        await fetchStats(userData.uid, statsRange, filteredData);
+
+        // Fetch stats and analysis in parallel
+        await Promise.all([
+          fetchStats(userData.uid, statsRange, filteredData),
+          fetchAnalysis(userData.uid)
+        ]);
+
       } catch (error) {
         console.error("Failed to load data", error);
       } finally {
         setLoading(false);
       }
+    }
+  };
+
+  const fetchAnalysis = async (uid) => {
+    try {
+      const history = await api.getAssessmentHistory(uid);
+      setAnalysisLogs(history);
+    } catch (e) {
+      console.error("Failed to parse analysis", e);
+    } finally {
+      setIsAnalysisLoading(false);
     }
   };
 
@@ -443,6 +463,8 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
                   userData={userData}
                   onChatRequest={onChatRequest}
                   onNavigate={onNavigate}
+                  assessmentHistory={analysisLogs}
+                  loading={isAnalysisLoading}
                 />
               )}
 

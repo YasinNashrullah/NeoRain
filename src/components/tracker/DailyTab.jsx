@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Edit3, Clock } from 'lucide-react';
+import PageTransition from '../PageTransition';
 
 const DailyTab = ({
     moods,
@@ -25,13 +26,7 @@ const DailyTab = ({
         }
     };
     return (
-        <motion.div
-            key="daily"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-5"
-        >
+        <PageTransition className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-5">
             {/* Input Card */}
             <div className="lg:col-span-7 space-y-8 h-fit">
                 <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-2xl relative overflow-hidden flex flex-col justify-center">
@@ -187,7 +182,7 @@ const DailyTab = ({
                     )}
                 </div>
             </div>
-        </motion.div >
+        </PageTransition >
     );
 };
 
