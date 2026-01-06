@@ -72,7 +72,7 @@ Pastikan kamu sudah menginstall:
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/username/mental-health-app.git
+git clone https://github.com/YasinNashrullah/NeoRain.git
 ```
 
 ### 2. Install Dependencies
