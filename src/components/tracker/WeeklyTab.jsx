@@ -16,7 +16,8 @@ const WeeklyTab = ({
     filteredWeeklyLogs,
     groupLogsByDate,
     getMoodConfig,
-    formatTime
+    formatTime,
+    skipEnterAnimation
 }) => {
 
     const activities = [
