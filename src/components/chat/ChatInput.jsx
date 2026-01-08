@@ -1,5 +1,5 @@
-import React from 'react';
-import { Send, Mic } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Send } from 'lucide-react';
 
 const ChatInput = ({ input, setInput, handleSend, isTyping, userName, currentStyle }) => {
     return (
@@ -25,19 +25,24 @@ const ChatInput = ({ input, setInput, handleSend, isTyping, userName, currentSty
                         className="flex-1 bg-transparent text-slate-800 dark:text-white text-sm px-3 py-1 focus:outline-none resize-none max-h-[100px] scrollbar-hide placeholder:text-slate-400"
                         style={{ height: 'auto' }}
                     />
-                    <Mic className="w-5 h-5 text-slate-400 hover:text-indigo-500 transition-colors mx-2 mb-1 cursor-pointer" />
                 </div>
-                <button
+                <motion.button
                     onClick={handleSend}
                     disabled={!input.trim() || isTyping}
                     className={`p-3 rounded-full shadow-md ${input.trim()
-                        ? `${currentStyle.primary} text-white hover:scale-110 active:scale-95`
+                        ? `text-white hover:scale-110 active:scale-95`
                         : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600'
                         }`}
-                    style={{ transition: 'background-color 1500ms ease-in-out, transform 300ms ease-in-out, opacity 300ms' }}
+                    animate={{
+                        background: input.trim() ? currentStyle.primaryGradient : undefined,
+                        backgroundColor: !input.trim() ? (currentStyle.theme === 'dark' ? '#1e293b' : '#e2e8f0') : undefined
+                    }}
+                    transition={{ duration: 1.5 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                 >
                     <Send className="w-5 h-5" />
-                </button>
+                </motion.button>
             </div>
         </div>
     );

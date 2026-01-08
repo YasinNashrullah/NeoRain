@@ -1,5 +1,6 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadMore, hasMore, isLoadingMore }) => {
     const containerRef = useRef(null);
@@ -37,18 +38,25 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
 
                 {/* Typing Indicator (Always at bottom if active) */}
                 {isTyping && (
-                    <div className="flex justify-start">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className="flex justify-start"
+                    >
                         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1 items-center shadow-sm">
                             <Loader2 className="w-4 h-4 text-indigo-500 dark:text-indigo-400 animate-spin" />
                             <span className="text-xs text-slate-500 dark:text-slate-400">Mengetik...</span>
                         </div>
-                    </div>
+                    </motion.div>
                 )}
 
                 {/* Messages */}
                 {reversedMessages.map((msg) => (
-                    <div
+                    <motion.div
                         key={msg.id}
+                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
                         className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                         {msg.sender === 'system' ? (
@@ -59,17 +67,25 @@ const MessageList = ({ messages, currentStyle, isTyping, messagesEndRef, onLoadM
                                 </span>
                             </div>
                         ) : (
-                            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap break-words transition-colors duration-[1500ms] ${msg.sender === 'user'
-                                ? `${currentStyle.primary} text-white rounded-tr-sm text-left`
-                                : 'bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm text-slate-800 dark:text-slate-200 rounded-tl-sm border border-white/50 dark:border-white/5 shadow-sm text-left'
-                                }`}>
+                            <motion.div
+                                className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm whitespace-pre-wrap break-words transition-colors duration-[1500ms] ${msg.sender === 'user'
+                                    ? `text-white rounded-tr-sm text-left`
+                                    : 'bg-white/80 dark:bg-slate-800/90 backdrop-blur-sm text-slate-800 dark:text-slate-200 rounded-tl-sm border border-white/50 dark:border-white/5 shadow-sm text-left'
+                                    }`}
+                                animate={{
+                                    background: msg.sender === 'user'
+                                        ? currentStyle.primaryGradient
+                                        : undefined
+                                }}
+                                transition={{ duration: 1.5 }}
+                            >
                                 {typeof msg.text === 'string' ? msg.text.replace(/\\n/g, '\n') : msg.text}
                                 <div className={`text-[10px] mt-1 text-right ${msg.sender === 'user' ? 'text-white/70' : 'text-slate-400'}`}>
                                     {msg.time}
                                 </div>
-                            </div>
+                            </motion.div>
                         )}
-                    </div>
+                    </motion.div>
                 ))}
 
                 {/* Top Spacer */}
