@@ -610,15 +610,14 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         animate={isDeleting ? {
           scale: 0.9,
           opacity: 0,
-          filter: 'blur(10px)',
           y: -50
         } : {
           scale: 1,
           opacity: 1,
-          filter: 'blur(0px)',
           y: 0
         }}
         transition={{ duration: 0.8, ease: "easeInOut" }}
+        style={{ willChange: 'transform, opacity' }}
       >
         <MessageList
           messages={messages}
