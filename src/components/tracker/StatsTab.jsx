@@ -12,10 +12,11 @@ const StatsTab = ({
     setStatsRange,
     statsData,
     onNavigate,
-    getMoodConfig
+    getMoodConfig,
+    skipEnterAnimation
 }) => {
     return (
-        <PageTransition className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:pb-0 pb-0">
+        <PageTransition skipEnterAnimation={skipEnterAnimation} className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:pb-0 pb-0">
             {/* top row controls wellness chat */}
             <div className="lg:col-span-4 bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-6 flex flex-col items-center justify-center text-center shadow-sm dark:shadow-none">
                 <div className="w-full">

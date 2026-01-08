@@ -24,11 +24,11 @@ const variants = {
     }
 };
 
-const PageTransition = ({ children, className = "" }) => {
+const PageTransition = ({ children, className = "", skipEnterAnimation = false }) => {
     return (
         <motion.div
             variants={variants}
-            initial="initial"
+            initial={skipEnterAnimation ? "enter" : "initial"}
             animate="enter"
             exit="exit"
             className={`w-full h-full ${className}`}

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Smile, Wind, Zap, Frown, CloudRain, Heart,
-  Briefcase, BookOpen, Users, Moon, Utensils, Dumbbell, Coffee, Car
+  Briefcase, BookOpen, Users, Moon, Utensils, Dumbbell, Coffee, Car, Loader2
 } from 'lucide-react';
+
 import { api } from '../utils/api';
 import DailyTab from '../components/tracker/DailyTab';
 import WeeklyTab from '../components/tracker/WeeklyTab';
@@ -31,6 +32,9 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   // state calendar & filter
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dateRange, setDateRange] = useState({ start: null, end: null });
+
+  // Animation control to prevent white blink on initial load
+  const [shouldAnimateTabs, setShouldAnimateTabs] = useState(false);
 
   // config mood
   const moods = [
@@ -74,6 +78,8 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
         console.error("Failed to load data", error);
       } finally {
         setLoading(false);
+        // Enable animations shortly after loading finishes
+        setTimeout(() => setShouldAnimateTabs(true), 100);
       }
     }
   };
@@ -399,77 +405,97 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
 
       {/* Container */}
       <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-32 md:pb-6 scrollbar-hide relative z-10">
-        <div className="w-full h-full mx-auto min-h-full">
+        <div className="w-full h-full mx-auto min-h-full relative">
 
-          {loading ? (
-            <div className="animate-pulse space-y-8">
-              <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-[30px] w-full"></div>
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-7 h-96 bg-slate-200 dark:bg-slate-800 rounded-[30px]"></div>
-                <div className="lg:col-span-5 h-96 bg-slate-200 dark:bg-slate-800 rounded-[30px]"></div>
-              </div>
-            </div>
-          ) : (
-            <AnimatePresence mode='wait'>
+          <AnimatePresence mode='wait'>
+            {loading && activeTab !== 'daily' ? (
+              <motion.div
+                key="loader"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center justify-center h-[60vh] w-full"
+              >
+                <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="content"
+                className="w-full"
+              >
+                <AnimatePresence mode='wait'>
 
-              {/* Daily */}
-              {activeTab === 'daily' && (
-                <DailyTab
-                  moods={moods.filter(m => m.id !== 'grateful')}
-                  selectedMood={selectedMood}
-                  setSelectedMood={setSelectedMood}
-                  note={note}
-                  setNote={setNote}
-                  selectedTags={selectedTags}
-                  setSelectedTags={setSelectedTags}
-                  activities={activities}
-                  isSaving={isSaving}
-                  handleSaveMood={handleSaveMood}
-                  todayLogs={todayLogs}
-                  getMoodConfig={getMoodConfig}
-                  formatTime={formatTime}
-                />
-              )}
+                  {/* Daily */}
+                  {activeTab === 'daily' && (
+                    <DailyTab
+                      isLoading={loading}
+                      skipEnterAnimation={!shouldAnimateTabs}
+                      moods={moods.filter(m => m.id !== 'grateful')}
+                      selectedMood={selectedMood}
+                      setSelectedMood={setSelectedMood}
+                      note={note}
+                      setNote={setNote}
+                      selectedTags={selectedTags}
+                      setSelectedTags={setSelectedTags}
+                      activities={activities}
+                      isSaving={isSaving}
+                      handleSaveMood={handleSaveMood}
+                      todayLogs={historyLogs.filter(log => {
+                        const logDate = new Date(log.created_at);
+                        const today = new Date();
+                        return logDate.getDate() === today.getDate() &&
+                          logDate.getMonth() === today.getMonth() &&
+                          logDate.getFullYear() === today.getFullYear();
+                      })}
+                      getMoodConfig={getMoodConfig}
+                      formatTime={formatTime}
+                    />
+                  )}
 
-              {/* Weekly & calendar */}
-              {activeTab === 'weekly' && (
-                <WeeklyTab
-                  currentDate={currentDate}
-                  changeMonth={changeMonth}
-                  renderCalendar={renderCalendar}
-                  dateRange={dateRange}
-                  setDateRange={setDateRange}
-                  filteredWeeklyLogs={filteredWeeklyLogs}
-                  groupLogsByDate={groupLogsByDate}
-                  getMoodConfig={getMoodConfig}
-                  formatTime={formatTime}
-                />
-              )}
+                  {/* Weekly & calendar */}
+                  {activeTab === 'weekly' && (
+                    <WeeklyTab
+                      skipEnterAnimation={!shouldAnimateTabs}
+                      currentDate={currentDate}
+                      changeMonth={changeMonth}
+                      renderCalendar={renderCalendar}
+                      dateRange={dateRange}
+                      setDateRange={setDateRange}
+                      filteredWeeklyLogs={weeklyLogs}
+                      groupLogsByDate={groupLogsByDate}
+                      getMoodConfig={getMoodConfig}
+                      formatTime={formatTime}
+                    />
+                  )}
 
-              {/* Statistic chart */}
-              {activeTab === 'stats' && (
-                <StatsTab
-                  statsRange={statsRange}
-                  setStatsRange={setStatsRange}
-                  statsData={statsData}
-                  onNavigate={onNavigate}
-                  getMoodConfig={getMoodConfig}
-                />
-              )}
+                  {/* Statistic chart */}
+                  {activeTab === 'stats' && (
+                    <StatsTab
+                      skipEnterAnimation={!shouldAnimateTabs}
+                      statsRange={statsRange}
+                      setStatsRange={setStatsRange}
+                      statsData={statsData}
+                      onNavigate={onNavigate}
+                      getMoodConfig={getMoodConfig}
+                    />
+                  )}
 
-              {/* Analysis Tab */}
-              {activeTab === 'analysis' && (
-                <AnalysisTab
-                  userData={userData}
-                  onChatRequest={onChatRequest}
-                  onNavigate={onNavigate}
-                  assessmentHistory={analysisLogs}
-                  loading={isAnalysisLoading}
-                />
-              )}
+                  {/* Analysis Tab */}
+                  {activeTab === 'analysis' && (
+                    <AnalysisTab
+                      skipEnterAnimation={!shouldAnimateTabs}
+                      userData={userData}
+                      onChatRequest={onChatRequest}
+                      onNavigate={onNavigate}
+                      assessmentHistory={analysisLogs}
+                      loading={isAnalysisLoading}
+                    />
+                  )}
 
-            </AnimatePresence>
-          )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

@@ -34,7 +34,7 @@ const WeeklyTab = ({
     const displayDays = Object.entries(filteredLogs);
 
     return (
-        <PageTransition className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-0 items-start mb-5">
+        <PageTransition skipEnterAnimation={skipEnterAnimation} className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:pb-0 pb-0 items-start mb-5">
             {/* left column calendar */}
             <div className="lg:col-span-7">
                 <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 lg:p-8 shadow-sm dark:shadow-xl relative overflow-hidden">

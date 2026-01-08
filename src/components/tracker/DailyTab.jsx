@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Edit3, Clock } from 'lucide-react';
 import PageTransition from '../PageTransition';
 
@@ -16,7 +16,9 @@ const DailyTab = ({
     formatTime,
     selectedTags,
     setSelectedTags,
-    activities
+    activities,
+    skipEnterAnimation,
+    isLoading
 }) => {
     const toggleTag = (tagId) => {
         if (selectedTags.includes(tagId)) {
@@ -26,7 +28,7 @@ const DailyTab = ({
         }
     };
     return (
-        <PageTransition className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-5">
+        <PageTransition skipEnterAnimation={skipEnterAnimation} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-5">
             {/* Input Card */}
             <div className="lg:col-span-7 space-y-8 h-fit">
                 <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-8 shadow-sm dark:shadow-2xl relative overflow-hidden flex flex-col justify-center">
@@ -127,59 +129,104 @@ const DailyTab = ({
                         Mood Hari Ini <span className="bg-slate-100 dark:bg-white/10 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300">{todayLogs.length}</span>
                     </h3>
 
-                    {todayLogs.length === 0 ? (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60">
-                            <Clock className="w-12 h-12 mb-3" />
-                            <p>Belum ada mood yang tercatat.</p>
-                        </div>
-                    ) : (
-                        <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                            {todayLogs.map((log) => {
-                                const config = getMoodConfig(log.mood);
-                                return (
-                                    <div key={log.id} className="relative group">
-                                        {/* Content */}
-                                        <div className={`p-3 m-1 rounded-3xl border ${config.border} ${config.bg} relative overflow-hidden transition-all hover:scale-[1.02] shadow-sm`}>
-                                            <div className="flex items-start gap-4 relative z-10">
-                                                <div className="w-10 h-10 rounded-2xl bg-white/40 dark:bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                                                    <config.icon className="w-5 h-5 text-slate-700 dark:text-white" />
+                    <AnimatePresence mode="wait">
+                        {isLoading ? (
+                            <motion.div
+                                key="skeleton"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent"
+                            >
+                                {[1, 2, 3].map((i) => (
+                                    <motion.div
+                                        key={`skeleton-${i}`}
+                                        animate={{ opacity: [0.4, 1, 0.4] }}
+                                        transition={{
+                                            opacity: {
+                                                repeat: Infinity,
+                                                duration: 1.5,
+                                                ease: "easeInOut"
+                                            }
+                                        }}
+                                        className="p-3 m-1 rounded-3xl border border-slate-200 dark:border-white/5 bg-white/50 dark:bg-white/5 relative overflow-hidden"
+                                    >
+                                        <div className="flex items-start gap-4 relative z-10">
+                                            <div className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-white/10" />
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="h-4 w-24 bg-slate-200 dark:bg-white/10 rounded-lg" />
+                                                    <div className="h-4 w-12 bg-slate-200 dark:bg-white/10 rounded-lg" />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <div className="flex justify-between items-start mb-1">
-                                                        <span className="text-sm font-bold text-slate-800 dark:text-white capitalize">{config.label}</span>
-                                                        <span className="text-[10px] bg-white/50 dark:bg-black/20 px-2 py-1 rounded-lg text-slate-600 dark:text-white/70 font-mono">
-                                                            {formatTime(log.created_at)}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Tags if any */}
-                                                    {log.activities && log.activities.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1 mb-2">
-                                                            {log.activities.map(tagId => {
-                                                                const act = activities.find(a => a.id === tagId);
-                                                                if (!act) return null;
-                                                                return (
-                                                                    <span key={tagId} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-white/40 dark:bg-black/20 text-slate-700 dark:text-white/80">
-                                                                        <act.icon className="w-3 h-3" /> {act.label}
-                                                                    </span>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                    )}
-
-                                                    {log.note && (
-                                                        <p className="text-xs text-slate-600 dark:text-white/90 italic bg-white/30 dark:bg-black/10 p-2 rounded-xl">
-                                                            "{log.note}"
-                                                        </p>
-                                                    )}
-                                                </div>
+                                                <div className="h-3 w-16 bg-slate-200 dark:bg-white/10 rounded-lg" />
                                             </div>
                                         </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="content"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent"
+                            >
+                                {todayLogs.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 opacity-60">
+                                        <Clock className="w-12 h-12 mb-3" />
+                                        <p>Belum ada mood yang tercatat.</p>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                ) : (
+                                    todayLogs.map((log) => {
+                                        const config = getMoodConfig(log.mood);
+                                        return (
+                                            <div key={log.id} className="relative group">
+                                                {/* Content */}
+                                                <div className={`p-3 m-1 rounded-3xl border ${config.border} ${config.bg} relative overflow-hidden transition-all hover:scale-[1.02] shadow-sm`}>
+                                                    <div className="flex items-start gap-4 relative z-10">
+                                                        <div className="w-10 h-10 rounded-2xl bg-white/40 dark:bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                                                            <config.icon className="w-5 h-5 text-slate-700 dark:text-white" />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex justify-between items-start mb-1">
+                                                                <span className="text-sm font-bold text-slate-800 dark:text-white capitalize">{config.label}</span>
+                                                                <span className="text-[10px] bg-white/50 dark:bg-black/20 px-2 py-1 rounded-lg text-slate-600 dark:text-white/70 font-mono">
+                                                                    {formatTime(log.created_at)}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Tags if any */}
+                                                            {log.activities && log.activities.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1 mb-2">
+                                                                    {log.activities.map(tagId => {
+                                                                        const act = activities.find(a => a.id === tagId);
+                                                                        if (!act) return null;
+                                                                        return (
+                                                                            <span key={tagId} className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-md bg-white/40 dark:bg-black/20 text-slate-700 dark:text-white/80">
+                                                                                <act.icon className="w-3 h-3" /> {act.label}
+                                                                            </span>
+                                                                        )
+                                                                    })}
+                                                                </div>
+                                                            )}
+
+                                                            {log.note && (
+                                                                <p className="text-xs text-slate-600 dark:text-white/90 italic bg-white/30 dark:bg-black/10 p-2 rounded-xl">
+                                                                    "{log.note}"
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </PageTransition >
