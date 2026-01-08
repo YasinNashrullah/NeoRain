@@ -4,9 +4,9 @@ import {
   User, Lock, HelpCircle, LogOut, Camera, ChevronRight,
   MapPin, Calendar, Mail, Flame, Award, Phone, MessageSquare,
   HeartHandshake, Save, X, Star, ShieldCheck, Sun, Moon, Smartphone, Clock,
-  Trophy, Target
+  Trophy, Target, Eye, EyeOff
 } from 'lucide-react';
-import { updateProfile, updatePassword, deleteUser } from "firebase/auth";
+import { updateProfile, updatePassword, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { auth } from '../firebase';
 import { api } from '../utils/api';
 
@@ -32,7 +32,8 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
   });
 
   // state security
-  const [passData, setPassData] = useState({ newPass: '', confirmPass: '' });
+  const [passData, setPassData] = useState({ oldPass: '', newPass: '', confirmPass: '' });
+  const [showPass, setShowPass] = useState({ old: false, new: false, confirm: false });
 
   useEffect(() => {
     if (userData) {
@@ -151,14 +152,35 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
 
   // change password firebase
   const handleChangePassword = async () => {
+    if (!passData.oldPass) return toast.error("Masukkan password lama Anda.");
     if (passData.newPass.length < 6) return toast.error("Password minimal 6 karakter!");
     if (passData.newPass !== passData.confirmPass) return toast.error("Password konfirmasi tidak cocok!");
 
     try {
-      await updatePassword(auth.currentUser, passData.newPass);
-      toast.success("Password berhasil diubah. Silakan login ulang.");
-      onLogout();
-    } catch (e) { toast.error("Gagal: " + e.message); }
+      const user = auth.currentUser;
+      const credential = EmailAuthProvider.credential(user.email, passData.oldPass);
+
+      // Re-authenticate user first
+      await reauthenticateWithCredential(user, credential);
+
+      // If successful, update password
+      await updatePassword(user, passData.newPass);
+      toast.success("Password berhasil diperbarui!");
+
+      // Clear form
+      setPassData({ oldPass: '', newPass: '', confirmPass: '' });
+      setActiveView('main');
+
+    } catch (e) {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        toast.error("Password lama salah.");
+      } else if (e.code === 'auth/too-many-requests') {
+        toast.error("Terlalu banyak percobaan. Coba lagi nanti.");
+      } else {
+        console.error(e);
+        toast.error("Gagal: " + e.message);
+      }
+    }
   };
 
   // delete account
@@ -635,19 +657,58 @@ const Profile = ({ userData, onLogout, onUpdateProfile, theme, setTheme }) => {
           </h3>
           <div className="space-y-4">
             <div>
-              <input
-                type="password"
-                placeholder="Password Baru (Min. 6 Karakter)"
-                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-indigo-500 outline-none shadow-sm"
-                onChange={(e) => setPassData({ ...passData, newPass: e.target.value })}
-              />
+              <div className="relative mb-4">
+                <input
+                  type={showPass.old ? "text" : "password"}
+                  value={passData.oldPass}
+                  placeholder="Password Lama"
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-indigo-500 outline-none shadow-sm pr-12"
+                  onChange={(e) => setPassData({ ...passData, oldPass: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass({ ...showPass, old: !showPass.old })}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  {showPass.old ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type={showPass.new ? "text" : "password"}
+                  value={passData.newPass}
+                  placeholder="Password Baru (Min. 6 Karakter)"
+                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-indigo-500 outline-none shadow-sm pr-12"
+                  onChange={(e) => setPassData({ ...passData, newPass: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass({ ...showPass, new: !showPass.new })}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  {showPass.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
-            <input
-              type="password"
-              placeholder="Konfirmasi Password Baru"
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-indigo-500 outline-none shadow-sm"
-              onChange={(e) => setPassData({ ...passData, confirmPass: e.target.value })}
-            />
+
+            <div className="relative">
+              <input
+                type={showPass.confirm ? "text" : "password"}
+                value={passData.confirmPass}
+                placeholder="Konfirmasi Password Baru"
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-800 dark:text-white focus:border-indigo-500 outline-none shadow-sm pr-12"
+                onChange={(e) => setPassData({ ...passData, confirmPass: e.target.value })}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass({ ...showPass, confirm: !showPass.confirm })}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                {showPass.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
             <button onClick={handleChangePassword} className="w-full bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 font-bold py-3 rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-600/30 transition-colors">
               Update Password
             </button>

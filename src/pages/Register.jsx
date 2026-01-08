@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Mail, Lock, ArrowRight, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from '../firebase';
 import logo from '../assets/neorain-logo-svg.svg';
@@ -9,6 +9,7 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -27,7 +28,6 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
         uid: user.uid,
         name: user.displayName,
         email: user.email
-        // role removed to trigger onboarding
       });
 
     } catch (err) {
@@ -45,124 +45,127 @@ const Register = ({ onRegisterSuccess, onSwitchToLogin }) => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[linear-gradient(0deg,#EEF1FF_0%,#D2DAFF_29%,#AAC4FF_66%,#B1B2FF_100%)] dark:bg-none dark:bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen w-full bg-slate-50 dark:bg-[#0B0F1A] flex items-center justify-center p-4 font-sans antialiased">
 
-      {/* page background global */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(219,39,119,0.15)_0%,_transparent_70%)] pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(circle,_rgba(79,70,229,0.15)_0%,_transparent_70%)] pointer-events-none"></div>
+      {/* Background Decorative */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl"></div>
+      </div>
 
-      {/* centered registration card container */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-5xl bg-white/40 dark:bg-slate-900/60 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10"
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        className="relative w-full max-w-md"
       >
-
-        {/* left side visual */}
-        <div className="hidden md:flex w-1/2 bg-pink-50/20 dark:bg-slate-900/50 relative items-center justify-center p-12 border-r border-white/20 dark:border-white/5 overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(236,72,153,0.1)_0%,_transparent_70%)]"></div>
-
-          <div className="relative z-10 text-center">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div className="w-20 h-20 bg-gradient-to-tr from-pink-500 to-rose-500 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-lg shadow-pink-500/20 overflow-hidden">
-                <img
-                  src={logo}
-                  alt="NeoRain Logo"
-                  className="w-20 h-20 object-contain brightness-0 invert drop-shadow-md"
-                />
-              </div>
-              <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-3 tracking-tight">Bergabunglah</h1>
-              <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed max-w-xs mx-auto">
-                Langkah pertama menuju kedamaian pikiran dimulai dari sini.
-              </p>
-            </motion.div>
-          </div>
+        {/* Logo Section */}
+        <div className="text-center mb-10">
+          <motion.div
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            className="inline-block p-0.5 rounded-full bg-gradient-to-tr from-purple-500 to-pink-600 shadow-lg mb-4"
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-transparent overflow-hidden">
+              <img src={logo} alt="NeoRain" className="w-full h-full object-contain brightness-0 invert drop-shadow-sm scale-75" />
+            </div>
+          </motion.div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Bergabunglah</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm font-medium">Mulai perjalanan kesehatan mentalmu hari ini.</p>
         </div>
 
-        {/* right side form */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 bg-white/30 dark:bg-slate-950/40">
-          <div className="max-w-sm mx-auto">
-            <div className="text-center md:text-left mb-10">
-              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Buat Akun Baru</h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">Isi data diri untuk mendaftar sebagai mahasiswa.</p>
-            </div>
+        {/* Form Card */}
+        <div className="bg-white dark:bg-slate-900/50 dark:backdrop-blur-xl border border-slate-200/60 dark:border-white/5 rounded-[2rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none">
 
+          <AnimatePresence mode='wait'>
             {error && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="bg-red-500/10 border border-red-500/50 text-red-600 dark:text-red-400 p-3 rounded-xl mb-6 text-xs flex items-center gap-2"
+                exit={{ opacity: 0, height: 0 }}
+                className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2"
               >
-                <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+                <AlertCircle className="w-4 h-4" /> {error}
               </motion.div>
             )}
+          </AnimatePresence>
 
-            <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-5">
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">Nama Lengkap</label>
-                <div className="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all group">
-                  <User className="w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-pink-500 dark:group-focus-within:text-pink-400 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Nama Kamu"
-                    className="bg-transparent w-full text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none text-sm"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 block text-left">Nama Lengkap</label>
+              <div className="relative transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-500/20 rounded-xl">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Nama Kamu"
+                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-all text-sm"
+                  required
+                />
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">Email</label>
-                <div className="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all group">
-                  <Mail className="w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-pink-500 dark:group-focus-within:text-pink-400 transition-colors" />
-                  <input
-                    type="email"
-                    placeholder="nama@email.com"
-                    className="bg-transparent w-full text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none text-sm"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 block text-left">Email</label>
+              <div className="relative transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-500/20 rounded-xl">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nama@email.com"
+                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white pl-12 pr-4 py-3.5 rounded-xl outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-all text-sm"
+                  required
+                />
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">Password</label>
-                <div className="bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3 focus-within:border-pink-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all group">
-                  <Lock className="w-4 h-4 text-slate-400 dark:text-slate-500 group-focus-within:text-pink-500 dark:group-focus-within:text-pink-400 transition-colors" />
-                  <input
-                    type="password"
-                    placeholder="Min. 6 Karakter"
-                    className="bg-transparent w-full text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none text-sm"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1 block text-left">Password</label>
+              <div className="relative transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-500/20 rounded-xl">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Min. 6 Karakter"
+                  className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-slate-900 dark:text-white pl-12 pr-12 py-3.5 rounded-xl outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-all text-sm"
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-pink-500/20 transition-all active:scale-95 flex justify-center items-center gap-2 text-sm mt-4"
-              >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Daftar <ArrowRight className="w-4 h-4" /></>}
-              </button>
-            </form>
+            <motion.button
+              whileHover={{ y: -1 }}
+              whileTap={{ y: 0, scale: 0.98 }}
+              disabled={isLoading}
+              className="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white font-semibold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 mt-2"
+            >
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Daftar <ArrowRight className="w-4 h-4" /></>}
+            </motion.button>
+          </form>
 
-            <p className="text-center text-slate-500 dark:text-slate-400 text-xs mt-8">
-              Sudah punya akun? <button onClick={onSwitchToLogin} className="text-pink-600 dark:text-pink-400 font-bold hover:text-pink-500 dark:hover:text-pink-300 transition-colors">Masuk</button>
-            </p>
-          </div>
+          {/* Footer text */}
+          <p className="text-center text-slate-500 dark:text-slate-400 text-sm mt-8">
+            Sudah punya akun?{' '}
+            <button
+              onClick={onSwitchToLogin}
+              className="text-indigo-600 dark:text-indigo-400 font-bold hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+            >
+              Masuk
+            </button>
+          </p>
         </div>
 
       </motion.div>
