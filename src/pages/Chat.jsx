@@ -18,6 +18,7 @@ const moodColors = {
     bubble1: 'rgba(236, 72, 153, 0.15)',
     bubble2: 'rgba(244, 114, 182, 0.1)',
     primary: 'bg-gradient-to-br from-pink-600 to-rose-600 shadow-pink-500/30',
+    primaryGradient: 'linear-gradient(135deg, #db2777 0%, #e11d48 100%)',
     text: 'text-pink-700',
     bgGradient: 'radial-gradient(circle at center, #3f1a28 0%, #020617 100%)',
     bgGradientLight: 'linear-gradient(135deg, #fff0f7 0%, #ffeef2 100%)'
@@ -26,6 +27,7 @@ const moodColors = {
     bubble1: 'rgba(34, 211, 238, 0.15)',
     bubble2: 'rgba(6, 182, 212, 0.1)',
     primary: 'bg-gradient-to-br from-cyan-600 to-blue-600 shadow-cyan-500/30',
+    primaryGradient: 'linear-gradient(135deg, #0891b2 0%, #2563eb 100%)',
     text: 'text-cyan-700',
     bgGradient: 'radial-gradient(circle at center, #0e2a35 0%, #020617 100%)',
     bgGradientLight: 'linear-gradient(135deg, #f0faff 0%, #e6f6ff 100%)'
@@ -34,6 +36,7 @@ const moodColors = {
     bubble1: 'rgba(250, 204, 21, 0.15)',
     bubble2: 'rgba(234, 179, 8, 0.1)',
     primary: 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-500/30',
+    primaryGradient: 'linear-gradient(135deg, #eab308 0%, #ea580c 100%)',
     text: 'text-yellow-700',
     bgGradient: 'radial-gradient(circle at center, #2e2408 0%, #020617 100%)',
     bgGradientLight: 'linear-gradient(135deg, #fffff0 0%, #fffde7 100%)'
@@ -42,6 +45,7 @@ const moodColors = {
     bubble1: 'rgba(251, 146, 60, 0.15)',
     bubble2: 'rgba(249, 115, 22, 0.1)',
     primary: 'bg-gradient-to-br from-orange-600 to-red-600 shadow-orange-500/30',
+    primaryGradient: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)',
     text: 'text-orange-800',
     bgGradient: 'radial-gradient(circle at center, #331408 0%, #020617 100%)',
     bgGradientLight: 'linear-gradient(135deg, #fff8f0 0%, #ffefd6 100%)'
@@ -50,6 +54,7 @@ const moodColors = {
     bubble1: 'rgba(99, 102, 241, 0.15)',
     bubble2: 'rgba(79, 70, 229, 0.1)',
     primary: 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-500/30',
+    primaryGradient: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
     text: 'text-indigo-700',
     bgGradient: 'radial-gradient(circle at center, #141430 0%, #020617 100%)',
     bgGradientLight: 'linear-gradient(135deg, #f5f7ff 0%, #eef0ff 100%)'
@@ -58,6 +63,7 @@ const moodColors = {
     bubble1: 'rgba(99, 102, 241, 0.15)',
     bubble2: 'rgba(139, 92, 246, 0.1)',
     primary: 'bg-gradient-to-br from-indigo-600 to-blue-700 shadow-indigo-500/30',
+    primaryGradient: 'linear-gradient(135deg, #4f46e5 0%, #1d4ed8 100%)',
     text: 'text-indigo-700',
     bgGradient: 'radial-gradient(circle at center, #0f172a 0%, #020617 100%)',
     bgGradientLight: 'linear-gradient(135deg, #f8faff 0%, #f1f4f9 100%)'
@@ -535,28 +541,92 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
         <div className="chat-bubble chat-bubble-2" style={{ background: currentStyle.bubble2 }}></div>
       </div>
 
-      <ChatHeader
-        onBack={onBack}
-        currentStyle={currentStyle}
-        activeContext={activeContext}
-        handleContextChange={handleContextChange}
-        showHistoryMenu={showHistoryMenu}
-        setShowHistoryMenu={setShowHistoryMenu}
-        assessmentHistory={assessmentHistory}
-        onDeleteChat={handleDeleteAllChats}
-        isCameraActive={isCameraActive}
-        onToggleCamera={handleToggleCamera}
-        detectedEmotion={detectedEmotion}
-        showPreview={showPreview}
-        setShowPreview={setShowPreview}
-      />
+      {/* Main Content Wrapper */}
+      <div className="flex flex-col h-full w-full relative z-10">
+        <motion.div
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="flex-none z-30"
+        >
+          <ChatHeader
+            onBack={onBack}
+            currentStyle={currentStyle}
+            activeContext={activeContext}
+            handleContextChange={handleContextChange}
+            showHistoryMenu={showHistoryMenu}
+            setShowHistoryMenu={setShowHistoryMenu}
+            assessmentHistory={assessmentHistory}
+            onDeleteChat={handleDeleteAllChats}
+            isCameraActive={isCameraActive}
+            onToggleCamera={handleToggleCamera}
+            detectedEmotion={detectedEmotion}
+            showPreview={showPreview}
+            setShowPreview={setShowPreview}
+          />
+        </motion.div>
 
-      <EmotionDetector
-        isActive={isCameraActive}
-        onEmotionDetected={setDetectedEmotion}
-        onClose={() => setIsCameraActive(false)}
-        showPreview={showPreview}
-      />
+        <motion.div
+          className="flex-1 flex flex-col overflow-hidden relative"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+        >
+          <EmotionDetector
+            isActive={isCameraActive}
+            onEmotionDetected={setDetectedEmotion}
+            onClose={() => setIsCameraActive(false)}
+            showPreview={showPreview}
+          />
+
+          <motion.div
+            className="flex-1 overflow-hidden relative flex flex-col"
+            animate={isDeleting ? {
+              scale: 0.9,
+              opacity: 0,
+              y: -50
+            } : {
+              scale: 1,
+              opacity: 1,
+              y: 0
+            }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            style={{ willChange: 'transform, opacity' }}
+          >
+            <MessageList
+              messages={messages}
+              currentStyle={currentStyle}
+              isTyping={isTyping}
+              messagesEndRef={messagesEndRef}
+              onLoadMore={loadMoreMessages}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+            />
+          </motion.div>
+
+          <SuggestionChips
+            suggestions={suggestions}
+            loadingSuggestions={loadingSuggestions}
+            setInput={setInput}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="flex-none z-20"
+        >
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            handleSend={handleSend}
+            isTyping={isTyping}
+            userName={userName}
+            currentStyle={currentStyle}
+          />
+        </motion.div>
+      </div>
 
       {/* Camera Permission Modal */}
       <AnimatePresence>
@@ -604,48 +674,6 @@ Skor: Depresi ${activeContext.depression_score}, Cemas ${activeContext.anxiety_s
           </div>
         )}
       </AnimatePresence>
-
-      <motion.div
-        className="flex-1 overflow-hidden relative flex flex-col"
-        animate={isDeleting ? {
-          scale: 0.9,
-          opacity: 0,
-          y: -50
-        } : {
-          scale: 1,
-          opacity: 1,
-          y: 0
-        }}
-        transition={{ duration: 0.8, ease: "easeInOut" }}
-        style={{ willChange: 'transform, opacity' }}
-      >
-        <MessageList
-          messages={messages}
-          currentStyle={currentStyle}
-          isTyping={isTyping}
-          messagesEndRef={messagesEndRef}
-          onLoadMore={loadMoreMessages}
-          hasMore={hasMore}
-          isLoadingMore={isLoadingMore}
-        />
-      </motion.div>
-
-      <SuggestionChips
-        suggestions={suggestions}
-        loadingSuggestions={loadingSuggestions}
-        setInput={setInput}
-      />
-
-
-
-      <ChatInput
-        input={input}
-        setInput={setInput}
-        handleSend={handleSend}
-        isTyping={isTyping}
-        userName={userName}
-        currentStyle={currentStyle}
-      />
 
     </motion.div>
   );
