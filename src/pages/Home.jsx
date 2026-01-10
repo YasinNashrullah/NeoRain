@@ -103,7 +103,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
       });
       setGratitudeText('');
       toast.success("Jurnal rasa syukur berhasil disimpan! ✨");
-      checkStreak(userData.uid).then(s => setStreak(s));
+
     } catch (error) {
       console.error("Failed to save gratitude:", error);
       toast.error("Gagal menyimpan jurnal. Coba lagi ya.");
