@@ -461,7 +461,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
                       renderCalendar={renderCalendar}
                       dateRange={dateRange}
                       setDateRange={setDateRange}
-                      filteredWeeklyLogs={weeklyLogs}
+                      filteredWeeklyLogs={filteredWeeklyLogs}
                       groupLogsByDate={groupLogsByDate}
                       getMoodConfig={getMoodConfig}
                       formatTime={formatTime}

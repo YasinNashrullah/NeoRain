@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 transition-colors duration-500;
+  }
+  .dark body {
+    @apply bg-[#0B0F1A] text-white;
+  }
+}
+
 /* Reset Margin & Padding agar Full Screen */
 html,
 body,

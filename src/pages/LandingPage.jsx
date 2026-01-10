@@ -6,6 +6,32 @@ import {
 } from 'lucide-react';
 import logo from '../assets/neorain-logo-svg.svg';
 
+// Reusable Animated Logo Component matching Sidebar.jsx
+const AnimatedLogo = ({ className = "w-10 h-10", imgClassName = "w-[200%] h-[200%]" }) => (
+  <motion.div
+    className={`relative ${className} flex items-center justify-center transform-gpu`}
+    whileHover={{ scale: 1.1, rotate: 180 }}
+    transition={{ duration: 0.8, type: "spring" }}
+  >
+    <motion.div
+      className="absolute inset-0 rounded-3xl blur-lg opacity-70 animate-pulse"
+      animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
+      transition={{ duration: 1 }}
+    />
+    <motion.div
+      className="relative w-full h-full rounded-3xl flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden"
+      animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
+      transition={{ duration: 1 }}
+    >
+      <img
+        src={logo}
+        alt="NeoRain Logo"
+        className={`${imgClassName} object-contain brightness-0 invert drop-shadow-md`}
+      />
+    </motion.div>
+  </motion.div>
+);
+
 const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
   const [activeSection, setActiveSection] = useState('main');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -75,13 +101,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
 
           {/* logo */}
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => scrollToSection('main')}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-600 flex items-center justify-center shadow-lg overflow-hidden">
-              <img
-                src={logo}
-                alt="NeoRain Logo"
-                className="w-full h-full object-contain brightness-0 invert drop-shadow-sm"
-              />
-            </div>
+            <AnimatedLogo className="w-10 h-10" />
             <span className="text-xl font-bold tracking-tight text-slate-800 dark:text-white transition-colors">NeoRain</span>
           </div>
 
@@ -177,13 +197,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
 
                   {/* mock sidebar */}
                   <div className="hidden md:flex w-14 bg-white dark:bg-[#0a0a12] border-r border-slate-200 dark:border-white/5 flex-col items-center py-4 gap-3 transition-colors">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 via-pink-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-1 overflow-hidden">
-                      <img
-                        src={logo}
-                        alt="NeoRain Logo"
-                        className="w-full h-full object-contain brightness-0 invert drop-shadow-sm scale-75"
-                      />
-                    </div>
+                    <AnimatedLogo className="w-8 h-8" />
 
                     {/* analyze button */}
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-md opacity-90">
@@ -361,13 +375,7 @@ const LandingPage = ({ onLogin, onRegister, theme, toggleTheme }) => {
         <footer className="py-20 text-center border-t border-transparent bg-transparent transition-colors">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex justify-center items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-pink-600 flex items-center justify-center shadow-lg overflow-hidden">
-                <img
-                  src={logo}
-                  alt="NeoRain Logo"
-                  className="w-full h-full object-contain brightness-0 invert drop-shadow-sm"
-                />
-              </div>
+              <AnimatedLogo className="w-10 h-10" />
               <span className="text-2xl font-bold text-slate-800 dark:text-white transition-colors">NeoRain</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-bold mb-8 text-slate-800 dark:text-white max-w-2xl mx-auto transition-colors">Ambil langkah kecil menuju kesehatan mental yang lebih baik bersama NeoRain.</h2>
