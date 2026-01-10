@@ -165,12 +165,12 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
             >
               <motion.div
                 className="absolute inset-0 rounded-3xl blur-lg opacity-70 animate-pulse"
-                animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
+                animate={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
                 transition={{ duration: 1 }}
               />
               <motion.div
                 className="relative w-full h-full rounded-3xl flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden"
-                animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
+                animate={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
                 transition={{ duration: 1 }}
               >
                 <img
@@ -216,7 +216,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                     layoutId="activeNavBorder"
                     className="absolute -inset-0.5 rounded-[1.6rem] opacity-60 blur-sm z-0"
                     style={{
-                      background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
+                      backgroundImage: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
                       backgroundSize: '200% 100%'
                     }}
                     transition={smoothTransition}
@@ -336,7 +336,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout, userData, theme, toggleThe
                       layoutId="activeNavBorder"
                       className="absolute -inset-0.5 rounded-xl opacity-60 blur-sm"
                       style={{
-                        background: activeStyle.activeGradient,
+                        backgroundImage: activeStyle.activeGradient,
                         backgroundSize: '200% 100%'
                       }}
                       transition={smoothTransition}

@@ -15,12 +15,12 @@ const AnimatedLogo = ({ className = "w-10 h-10", imgClassName = "w-[200%] h-[200
   >
     <motion.div
       className="absolute inset-0 rounded-3xl blur-lg opacity-70 animate-pulse"
-      animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
+      animate={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
       transition={{ duration: 1 }}
     />
     <motion.div
       className="relative w-full h-full rounded-3xl flex items-center justify-center shadow-2xl border border-white/20 overflow-hidden"
-      animate={{ background: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
+      animate={{ backgroundImage: 'linear-gradient(135deg, #ec4899, #a855f7, #6366f1)' }}
       transition={{ duration: 1 }}
     >
       <img
