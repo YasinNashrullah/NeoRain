@@ -33,8 +33,8 @@ const questions = [
 const options = [
   { val: 0, label: "Tidak Sesuai", desc: "Tidak pernah terjadi" },
   { val: 1, label: "Kadang-kadang", desc: "Jarang terjadi" },
-  { val: 2, label: "Sering", desc: "Cukup sering terjadi" },
-  { val: 3, label: "Sangat Sering", desc: "Hampir selalu terjadi" },
+  { val: 2, label: "Sering", desc: "Cukup sering" },
+  { val: 3, label: "Sangat Sering", desc: "Hampir selalu" },
 ];
 
 const Analyze = ({ userData, onFinish }) => {
@@ -77,15 +77,17 @@ const Analyze = ({ userData, onFinish }) => {
         throw new Error("API Key (VITE_GEMINI_API_KEY) missing. Please add it to .env");
       }
 
-      // fetch contextual data moods gamification
+      // fetch contextual data moods gamification & CHAT HISTORY
       let moodContext = "Belum ada data mood.";
       let streakContext = "Belum ada streak.";
+      let chatHistoryContext = "Tidak ada riwayat chat.";
 
       if (userData?.uid) {
         try {
-          const [moods, gamification] = await Promise.all([
+          const [moods, gamification, chatData] = await Promise.all([
             api.getMoods(userData.uid),
-            api.getGamification(userData.uid)
+            api.getGamification(userData.uid),
+            api.getChats(userData.uid, 1) // Fetch page 1 of chats
           ]);
 
           // process moods last 7 days
@@ -98,93 +100,39 @@ const Analyze = ({ userData, onFinish }) => {
           if (gamification) {
             streakContext = `Streak saat ini: ${gamification.streak || 0} hari.`;
           }
+
+          // process chat history (Last 10 messages)
+          if (chatData?.data && chatData.data.length > 0) {
+            // Take last 10, reverse to correct order (oldest -> newest for reading)
+            const recentChats = chatData.data.slice(0, 10).reverse();
+            chatHistoryContext = recentChats.map(m =>
+              `${m.sender === 'user' ? 'User' : 'NeoRain'}: ${m.text}`
+            ).join("\n");
+          }
+
         } catch (err) {
           console.warn("Failed to fetch context data", err);
         }
       }
 
-      const prompt = `
-        Role: Psikolog Klinis Gen Z.
-        User Data:
-        - DASS-21: Depresi ${scores.depression}, Cemas ${scores.anxiety}, Stres ${scores.stress}.
-        - Context: ${moodContext}. ${streakContext}.
-        
-        Task: JSON Analysis.
-        
-        Actions Rule:
-        - 5 Self-Care steps.
-        - NO prefixes (e.g. "Journaling:").
-        - Descriptive, warm, persuasive sentences.
-        - Language: Indonesian, chill, relatable, "cool".
-
-        JSON Format:
-        {
-          "summary": "Validating & calming summary (max 2 sentences).",
-          "factors": "Possible causes (student life, overthinking, etc).",
-          "actions": ["Action 1", "Action 2", "Action 3", "Action 4", "Action 5"],
-          "education": "Short insightful fact."
-        }
-      `;
-
-      // request ke google gemini api
-      const response = await fetch(`${baseUrl}/${model}:generateContent?key=${apiKey}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: prompt }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2000,
-            responseMimeType: "application/json"
-          }
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Gemini API Error ${response.status}: ${JSON.stringify(errorData)}`);
-      }
-
-      const data = await response.json();
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        throw new Error("Invalid Gemini Response Structure");
-      }
-
-      const rawText = data.candidates[0].content.parts[0].text;
-      console.log("Raw AI Response:", rawText);
-
+      // --- STANDARD API INTEGRATION ---
       let aiAnalysis;
       try {
-        // clean markdown code blocks if present
-        const cleanText = rawText.replace(/```json|```/g, '').trim();
-        aiAnalysis = JSON.parse(cleanText);
-      } catch (e) {
-        console.error("JSON Parse Error:", e);
-        // fallback rare with native json
+        console.log("Generating report via api.analyst...");
+        aiAnalysis = await api.analyst.generateReport({
+          userData: { uid: userData?.uid, name: userData?.displayName || 'User' },
+          scores: scores,
+          context: { moodContext, streakContext, chatHistory: chatHistoryContext }
+        });
+      } catch (error) {
+        console.error("API Error, utilizing fallback:", error);
+        // Fallback UI data if API fails completely
         aiAnalysis = {
           summary: "Analisis selesai. Skor kamu telah direkam.",
           factors: "Tidak dapat memuat detail faktor saat ini.",
           actions: ["Istirahat yang cukup", "Konsultasi profesional jika perlu"],
           education: "Kesehatan mental sama pentingnya dengan kesehatan fisik."
         };
-      }
-
-      // simpan ke firestore
-      const payload = {
-        firebase_uid: userData?.uid,
-        depression_score: scores.depression,
-        anxiety_score: scores.anxiety,
-        stress_score: scores.stress,
-        ai_analysis: aiAnalysis // Kirim object JSON
-      };
-
-      const result = await api.saveAssessment(payload);
-      if (!result) {
-        throw new Error("Gagal menyimpan data ke server via API.");
       }
 
       // opsional simpan juga ke chat agar muncul di riwayat chat
@@ -233,12 +181,24 @@ const Analyze = ({ userData, onFinish }) => {
                   <CheckCircle className="w-10 h-10 text-white" />
                 </div>
                 <h1 className="text-3xl font-bold mb-4 text-slate-800 dark:text-white">Cek Kesehatan Mentalmu</h1>
-                <p className="text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
                   Kuesioner ini menggunakan metode <strong>DASS-21</strong> dibantu <strong>AI</strong> untuk memberikan saran yang personal.
                 </p>
+
+                {/* Medical Disclaimer */}
+                <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4 mb-8 text-left mx-auto max-w-sm">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+                    <div className="text-xs text-slate-700 dark:text-slate-300">
+                      <span className="font-bold text-orange-700 dark:text-orange-400 block mb-1">Penting:</span>
+                      Tes ini adalah alat skrining, <b>bukan diagnosis medis</b>. Hasil hanya gambaran awal. Hubungi profesional untuk diagnosis akurat.
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   onClick={() => setStep('quiz')}
-                  className="bg-white dark:bg-white text-indigo-600 dark:text-slate-900 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-indigo-50 dark:hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2 mx-auto shadow-lg shadow-indigo-500/10"
+                  className="bg-white dark:bg-white text-indigo-600 dark:text-slate-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-indigo-50 dark:hover:bg-slate-200 transition-all active:scale-95 flex items-center gap-2 mx-auto shadow-lg shadow-indigo-500/10"
                 >
                   Mulai Tes <ChevronRight className="w-5 h-5" />
                 </button>
@@ -286,11 +246,14 @@ const Analyze = ({ userData, onFinish }) => {
                           : 'bg-white/60 dark:bg-slate-900 border-white/40 dark:border-white/10 hover:bg-purple-50 dark:hover:bg-slate-800 hover:border-purple-300'
                         }`}
                     >
-                      <div>
-                        <div className={`font-bold text-lg transition-colors ${answers[questions[currentQ].id] === opt.val ? 'text-white' : 'text-slate-800 dark:text-white'}`}>{opt.label}</div>
-                        <div className={`text-sm transition-colors ${answers[questions[currentQ].id] === opt.val ? 'text-purple-100' : 'text-slate-500 dark:text-slate-500'}`}>{opt.desc}</div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-2xl">{opt.emoji}</div>
+                        <div>
+                          <div className={`font-bold text-lg transition-colors ${answers[questions[currentQ].id] === opt.val ? 'text-white' : 'text-slate-800 dark:text-white'}`}>{opt.label}</div>
+                          <div className={`text-sm transition-colors ${answers[questions[currentQ].id] === opt.val ? 'text-purple-100' : 'text-slate-500 dark:text-slate-500'}`}>{opt.desc}</div>
+                        </div>
                       </div>
-                      <div className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center
+                      <div className={`w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center shrink-0
                         ${answers[questions[currentQ].id] === opt.val
                           ? 'border-white bg-white/20'
                           : 'border-slate-300 dark:border-slate-600'

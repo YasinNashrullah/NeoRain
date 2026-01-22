@@ -251,46 +251,98 @@ const ActionPlan = ({ userData, onNavigate }) => {
                         transition={{ duration: 0.5 }}
                         className="flex-1 w-full overflow-y-auto overflow-x-hidden scrollbar-hide pb-24 p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 relative z-10 max-w-full"
                     >
-                        {/* header stats */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="col-span-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[30px] p-6 flex items-center justify-between shadow-lg shadow-indigo-500/20 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        {/* header stats (Hero Section) */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* 1. Score (Premium Hero Card) */}
+                            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[20px] p-4 flex items-center justify-between shadow-xl shadow-indigo-500/30 relative overflow-hidden group">
+                                {/* Background Effects */}
+                                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                                <div className="absolute top-1/2 right-0 -translate-y-1/2 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+                                <Trophy className="absolute top-1/2 right-10 -translate-y-1/2 w-32 h-32 text-white/5 -rotate-12" />
+
+                                {/* Left: Label */}
+                                <div className="relative z-10 flex flex-col justify-center h-full">
+                                    <div className="flex items-center gap-2 bg-indigo-500/30 backdrop-blur-md px-2.5 py-1 rounded-full border border-indigo-400/20 mb-1 w-fit">
+                                        <Trophy className="w-3.5 h-3.5 text-yellow-300" />
+                                        <span className="text-indigo-100 font-bold text-[10px] uppercase tracking-widest">Total Skor</span>
+                                    </div>
+                                    <p className="text-indigo-200 text-xs font-medium max-w-[120px] leading-relaxed">
+                                        Poin produktivitas Anda sejauh ini.
+                                    </p>
+                                </div>
+
+                                {/* Right: Score */}
                                 <div className="relative z-10">
-                                    <p className="text-indigo-100 font-medium mb-1">Total Skor</p>
-                                    <h2 className="text-4xl font-bold text-white">{score}</h2>
-                                    <div className="flex items-center gap-2 mt-2 bg-white/20 w-fit px-3 py-1 rounded-full backdrop-blur-md">
-                                        <currentLevel.icon className="w-3 h-3 text-white" />
-                                        <span className="text-xs font-bold text-white uppercase tracking-wider">{currentLevel.label}</span>
+                                    <h2 className="text-5xl font-black text-white tracking-tighter drop-shadow-sm leading-none text-right">{score}</h2>
+                                </div>
+                            </div>
+
+                            {/* 2. Level (Premium Hero Card) */}
+                            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 rounded-[20px] p-4 flex flex-col justify-between shadow-xl relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                                <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20 ${currentLevel.bg.replace('/10', '')}`}></div>
+
+                                <div className="relative z-10 h-full flex flex-col justify-between pt-2">
+                                    {/* Combined Header */}
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className={`p-1 rounded-md ${currentLevel.bg} border border-white/5`}>
+                                                <currentLevel.icon className={`w-3.5 h-3.5 ${currentLevel.color}`} />
+                                            </div>
+                                            <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Level Saat Ini</span>
+                                        </div>
+
+                                        <div className="flex items-baseline gap-3">
+                                            <h2 className={`text-3xl font-black ${currentLevel.color} tracking-tight leading-none`}>{currentLevel.label}</h2>
+                                            <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+                                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Rank</span>
+                                                <span className="text-xs font-bold text-white leading-none">{Math.floor(score / 50) + 1}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress Section */}
+                                    <div className="bg-slate-800/50 rounded-xl p-2.5 border border-slate-700/50 mt-1">
+                                        <div className="flex justify-between items-end mb-1.5">
+                                            <span className="text-[10px] font-medium text-slate-400">Progress</span>
+                                            <span className="text-[10px] font-bold text-white">{currentLevel.next - score} XP <span className="text-slate-500 font-normal">lagi</span></span>
+                                        </div>
+
+                                        <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden relative shadow-inner">
+                                            <motion.div
+                                                className={`h-full relative z-10 shadow-[0_0_10px_rgba(250,204,21,0.3)]`}
+                                                style={{
+                                                    width: `${levelProgress}%`,
+                                                    background: 'linear-gradient(90deg, #ca8a04, #eab308, #facc15, #eab308)',
+                                                    backgroundSize: '200% 100%'
+                                                }}
+                                                animate={{ backgroundPosition: ['0% 0%', '100% 0%'] }}
+                                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm shadow-inner border border-white/10">
-                                    <Trophy className="w-10 h-10 text-yellow-300 drop-shadow-lg" />
-                                </div>
-                            </div>
-
-                            <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 flex flex-col justify-center items-center shadow-sm dark:shadow-xl hover:border-orange-500/30 transition-colors">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Flame className={`w-5 h-5 ${streak > 0 ? 'text-orange-500 animate-pulse' : 'text-slate-600 dark:text-slate-500'}`} />
-                                    <span className="text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">Streak</span>
-                                </div>
-                                <span className="text-3xl font-bold text-slate-800 dark:text-white">{streak} <span className="text-sm text-slate-500 font-normal">days</span></span>
-                            </div>
-
-                            <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 flex flex-col justify-center items-center shadow-sm dark:shadow-xl hover:border-purple-500/30 transition-colors">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Medal className="w-5 h-5 text-purple-400" />
-                                    <span className="text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">Badges</span>
-                                </div>
-                                <span className="text-3xl font-bold text-slate-800 dark:text-white">{achievements.length} <span className="text-sm text-slate-500 font-normal">/ {ACHIEVEMENTS_LIST.length}</span></span>
                             </div>
                         </div>
 
-                        {/* main content grid */}
+                        {/* Daily Motivation Banner */}
+                        <div className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-orange-500/10 dark:to-purple-500/10 border border-orange-200 dark:border-orange-500/20 rounded-[30px] p-6 relative overflow-hidden shadow-sm flex items-center justify-between gap-6">
+                            <div className="relative z-10 flex-1">
+                                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
+                                    <Zap className="w-5 h-5 text-orange-400" /> Motivasi Harian
+                                </h3>
+                                <p className="text-slate-600 dark:text-slate-300 italic font-medium leading-relaxed">
+                                    "Langkah kecil setiap hari membawa hasil besar. Teruslah melangkah!"
+                                </p>
+                            </div>
+                            <Quote className="hidden md:block w-12 h-12 text-orange-500/20 rotate-12 shrink-0" />
+                        </div>
+
                         {/* main content grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-full">
 
-                            {/* left column missions */}
-                            <div className="lg:col-span-8 space-y-6 w-full min-w-0">
+                            {/* left column: Missions */}
+                            <div className="lg:col-span-8 space-y-6 w-full min-w-0 flex flex-col">
 
                                 {/* progress bar */}
                                 <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[20px] p-6 backdrop-blur-sm shadow-sm dark:shadow-none w-full">
@@ -314,10 +366,10 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                     </div>
                                 </div>
 
-                                {/* mission list */}
-                                <div className="space-y-4">
+                                {/* mission list (Grid Layout) */}
+                                <div className={actionItems.length === 0 ? "h-full" : "grid grid-cols-1 md:grid-cols-2 gap-4"}>
                                     {actionItems.length === 0 ? (
-                                        <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-12 text-center flex flex-col items-center justify-center min-h-[400px] shadow-sm">
+                                        <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900/50 dark:to-slate-900/50 border border-white/60 dark:border-white/10 rounded-[30px] p-12 text-center flex flex-col items-center justify-center min-h-[300px] shadow-sm h-full">
                                             <div className="w-24 h-24 bg-slate-100 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-6 relative">
                                                 <BrainCircuit className="w-12 h-12 text-slate-400 dark:text-slate-600" />
                                                 <div className="absolute inset-0 bg-indigo-500/10 rounded-full blur-xl animate-pulse"></div>
@@ -341,30 +393,38 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                             return (
                                                 <motion.div
                                                     key={idx}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: idx * 0.1 }}
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ delay: idx * 0.05 }}
                                                     onClick={() => handleToggleTask(idx)}
-                                                    className={`group relative p-5 rounded-2xl border transition-all cursor-pointer overflow-hidden shadow-sm w-full max-w-full ${isCompleted
+                                                    className={`group relative p-5 rounded-2xl border transition-all cursor-pointer overflow-hidden shadow-sm flex flex-col justify-between min-h-[140px] ${isCompleted
                                                         ? 'bg-green-50 dark:bg-green-500/5 border-green-200 dark:border-green-500/30'
-                                                        : 'bg-white/60 dark:bg-slate-900 border-white/60 dark:border-white/10 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800'
+                                                        : 'bg-white/60 dark:bg-slate-900/80 border-white/60 dark:border-white/10 hover:border-indigo-500/50 hover:bg-white dark:hover:bg-slate-800 hover:-translate-y-1 hover:shadow-md'
                                                         }`}
                                                 >
-                                                    <div className="flex items-start gap-4 relative z-10 w-full">
-                                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all mt-0.5 flex-shrink-0 ${isCompleted
+                                                    <div className="flex items-start gap-3 relative z-10">
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all mt-0.5 flex-shrink-0 ${isCompleted
                                                             ? 'bg-green-500 border-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.4)]'
                                                             : 'border-slate-300 dark:border-slate-500 text-transparent group-hover:border-indigo-400'
                                                             }`}>
-                                                            <CheckCircle2 className="w-4 h-4" />
+                                                            <CheckCircle2 className="w-3.5 h-3.5" />
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className={`text-base font-medium transition-all leading-relaxed break-words ${isCompleted ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'
+                                                            <p className={`text-sm font-medium transition-all leading-relaxed ${isCompleted ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-700 dark:text-slate-200'
                                                                 }`}>
                                                                 {item}
                                                             </p>
                                                         </div>
-                                                        {isCompleted && (
-                                                            <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-500/10 px-3 py-1 rounded-full whitespace-nowrap border border-green-200 dark:border-green-500/20">
+                                                    </div>
+
+                                                    {/* XP Text / Indicator */}
+                                                    <div className="flex justify-end mt-4">
+                                                        {isCompleted ? (
+                                                            <span className="text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-500/10 px-2 py-0.5 rounded-full whitespace-nowrap border border-green-200 dark:border-green-500/20">
+                                                                Completed (+10 XP)
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold text-indigo-400 dark:text-indigo-500/50 group-hover:text-indigo-500 transition-colors">
                                                                 +10 XP
                                                             </span>
                                                         )}
@@ -374,28 +434,36 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                         })
                                     )}
                                 </div>
+
                             </div>
 
-                            {/* right column sidebar */}
-                            <div className="lg:col-span-4 space-y-6">
+                            {/* right column sidebar: Achievements (Compact) */}
+                            <div className="lg:col-span-4 h-full flex flex-col gap-6">
 
-                                {/* daily motivation card */}
-                                <div className="bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50 dark:from-orange-500/10 dark:to-purple-500/10 border border-orange-200 dark:border-orange-500/20 rounded-[30px] p-6 relative overflow-hidden shadow-sm">
-                                    <Quote className="absolute top-4 right-4 w-12 h-12 text-orange-500/10 rotate-12" />
-                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
-                                        <Zap className="w-5 h-5 text-orange-400" /> Motivasi Harian
-                                    </h3>
-                                    <p className="text-slate-600 dark:text-slate-300 italic font-medium leading-relaxed relative z-10">
-                                        "Langkah kecil setiap hari membawa hasil besar. Teruslah melangkah!"
-                                    </p>
+                                {/* Streak Card (Relocated here) */}
+                                <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-[30px] p-6 text-white shadow-lg shadow-orange-500/30 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl translate-x-1/2 -translate-y-1/2"></div>
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-2 mb-4 bg-white/20 w-fit px-3 py-1 rounded-full border border-white/10 backdrop-blur-md">
+                                            <Flame className={`w-4 h-4 ${streak > 0 ? 'text-white animate-pulse' : 'text-white/70'}`} />
+                                            <span className="text-xs font-bold uppercase tracking-wider">Current Streak</span>
+                                        </div>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-4xl font-black">{streak}</span>
+                                            <span className="text-lg font-medium text-orange-100">Hari</span>
+                                        </div>
+                                        <p className="text-xs text-orange-100 mt-2 font-medium">
+                                            {streak > 3 ? "Konsistensi yang luar biasa! Pertahankan!" : "Ayo bangun kebiasaan baik setiap hari!"}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 {/* achievements list */}
-                                <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl">
-                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                                <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 shadow-sm dark:shadow-xl flex-1 flex flex-col max-h-[420px]">
+                                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2 flex-shrink-0">
                                         <Trophy className="w-5 h-5 text-yellow-500 dark:text-yellow-400" /> Pencapaian
                                     </h3>
-                                    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                                    <div className="space-y-3 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent flex-1">
                                         {ACHIEVEMENTS_LIST.map(badge => {
                                             const isUnlocked = achievements.includes(badge.id);
                                             return (
@@ -421,36 +489,6 @@ const ActionPlan = ({ userData, onNavigate }) => {
                                                 </div>
                                             );
                                         })}
-                                    </div>
-                                </div>
-
-                                {/* level card */}
-                                <div className="bg-gradient-to-br from-white/95 to-slate-50/90 dark:from-slate-900 dark:to-slate-900 border border-white/60 dark:border-white/10 rounded-[30px] p-6 relative overflow-hidden shadow-sm dark:shadow-xl">
-                                    <div className={`absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-20 ${currentLevel.bg.replace('/10', '')}`}></div>
-
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h3 className="text-lg font-bold text-slate-800 dark:text-white">Level Saat Ini</h3>
-                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Peringkat {Math.floor(score / 50) + 1}</span>
-                                    </div>
-
-                                    <div className="flex flex-col items-center text-center relative z-10">
-                                        <div className={`w-24 h-24 rounded-full ${currentLevel.bg} flex items-center justify-center mb-4 border-4 ${currentLevel.border} shadow-[0_0_20px_rgba(0,0,0,0.1)] relative`}>
-                                            <currentLevel.icon className={`w-10 h-10 ${currentLevel.color}`} />
-                                            {/* Circular Progress (Visual Only) */}
-                                            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                                                <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-200 dark:text-white/10" />
-                                                <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" strokeWidth="2"
-                                                    className={currentLevel.color}
-                                                    strokeDasharray="289"
-                                                    strokeDashoffset={289 - (289 * levelProgress) / 100}
-                                                    strokeLinecap="round"
-                                                />
-                                            </svg>
-                                        </div>
-                                        <h4 className={`text-2xl font-black ${currentLevel.color} mb-1 tracking-tight`}>{currentLevel.label}</h4>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                                            {score} / {currentLevel.next} XP lagi untuk naik level
-                                        </p>
                                     </div>
                                 </div>
 

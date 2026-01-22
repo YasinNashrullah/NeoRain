@@ -14,7 +14,7 @@ import { useToast } from '../components/ui/ToastProvider';
 
 const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState(initialTab || 'daily');
+  const [activeTab, setActiveTab] = useState(initialTab || 'analysis');
   const [selectedMood, setSelectedMood] = useState(null);
   const [note, setNote] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -63,14 +63,19 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
     if (userData?.uid) {
       try {
         const allData = await api.getMoods(userData.uid);
-        // Filter out auto-saved mood scanner updates
-        const filteredData = allData.filter(log => log.note !== "Mood Scanner Update");
-        setHistoryLogs(filteredData);
-        setWeeklyLogs(filteredData);
+
+        // 1. Filter for UI List (HIDE Auto-Mood logs to prevent spam)
+        const visibleLogs = allData.filter(log => log.note !== "Mood Scanner Update" && log.note !== "Auto-Mood: Chat Conversation");
+        setHistoryLogs(visibleLogs);
+        setWeeklyLogs(visibleLogs); // Weekly tab also uses visible logs
+
+        // 2. Use ALL Data for Stats (Include Auto-Moods for accurate analysis)
+        // Filter only system technical updates if any
+        const statsLogs = allData.filter(log => log.note !== "Mood Scanner Update");
 
         // Fetch stats and analysis in parallel
         await Promise.all([
-          fetchStats(userData.uid, statsRange, filteredData),
+          fetchStats(userData.uid, statsRange, statsLogs),
           fetchAnalysis(userData.uid)
         ]);
 
@@ -383,7 +388,7 @@ const Tracker = ({ userData, onNavigate, onChatRequest, initialTab }) => {
       {/* Header */}
       <div className="md:px-9 px-6 pt-8 pb-4 relative z-10 flex-none">
         <div className="w-full mx-auto bg-white/80 dark:bg-white/5 p-1.5 rounded-2xl flex gap-2 relative border border-slate-200 dark:border-white/10 backdrop-blur-md shadow-sm dark:shadow-xl">
-          {['daily', 'weekly', 'stats', 'analysis'].map((tab) => (
+          {['analysis', 'stats', 'daily', 'weekly'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}

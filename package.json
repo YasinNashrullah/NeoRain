@@ -17,6 +17,7 @@
     "@openrouter/sdk": "^0.2.9",
     "aos": "^2.3.4",
     "canvas-confetti": "^1.9.4",
+    "dotenv": "^17.2.3",
     "face-api.js": "^0.22.2",
     "firebase": "^12.6.0",
     "framer-motion": "^12.23.24",
