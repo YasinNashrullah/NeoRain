@@ -181,10 +181,10 @@ const ActionPlan = ({ userData, onNavigate }) => {
     };
 
     const getLevel = (score) => {
-        if (score < 50) return { label: 'Novice', color: 'text-slate-400', border: 'border-slate-400', bg: 'bg-slate-400/10', icon: Star, next: 50 };
-        if (score < 150) return { label: 'Apprentice', color: 'text-indigo-400', border: 'border-indigo-400', bg: 'bg-indigo-400/10', icon: Zap, next: 150 };
-        if (score < 300) return { label: 'Expert', color: 'text-purple-400', border: 'border-purple-400', bg: 'bg-purple-400/10', icon: Medal, next: 300 };
-        return { label: 'Master', color: 'text-yellow-400', border: 'border-yellow-400', bg: 'bg-yellow-400/10', icon: Crown, next: 1000 };
+        if (score < 50) return { label: 'Novice', color: 'text-slate-600 dark:text-slate-400', border: 'border-slate-400', bg: 'bg-slate-400/10', icon: Star, next: 50 };
+        if (score < 150) return { label: 'Apprentice', color: 'text-indigo-600 dark:text-indigo-400', border: 'border-indigo-500/50 dark:border-indigo-400', bg: 'bg-indigo-500/10 dark:bg-indigo-400/10', icon: Zap, next: 150 };
+        if (score < 300) return { label: 'Expert', color: 'text-purple-600 dark:text-purple-400', border: 'border-purple-500 dark:border-purple-400', bg: 'bg-purple-500/10 dark:bg-purple-400/10', icon: Medal, next: 300 };
+        return { label: 'Master', color: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-500 dark:border-yellow-400', bg: 'bg-yellow-500/10 dark:bg-yellow-400/10', icon: Crown, next: 1000 };
     };
 
     const currentLevel = getLevel(score);
@@ -278,37 +278,37 @@ const ActionPlan = ({ userData, onNavigate }) => {
                             </div>
 
                             {/* 2. Level (Premium Hero Card) */}
-                            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 rounded-[20px] p-4 flex flex-col justify-between shadow-xl relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                            <div className="bg-gradient-to-br from-white via-indigo-50/50 to-white dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 border border-slate-200 dark:border-slate-700/50 rounded-[20px] p-4 flex flex-col justify-between shadow-xl relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 dark:opacity-20 mix-blend-multiply dark:mix-blend-overlay"></div>
                                 <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-20 ${currentLevel.bg.replace('/10', '')}`}></div>
 
                                 <div className="relative z-10 h-full flex flex-col justify-between pt-2">
                                     {/* Combined Header */}
                                     <div>
                                         <div className="flex items-center gap-2 mb-2">
-                                            <div className={`p-1 rounded-md ${currentLevel.bg} border border-white/5`}>
+                                            <div className={`p-1 rounded-md ${currentLevel.bg} border ${currentLevel.border.replace('border-', 'border-opacity-20 ')}`}>
                                                 <currentLevel.icon className={`w-3.5 h-3.5 ${currentLevel.color}`} />
                                             </div>
-                                            <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Level Saat Ini</span>
+                                            <span className="text-slate-500 dark:text-slate-400 font-bold text-[10px] uppercase tracking-wider">Level Saat Ini</span>
                                         </div>
 
                                         <div className="flex items-baseline gap-3">
                                             <h2 className={`text-3xl font-black ${currentLevel.color} tracking-tight leading-none`}>{currentLevel.label}</h2>
-                                            <div className="flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
-                                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Rank</span>
-                                                <span className="text-xs font-bold text-white leading-none">{Math.floor(score / 50) + 1}</span>
+                                            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full border border-slate-200 dark:border-white/10">
+                                                <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Rank</span>
+                                                <span className="text-xs font-bold text-slate-700 dark:text-white leading-none">{Math.floor(score / 50) + 1}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Progress Section */}
-                                    <div className="bg-slate-800/50 rounded-xl p-2.5 border border-slate-700/50 mt-1">
+                                    <div className="bg-white/60 dark:bg-slate-800/50 rounded-xl p-2.5 border border-slate-200 dark:border-slate-700/50 mt-1 backdrop-blur-sm">
                                         <div className="flex justify-between items-end mb-1.5">
-                                            <span className="text-[10px] font-medium text-slate-400">Progress</span>
-                                            <span className="text-[10px] font-bold text-white">{currentLevel.next - score} XP <span className="text-slate-500 font-normal">lagi</span></span>
+                                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">Progress</span>
+                                            <span className="text-[10px] font-bold text-slate-700 dark:text-white">{currentLevel.next - score} XP <span className="text-slate-500 font-normal">lagi</span></span>
                                         </div>
 
-                                        <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden relative shadow-inner">
+                                        <div className="w-full h-2 bg-slate-200 dark:bg-slate-900/50 rounded-full overflow-hidden relative shadow-inner">
                                             <motion.div
                                                 className={`h-full relative z-10 shadow-[0_0_10px_rgba(250,204,21,0.3)]`}
                                                 style={{

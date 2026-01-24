@@ -28,7 +28,9 @@ const _callGemini = async (payload, keys, contextName = "Gemini API") => {
   const { baseUrl, model } = config.gemini;
   let lastError = null;
 
-  console.log(`[${contextName}] Initializing with ${keys?.length || 0} keys available.`);
+  console.log(
+    `[${contextName}] Initializing with ${keys?.length || 0} keys available.`,
+  );
 
   if (!keys || keys.length === 0) {
     throw new Error(`[${contextName}] No API keys configured! Check .env`);
@@ -37,7 +39,9 @@ const _callGemini = async (payload, keys, contextName = "Gemini API") => {
   for (let i = 0; i < keys.length; i++) {
     const apiKey = keys[i];
     try {
-      console.log(`[${contextName}] Attempting request with Key #${i + 1} (${apiKey.substring(0, 4)}***)...`);
+      console.log(
+        `[${contextName}] Attempting request with Key #${i + 1} (${apiKey.substring(0, 4)}***)...`,
+      );
 
       const response = await fetch(`${baseUrl}/${model}:generateContent`, {
         method: "POST",
@@ -51,13 +55,23 @@ const _callGemini = async (payload, keys, contextName = "Gemini API") => {
       if (!response.ok) {
         // Detailed error logging
         const errText = await response.text();
-        console.warn(`[${contextName}] Key #${i + 1} Failed. Status: ${response.status}. Response: ${errText.substring(0, 200)}`);
+        console.warn(
+          `[${contextName}] Key #${i + 1} Failed. Status: ${response.status}. Response: ${errText.substring(0, 200)}`,
+        );
 
-        if (response.status === 429 || response.status === 503 || response.status === 500) {
-          console.warn(`[${contextName}] Switching to next key due to limits/server error...`);
+        if (
+          response.status === 429 ||
+          response.status === 503 ||
+          response.status === 500
+        ) {
+          console.warn(
+            `[${contextName}] Switching to next key due to limits/server error...`,
+          );
           continue;
         }
-        throw new Error(`Gemini Error ${response.status}: ${response.statusText} - ${errText}`);
+        throw new Error(
+          `Gemini Error ${response.status}: ${response.statusText} - ${errText}`,
+        );
       }
 
       const data = await response.json();
@@ -67,7 +81,6 @@ const _callGemini = async (payload, keys, contextName = "Gemini API") => {
       }
       console.log(`[${contextName}] Success with Key #${i + 1}`);
       return data.candidates[0].content.parts[0].text;
-
     } catch (err) {
       console.error(`[${contextName}] Key #${i + 1} Error Chain:`, err);
       lastError = err;
@@ -110,8 +123,27 @@ export const api = {
              - Jika kamu berpendapat -> Saran adalah tanggapan ("Setuju/Bener juga/Ah masa?").
              - MAX 3-4 KATA.
           
+
           Konteks Visual (Kamera): ${context?.emotion ? `Ekspresi wajah user terlihat "${context.emotion}". Validasi ini.` : "Tidak ada visual."}
-          
+
+          Konteks Analisis (Jika ada, user ingin membahas ini):
+          ${
+            context?.activeContext
+              ? `
+            [DATA ANALISIS AKTIF]
+            - Tanggal Tes: ${new Date(context.activeContext.created_at).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            - Skor Depresi: ${context.activeContext.depression_score} (Skala DASS-21)
+            - Skor Cemas: ${context.activeContext.anxiety_score} (Skala DASS-21)
+            - Skor Stress: ${context.activeContext.stress_score} (Skala DASS-21)
+            - Ringkasan AI: "${context.activeContext.ai_analysis?.summary || "-"}"
+            - Faktor Pemicu: "${context.activeContext.ai_analysis?.factors || "-"}"
+            
+            TUGAS KHUSUS: 
+            Jelaskan hasil ini dengan empati jika user bertanya. Hubungkan skor dengan perasaan mereka. Beri validasi bahwa tidak apa-apa untuk merasa seperti itu.
+          `
+              : "Mode Chat Umum (Tanpa data analisis spesifik)."
+          }
+
           OUTPUT JSON ONLY:
           {
             "reply": "Teks jawabanmu...",
@@ -121,11 +153,11 @@ export const api = {
         `;
 
         const contents = [
-          ...history.map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.text }]
+          ...history.map((msg) => ({
+            role: msg.sender === "user" ? "user" : "model",
+            parts: [{ text: msg.text }],
           })),
-          { role: "user", parts: [{ text: message }] }
+          { role: "user", parts: [{ text: message }] },
         ];
 
         // 2. Call Gemini
@@ -133,22 +165,35 @@ export const api = {
           {
             contents,
             systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: { responseMimeType: "application/json" }
+            generationConfig: { responseMimeType: "application/json" },
           },
           config.gemini.chatKeys,
-          "Chat API"
+          "Chat API",
         );
 
         const result = JSON.parse(rawResponse);
 
         // 3. Fire-and-Forget: Track Mood Background
         // ENABLED as Smart Tracking (Silent)
-        api.mood.trackFromChat(message, result.mood, userData?.uid).catch(error => console.warn("Background mood track failed", error));
+        api.mood
+          .trackFromChat(message, result.mood, userData?.uid)
+          .catch((error) =>
+            console.warn("Background mood track failed", error),
+          );
 
         // 4. Save Chat to DB
         if (userData?.uid) {
-          await api.saveChat({ firebase_uid: userData.uid, message, sender: 'user' });
-          await api.saveChat({ firebase_uid: userData.uid, message: result.reply, sender: 'ai', mood: result.mood });
+          await api.saveChat({
+            firebase_uid: userData.uid,
+            message,
+            sender: "user",
+          });
+          await api.saveChat({
+            firebase_uid: userData.uid,
+            message: result.reply,
+            sender: "ai",
+            mood: result.mood,
+          });
         }
 
         return result;
@@ -156,7 +201,7 @@ export const api = {
         console.error("Chat API Failed:", error);
         throw error;
       }
-    }
+    },
   },
 
   // ==========================================
@@ -168,7 +213,7 @@ export const api = {
         const prompt = `
           Role: Psikolog Klinis Gen Z & Life Coach.
           Data User: Depresi ${scores.depression}, Cemas ${scores.anxiety}, Stres ${scores.stress}.
-          Context: ${context?.moodContext || '-'}, ${context?.streakContext || '-'}.
+          Context: ${context?.moodContext || "-"}, ${context?.streakContext || "-"}.
           
           Riwayat Chat Terakhir (Gali Hobi/Minat dari sini):
           ${context?.chatHistory || "Tidak ada riwayat chat."}
@@ -194,10 +239,10 @@ export const api = {
         const rawResponse = await _callGemini(
           {
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
+            generationConfig: { responseMimeType: "application/json" },
           },
           config.gemini.analyzeKeys,
-          "Analyst API"
+          "Analyst API",
         );
 
         let analysis;
@@ -205,7 +250,7 @@ export const api = {
           analysis = JSON.parse(rawResponse);
         } catch (e) {
           // Fallback if clean JSON parsing fails (though _callGemini should return text)
-          const cleanText = rawResponse.replace(/```json|```/g, '').trim();
+          const cleanText = rawResponse.replace(/```json|```/g, "").trim();
           analysis = JSON.parse(cleanText);
         }
 
@@ -216,7 +261,7 @@ export const api = {
             depression_score: scores.depression,
             anxiety_score: scores.anxiety,
             stress_score: scores.stress,
-            ai_analysis: analysis
+            ai_analysis: analysis,
           });
         }
 
@@ -239,7 +284,7 @@ export const api = {
           firebase_uid: uid,
           mood: detectedMood,
           trigger: "chat_conversation",
-          note: "Auto-Mood: Chat Conversation"
+          note: "Auto-Mood: Chat Conversation",
         });
       } catch (error) {
         console.error("Mood Tracker Failed:", error);
@@ -248,7 +293,7 @@ export const api = {
 
     generateDailyInsight: async (uid) => {
       // Future implementation
-    }
+    },
   },
 
   // ==========================================
@@ -268,7 +313,11 @@ export const api = {
           updatedAt: serverTimestamp(),
         });
       } else {
-        await updateDoc(userRef, { updatedAt: serverTimestamp() }, { merge: true });
+        await updateDoc(
+          userRef,
+          { updatedAt: serverTimestamp() },
+          { merge: true },
+        );
       }
       return { ...userData, ...userSnap.data() };
     } catch (error) {
@@ -293,13 +342,15 @@ export const api = {
       const q = query(
         collection(db, "moods"),
         where("firebase_uid", "==", firebaseUid),
-        orderBy("created_at", "desc")
+        orderBy("created_at", "desc"),
       );
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        created_at: doc.data().created_at?.toDate().toISOString() || new Date().toISOString(),
+        created_at:
+          doc.data().created_at?.toDate().toISOString() ||
+          new Date().toISOString(),
       }));
     } catch (error) {
       return handleError("Get Moods", error) || [];
@@ -314,7 +365,7 @@ export const api = {
         collection(db, "moods"),
         where("firebase_uid", "==", firebaseUid),
         where("created_at", ">=", Timestamp.fromDate(pastDate)),
-        orderBy("created_at", "asc")
+        orderBy("created_at", "asc"),
       );
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map((doc) => ({
@@ -347,7 +398,7 @@ export const api = {
         collection(db, "chats"),
         where("firebase_uid", "==", firebaseUid),
         orderBy("created_at", "desc"),
-        limit(limitPerReq)
+        limit(limitPerReq),
       );
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map((doc) => ({
@@ -364,7 +415,10 @@ export const api = {
 
   deleteAllChats: async (firebaseUid) => {
     try {
-      const q = query(collection(db, "chats"), where("firebase_uid", "==", firebaseUid));
+      const q = query(
+        collection(db, "chats"),
+        where("firebase_uid", "==", firebaseUid),
+      );
       const snapshot = await getDocs(q);
       if (snapshot.empty) return { success: true, count: 0 };
       const batchSize = 500;
@@ -407,7 +461,7 @@ export const api = {
         collection(db, "assessments"),
         where("firebase_uid", "==", firebaseUid),
         orderBy("created_at", "desc"),
-        limit(1)
+        limit(1),
       );
       const querySnapshot = await getDocs(q);
       if (querySnapshot.empty) return null;
@@ -428,7 +482,7 @@ export const api = {
       // Query without sorting to avoid index requirements
       const q = query(
         collection(db, "assessments"),
-        where("firebase_uid", "==", firebaseUid)
+        where("firebase_uid", "==", firebaseUid),
       );
 
       const querySnapshot = await getDocs(q);
@@ -437,12 +491,16 @@ export const api = {
         id: doc.id,
         ...doc.data(),
         // Handle timestamp robustly
-        created_at: doc.data().created_at?.toDate?.()?.toISOString() || new Date(doc.data().created_at).toISOString() || new Date().toISOString(),
+        created_at:
+          doc.data().created_at?.toDate?.()?.toISOString() ||
+          new Date(doc.data().created_at).toISOString() ||
+          new Date().toISOString(),
       }));
 
       // Sort manually in client (Newest first)
-      return docs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+      return docs.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      );
     } catch (error) {
       console.error("Error fetching history:", error);
       return [];
@@ -465,7 +523,11 @@ export const api = {
       const targetUid = uid || data.firebase_uid;
       if (!targetUid) throw new Error("No UID provided");
       const userRef = doc(db, "users", targetUid);
-      await setDoc(userRef, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(
+        userRef,
+        { ...data, updatedAt: serverTimestamp() },
+        { merge: true },
+      );
       return { success: true };
     } catch (error) {
       console.error("Error update profile:", error);
@@ -477,15 +539,19 @@ export const api = {
     try {
       const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
       const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-      if (!cloudName || !uploadPreset) throw new Error("Cloudinary Config Missing!");
+      if (!cloudName || !uploadPreset)
+        throw new Error("Cloudinary Config Missing!");
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", uploadPreset);
       formData.append("folder", "neorain_users");
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err.error?.message || "Upload ke Cloudinary gagal");
@@ -493,7 +559,15 @@ export const api = {
       const data = await response.json();
       const downloadURL = data.secure_url;
       const userRef = doc(db, "users", firebaseUid);
-      await setDoc(userRef, { photo_url: downloadURL, photoURL: downloadURL, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(
+        userRef,
+        {
+          photo_url: downloadURL,
+          photoURL: downloadURL,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
       return { url: downloadURL };
     } catch (error) {
       console.error("Error upload photo (Cloudinary):", error);
@@ -518,7 +592,7 @@ export const api = {
         collection(db, "moods"),
         where("firebase_uid", "==", firebaseUid),
         where("created_at", ">=", Timestamp.fromDate(startDate)),
-        orderBy("created_at", "desc")
+        orderBy("created_at", "desc"),
       );
       const querySnapshot = await getDocs(q);
       const logs = querySnapshot.docs.map((doc) => ({
@@ -536,23 +610,56 @@ export const api = {
         const score = moodScores[log.mood] || 3;
         totalScore += score;
         moodCounts[log.mood] = (moodCounts[log.mood] || 0) + 1;
-        const dateKey = new Date(log.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        if (!dailyScores[dateKey]) dailyScores[dateKey] = { total: 0, count: 0 };
+        const dateKey = new Date(log.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+        if (!dailyScores[dateKey])
+          dailyScores[dateKey] = { total: 0, count: 0 };
         dailyScores[dateKey].total += score;
         dailyScores[dateKey].count += 1;
       });
       Object.keys(dailyScores).forEach((date) => {
-        trend.push({ date, score: Number((dailyScores[date].total / dailyScores[date].count).toFixed(1)) });
+        trend.push({
+          date,
+          score: Number(
+            (dailyScores[date].total / dailyScores[date].count).toFixed(1),
+          ),
+        });
       });
       trend.sort((a, b) => new Date(a.date) - new Date(b.date));
       const average_score = (totalScore / logs.length).toFixed(1);
-      const sortedMoods = Object.entries(moodCounts).sort((a, b) => b[1] - a[1]);
+      const sortedMoods = Object.entries(moodCounts).sort(
+        (a, b) => b[1] - a[1],
+      );
       const most_frequent_mood = sortedMoods[0] ? sortedMoods[0][0] : null;
       const insights = [];
-      if (Number(average_score) >= 4) insights.push({ icon: "Sun", text: "Kondisi mentalmu sangat baik!", color: "text-orange-500" });
-      else if (Number(average_score) <= 2) insights.push({ icon: "CloudRain", text: "Kamu mungkin butuh istirahat.", color: "text-indigo-500" });
-      if (most_frequent_mood === "anxious") insights.push({ icon: "Wind", text: "Coba latihan pernapasan.", color: "text-cyan-500" });
-      return { total_logs: logs.length, average_score, wellness_score: Math.round((Number(average_score) / 5) * 100), most_frequent_mood, trend, insights };
+      if (Number(average_score) >= 4)
+        insights.push({
+          icon: "Sun",
+          text: "Kondisi mentalmu sangat baik!",
+          color: "text-orange-500",
+        });
+      else if (Number(average_score) <= 2)
+        insights.push({
+          icon: "CloudRain",
+          text: "Kamu mungkin butuh istirahat.",
+          color: "text-indigo-500",
+        });
+      if (most_frequent_mood === "anxious")
+        insights.push({
+          icon: "Wind",
+          text: "Coba latihan pernapasan.",
+          color: "text-cyan-500",
+        });
+      return {
+        total_logs: logs.length,
+        average_score,
+        wellness_score: Math.round((Number(average_score) / 5) * 100),
+        most_frequent_mood,
+        trend,
+        insights,
+      };
     } catch (error) {
       console.error("Error getMoodStatistics:", error);
       return null;
@@ -563,7 +670,8 @@ export const api = {
     try {
       const userRef = doc(db, "users", firebaseUid);
       const userSnap = await getDoc(userRef);
-      if (userSnap.exists() && userSnap.data().gamification) return userSnap.data().gamification;
+      if (userSnap.exists() && userSnap.data().gamification)
+        return userSnap.data().gamification;
       return null;
     } catch (error) {
       return handleError("Get Gamification", error);
@@ -573,7 +681,11 @@ export const api = {
   saveGamification: async (firebaseUid, data) => {
     try {
       const userRef = doc(db, "users", firebaseUid);
-      await setDoc(userRef, { gamification: data, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(
+        userRef,
+        { gamification: data, updatedAt: serverTimestamp() },
+        { merge: true },
+      );
       return { success: true };
     } catch (error) {
       return handleError("Save Gamification", error);
@@ -586,7 +698,7 @@ export const api = {
         collection(db, "moods"),
         where("firebase_uid", "==", firebaseUid),
         orderBy("created_at", "desc"),
-        limit(1)
+        limit(1),
       );
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) return querySnapshot.docs[0].data().mood;
@@ -599,7 +711,11 @@ export const api = {
   saveDailyPlan: async (firebaseUid, planData) => {
     try {
       const userRef = doc(db, "users", firebaseUid);
-      await setDoc(userRef, { daily_plan: planData, updatedAt: serverTimestamp() }, { merge: true });
+      await setDoc(
+        userRef,
+        { daily_plan: planData, updatedAt: serverTimestamp() },
+        { merge: true },
+      );
       return { success: true };
     } catch (error) {
       return handleError("Save Daily Plan", error);
@@ -610,7 +726,8 @@ export const api = {
     try {
       const userRef = doc(db, "users", firebaseUid);
       const userSnap = await getDoc(userRef);
-      if (userSnap.exists() && userSnap.data().daily_plan) return userSnap.data().daily_plan;
+      if (userSnap.exists() && userSnap.data().daily_plan)
+        return userSnap.data().daily_plan;
       return null;
     } catch (error) {
       return handleError("Get Daily Plan", error);
@@ -618,15 +735,24 @@ export const api = {
   },
 
   // Deprecated: Chat with AI (Legacy)
-  chatWithAI: async (message, firebaseUid, contextData = null, userName = "Teman") => {
+  chatWithAI: async (
+    message,
+    firebaseUid,
+    contextData = null,
+    userName = "Teman",
+  ) => {
     console.warn("Deprecated: Use api.chat.sendMessage instead");
     // Fallback using new method
     const response = await api.chat.sendMessage({
       message,
       history: [],
       userData: { name: userName, uid: firebaseUid },
-      context: contextData
+      context: contextData,
     });
-    return { text: response.reply, mood: response.mood, suggestions: response.suggestions };
+    return {
+      text: response.reply,
+      mood: response.mood,
+      suggestions: response.suggestions,
+    };
   },
 };

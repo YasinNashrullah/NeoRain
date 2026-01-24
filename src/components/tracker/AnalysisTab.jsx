@@ -50,7 +50,7 @@ const ScoreReferenceModal = ({ isOpen, onClose }) => (
 
                     <div className="p-6 overflow-y-auto">
                         <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                            NeoRain menggunakan skala DASS-21 yang dikonversi ke DASS-42 (dikali 2). Berikut adalah acuan tingkat keparahan:
+                            NeoRain menggunakan skala DASS-21. Berikut adalah acuan tingkat keparahan:
                         </p>
 
                         <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-white/10">

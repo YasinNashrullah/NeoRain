@@ -111,8 +111,6 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   useEffect(() => {
     if (detectedEmotion) {
       // EmotionDetector now returns mapped values directly:
-      // 'calm', 'energetic', 'happy', 'sad', 'angry'
-
       if (moodColors[detectedEmotion]) {
         setCurrentMood(detectedEmotion);
       }
@@ -128,11 +126,11 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
   useEffect(() => {
     const initData = async () => {
       if (userData?.uid && !historyLoaded) {
-        // 1. Load Assessment History
+        // Load Assessment History
         const history = await api.getAssessmentHistory(userData.uid);
         setAssessmentHistory(history);
 
-        // 2. Load Chat History
+        // Load Chat History
         const { data, hasMore: more } = await api.getChats(userData.uid, 1);
 
         if (data.length > 0) {
@@ -144,7 +142,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         } else {
           // If NO history, show Welcome Message or Context Message
           if (initialContext) {
-            saetActiveContext(initialContext);
+            setActiveContext(initialContext);
             setMessages([{
               id: 'sys-init',
               text: `Mode Analisis Aktif: Menggunakan data tanggal ${new Date(initialContext.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}. Silakan tanya tentang hasil ini.`,
@@ -261,10 +259,10 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
       // Call Standardized API
       const response = await api.chat.sendMessage({
         message: userMsg.text,
-        history: messages, // Send full history, API will filter/format
+        history: messages,
         context: {
           emotion: detectedEmotion,
-          activeContext, // Send full context object if exists
+          activeContext,
         },
         userData: {
           uid: userData?.uid,
