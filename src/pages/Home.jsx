@@ -4,8 +4,9 @@ import {
   CloudRain, Sun, Moon, MapPin,
   Smile, Frown, Zap, Wind, Cloud,
   ArrowRight, MessageCircle, Quote, Activity, Heart,
-  Flame, Music,
+  Flame, Music, CheckCircle2
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { checkStreak } from '../utils/gamification';
 import { api } from '../utils/api';
 import BreathingModal from '../components/BreathingModal';
@@ -65,6 +66,8 @@ const itemVars = {
 const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNavigate, onVerifyHistory, lastAssessment }) => {
   const [timeGreeting, setTimeGreeting] = useState('Pagi');
   const [streak, setStreak] = useState(0);
+  const [completedIndices, setCompletedIndices] = useState([]);
+  const [score, setScore] = useState(0);
   const [isPlayingRain, setIsPlayingRain] = useState(false);
   const [gratitudeText, setGratitudeText] = useState('');
   const [showBreathingModal, setShowBreathingModal] = useState(false);
@@ -110,7 +113,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     }
   };
 
-  // time and streak logic
+  // time and gamification logic
   useEffect(() => {
     const updateTime = () => {
       const hours = new Date().getHours();
@@ -121,26 +124,67 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     };
     updateTime();
 
-    const initStreak = async () => {
+    const initGamification = async () => {
       if (userData?.uid) {
         try {
           const gamification = await api.getGamification(userData.uid);
           const lastLogin = gamification?.last_login || new Date(Date.now() - 86400000).toISOString();
           const currentStreak = gamification?.streak || 0;
           const newStreak = checkStreak(lastLogin, currentStreak);
+
           setStreak(newStreak);
+          setCompletedIndices(gamification?.completedIndices || []);
+          setScore(gamification?.score || 0);
+
           await api.saveGamification(userData.uid, {
             ...gamification,
             streak: newStreak,
             last_login: new Date().toISOString()
           });
         } catch (e) {
-          console.error("Failed to sync streak", e);
+          console.error("Failed to sync gamification", e);
         }
       }
     };
-    initStreak();
+    initGamification();
   }, [userData]);
+
+  // Sync gamification state changes to DB
+  useEffect(() => {
+    if (!userData?.uid) return;
+
+    // Delay save to debounce/avoid rapid writes
+    const timeout = setTimeout(async () => {
+      const gamification = await api.getGamification(userData.uid);
+      await api.saveGamification(userData.uid, {
+        ...gamification,
+        score,
+        completedIndices
+      });
+    }, 1000); // 1s debounce
+
+    return () => clearTimeout(timeout);
+  }, [score, completedIndices, userData]);
+
+
+  const handleToggleTask = (index) => {
+    const isCompleted = completedIndices.includes(index);
+
+    if (isCompleted) {
+      setCompletedIndices(prev => prev.filter(i => i !== index));
+      setScore(prev => Math.max(0, prev - 10)); // Deduct
+    } else {
+      setCompletedIndices(prev => [...prev, index]);
+      setScore(prev => prev + 10);
+
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ['#818cf8', '#34d399']
+      });
+    }
+  };
 
   // daily plan logic
   const [dailyPlan, setDailyPlan] = useState(null);
@@ -156,7 +200,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           if (storedPlan && storedPlan.date === todayStr) {
             setDailyPlan(storedPlan);
           } else {
-            // Generate new plan
+            // Generate new plan  
             setLoadingPlan(true);
             const newPlan = await api.analyst.generateDailyGoals({
               userData,
@@ -287,14 +331,33 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
               </div>
             ) : dailyPlan?.goals ? (
               <div className="space-y-3">
-                {dailyPlan.goals.map((goal, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-white/5 border border-white/60 dark:border-white/5">
-                    <div className="w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-indigo-500">{idx + 1}</span>
-                    </div>
-                    <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{goal}</span>
-                  </div>
-                ))}
+                {dailyPlan.goals.map((goal, idx) => {
+                  const isCompleted = completedIndices.includes(idx);
+                  return (
+                    <motion.div
+                      key={idx}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleToggleTask(idx)}
+                      className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${isCompleted
+                          ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
+                          : 'bg-white/50 dark:bg-white/5 border-white/60 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/10'
+                        }`}
+                    >
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${isCompleted
+                          ? 'bg-green-500 text-white'
+                          : 'border-2 border-indigo-400 text-indigo-500/20'
+                        }`}>
+                        {isCompleted && <CheckCircle2 className="w-4 h-4" />}
+                      </div>
+                      <span className={`text-sm font-medium transition-all ${isCompleted
+                          ? 'text-slate-400 dark:text-slate-500 line-through'
+                          : 'text-slate-700 dark:text-slate-300'
+                        }`}>
+                        {goal}
+                      </span>
+                    </motion.div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-slate-500">Siap untuk hari ini? Yuk mulai!</p>

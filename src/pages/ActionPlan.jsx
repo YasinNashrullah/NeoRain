@@ -32,15 +32,18 @@ const ActionPlan = ({ userData, onNavigate }) => {
             if (!userData?.uid) return;
 
             try {
+                const todayStr = new Date().toDateString();
+
                 // load gamification data
                 const savedGamification = (await api.getGamification(userData.uid)) || {
                     score: 0,
                     streak: 0,
                     completedIndices: [],
+                    last_action_date: null,
                     history: []
                 };
 
-                // load latest assessment
+                // load latest assessment (for context/generating new goals if needed)
                 const assessment = await api.getLatestAssessment(userData.uid);
                 setAssessmentId(assessment?.id);
 
@@ -48,41 +51,42 @@ const ActionPlan = ({ userData, onNavigate }) => {
                 let currentPlan = await api.getDailyPlan(userData.uid);
                 let actions = [];
 
-                // LOGIC: Sync with Assessment
-                // If we have a new assessment that is different from what we based our current plan on
-                if (assessment && assessment.ai_analysis?.actions) {
-
-                    // Check if we need to update (Different source assessment ID)
-                    if (currentPlan?.source_assessment_id !== assessment.id) {
-                        // NEW PLAN FROM ASSESSMENT
-                        actions = assessment.ai_analysis.actions;
-
-                        // Filter out "Professional Help" generic advice if possible, to keep it actionable
-                        actions = actions.filter(a =>
-                            !a.toLowerCase().includes("konsultasi") &&
-                            !a.toLowerCase().includes("profesional")
-                        );
-
-                        // Fallback if filter removes everything
-                        if (actions.length === 0) actions = assessment.ai_analysis.actions;
-
-                        // Save this new plan
-                        await api.saveDailyPlan(userData.uid, {
-                            source_assessment_id: assessment.id,
-                            updated_at: new Date().toISOString(),
-                            actions: actions
-                        });
-
-                        // Reset progress for new plan
-                        savedGamification.completedIndices = [];
-                        await api.saveGamification(userData.uid, savedGamification);
-                    } else {
-                        // EXISTING PLAN (Match)
-                        actions = currentPlan.actions || [];
-                    }
+                // LOGIC: Daily Reset & Sync with Home.jsx
+                if (currentPlan && currentPlan.date === todayStr) {
+                    // Plan exists for today - Use it (Prioritize goals from Home.jsx if available, else actions)
+                    actions = currentPlan.goals || currentPlan.actions || [];
                 } else {
-                    // No assessment available yet, or no actions in it
-                    actions = [];
+                    // No plan for today - Generate NEW Daily Goals
+                    console.log("Generating new daily goals from ActionPlan...");
+
+                    // We need mood for generation, default to 'calm' if not in args (ActionPlan doesn't have mood prop, fetch or default)
+                    // Trying to fetch current mood from API is safest but extra call. 
+                    // For now, let's use assessment stress or default.
+
+                    const newPlan = await api.analyst.generateDailyGoals({
+                        userData,
+                        lastAssessment: assessment,
+                        currentMood: 'calm' // Default since we don't have real-time mood here easily without prop
+                    });
+
+                    // Save this new plan
+                    const planToSave = {
+                        ...newPlan,
+                        date: todayStr,
+                        source_assessment_id: assessment?.id,
+                        updated_at: new Date().toISOString()
+                    };
+
+                    await api.saveDailyPlan(userData.uid, planToSave);
+                    actions = newPlan.goals || [];
+                    currentPlan = planToSave; // Update current ref
+                }
+
+                // Check for Daily Reset of Checks
+                if (savedGamification.last_action_date !== todayStr) {
+                    savedGamification.completedIndices = [];
+                    savedGamification.last_action_date = todayStr;
+                    await api.saveGamification(userData.uid, savedGamification);
                 }
 
                 setActionItems(actions);
