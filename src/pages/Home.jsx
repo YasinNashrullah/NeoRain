@@ -142,20 +142,50 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
     initStreak();
   }, [userData]);
 
+  // daily plan logic
+  const [dailyPlan, setDailyPlan] = useState(null);
+  const [loadingPlan, setLoadingPlan] = useState(false);
+
+  useEffect(() => {
+    const fetchDailyPlan = async () => {
+      if (userData?.uid) {
+        try {
+          const todayStr = new Date().toDateString();
+          const storedPlan = await api.getDailyPlan(userData.uid);
+
+          if (storedPlan && storedPlan.date === todayStr) {
+            setDailyPlan(storedPlan);
+          } else {
+            // Generate new plan
+            setLoadingPlan(true);
+            const newPlan = await api.analyst.generateDailyGoals({
+              userData,
+              lastAssessment,
+              currentMood: displayMood
+            });
+
+            const planToSave = { ...newPlan, date: todayStr };
+            await api.saveDailyPlan(userData.uid, planToSave);
+            setDailyPlan(planToSave);
+            setLoadingPlan(false);
+          }
+        } catch (error) {
+          console.error("Failed to load daily plan", error);
+          setLoadingPlan(false);
+        }
+      }
+    };
+    fetchDailyPlan();
+  }, [userData, lastAssessment, displayMood]);
+
   // dynamic content logic
   const isNegativeMood = ['angry', 'sad'].includes(displayMood);
-  const recTitle = isNegativeMood ? "Butuh Teman Cerita?" : "Jaga Kesehatan Mentalmu";
-  const recDesc = isNegativeMood
-    ? "Perasaanmu valid. Jangan dipendam sendiri. Cek kondisimu sekarang."
-    : "Lakukan pengecekan rutin untuk mengetahui kondisi mentalmu saat ini.";
-
-  const recBtnText = "Mulai Analisis";
-  const recAction = onStartAnalysis;
-
+  // Selected Quote logic
   const selectedQuote = useMemo(() => {
+    if (dailyPlan?.quote) return dailyPlan.quote;
     const moodQuotes = quotesData[displayMood] || quotesData.calm;
     return moodQuotes[Math.floor(Math.random() * moodQuotes.length)];
-  }, [displayMood]);
+  }, [displayMood, dailyPlan]);
 
   return (
     <motion.div
@@ -235,28 +265,48 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           </div>
         </motion.div>
 
-        {/* main action card */}
+        {/* Daily Missions Card (Replaces generic AI Rec) */}
         <motion.div variants={itemVars} className={`row-span-2 ${cardBaseStyle} group flex flex-col justify-between`}>
-          <div className={`absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 transition-colors duration-500 ${isNegativeMood ? 'bg-orange-500' : 'bg-green-500'}`}></div>
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 bg-indigo-500"></div>
 
-          <div className="relative z-10">
+          <div className="relative z-10 w-full">
             <div className="flex justify-between items-start mb-4">
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-bold px-2 py-1 rounded text-white">
-                AI RECOMMENDATION
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-bold px-2 py-1 rounded text-white flex items-center gap-1">
+                <Sun className="w-3 h-3" /> DAILY MISSIONS
               </div>
-              <ArrowRight className="w-5 h-5 text-slate-400 dark:text-white/50 group-hover:translate-x-1 transition-transform" />
+              <Activity className="w-5 h-5 text-slate-400 dark:text-white/50" />
             </div>
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{recTitle}</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
-              {recDesc}
-            </p>
+
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Misi Hari Ini</h3>
+
+            {loadingPlan ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-3/4"></div>
+                <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-full"></div>
+                <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-2/3"></div>
+              </div>
+            ) : dailyPlan?.goals ? (
+              <div className="space-y-3">
+                {dailyPlan.goals.map((goal, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-white/50 dark:bg-white/5 border border-white/60 dark:border-white/5">
+                    <div className="w-6 h-6 rounded-full border-2 border-indigo-400 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-indigo-500">{idx + 1}</span>
+                    </div>
+                    <span className="text-sm text-slate-700 dark:text-slate-300 font-medium">{goal}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">Siap untuk hari ini? Yuk mulai!</p>
+            )}
+
           </div>
 
           <button
-            onClick={recAction}
-            className="relative z-10 w-full py-4 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-950 font-bold text-sm hover:bg-slate-800 dark:hover:bg-slate-200 transition-all flex items-center justify-center gap-2 group-hover:scale-[1.02]"
+            onClick={onStartAnalysis}
+            className="relative z-10 w-full mt-6 py-4 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
           >
-            {recBtnText}
+            Cek Kesehatan Mental
           </button>
         </motion.div>
 

@@ -173,7 +173,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
       const { data, hasMore: more } = await api.getChats(userData.uid, page);
       if (data.length > 0) {
         const validMessages = data.filter(m => m.text && m.text.trim() !== "");
-        setMessages(validMessages.reverse()); // Replace state because API returns cumulative list
+        setMessages(validMessages.reverse());
         setHasMore(more);
         setPage(prev => prev + 1);
       } else {
@@ -207,6 +207,40 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
       }
     }
   }, [activeContext, messages.length]);
+
+  // Handle initialContext changes (System Message & State Update)
+  const processedContextRef = useRef(null);
+  const activeContextRef = useRef(activeContext);
+
+  useEffect(() => {
+    activeContextRef.current = activeContext;
+  }, [activeContext]);
+
+  useEffect(() => {
+    if (historyLoaded && initialContext) {
+      setActiveContext(initialContext);
+
+      // Only append system message if we haven't processed this context ID in this session
+      // OR if we just remounted and the last message isn't already this system message
+      if (processedContextRef.current !== initialContext.id) {
+        setMessages(prev => {
+          const contextDate = new Date(initialContext.created_at).toLocaleDateString('id-ID');
+          const text = `Konteks diubah: Data tanggal ${contextDate}.`;
+
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg?.text === text) return prev;
+
+          return [...prev, {
+            id: Date.now(),
+            text: text,
+            sender: 'system',
+            time: 'Update'
+          }];
+        });
+        processedContextRef.current = initialContext.id;
+      }
+    }
+  }, [historyLoaded, initialContext, setMessages]);
 
 
 
@@ -262,7 +296,7 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         history: messages,
         context: {
           emotion: detectedEmotion,
-          activeContext,
+          activeContext: activeContextRef.current,
         },
         userData: {
           uid: userData?.uid,

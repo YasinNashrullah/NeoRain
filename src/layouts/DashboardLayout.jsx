@@ -22,7 +22,7 @@ const Placeholder = ({ title, icon: Icon }) => (
 const DashboardLayout = ({ userData, onLogout, onUpdateProfile }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [chatContext, setChatContext] = useState(null);
-  
+
   // State Mood & Chat
   const [currentMood, setCurrentMood] = useState(() => localStorage.getItem('currentMood') || 'default');
   const [messages, setMessages] = useState(() => {
@@ -32,10 +32,18 @@ const DashboardLayout = ({ userData, onLogout, onUpdateProfile }) => {
 
   // Handler
   const handleAnalyzeFinish = () => setActiveTab('stats');
-  
+
   const handleChatWithContext = (assessmentData) => {
     setChatContext(assessmentData);
     setActiveTab('chat');
+  };
+
+  const handleNavigate = (tab) => {
+    setActiveTab(tab);
+    // Clear chat context if navigating away from chat
+    if (tab !== 'chat') {
+      setChatContext(null);
+    }
   };
 
   const handleStartAnalysis = () => setActiveTab('analyze');
@@ -46,79 +54,86 @@ const DashboardLayout = ({ userData, onLogout, onUpdateProfile }) => {
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[150px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-900/20 rounded-full blur-[150px] pointer-events-none"></div>
 
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        onLogout={onLogout} 
-        userData={userData} 
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={handleNavigate}
+        onLogout={onLogout}
+        userData={userData}
       />
-      
+
       <div className="flex-1 relative h-full w-full overflow-hidden flex flex-col">
-        
+
         {/* Mobile Chat Overlay */}
         {activeTab === 'chat' && (
           <div className="md:hidden fixed inset-0 z-[9999] w-full h-full bg-slate-950">
-             <Chat 
-                onBack={() => setActiveTab('home')} 
-                userData={userData}
-                initialContext={chatContext}
-                messages={messages}
-                setMessages={setMessages}
-                currentMood={currentMood}
-                setCurrentMood={setCurrentMood}
-             />
+            <Chat
+              onBack={() => handleNavigate('home')}
+              userData={userData}
+              initialContext={chatContext}
+              messages={messages}
+              setMessages={setMessages}
+              currentMood={currentMood}
+              setCurrentMood={setCurrentMood}
+            />
           </div>
         )}
 
         {/* Desktop container */}
         <div className="flex-1 w-full h-full flex flex-col md:p-6 transition-all duration-300">
           <div className="flex-1 w-full h-full bg-slate-950 md:bg-slate-950/50 md:backdrop-blur-sm md:border md:border-white/5 md:rounded-[30px] relative overflow-hidden shadow-2xl flex flex-col">
-            
+
             {/* content */}
             {activeTab === 'chat' ? (
               <div className="hidden md:flex flex-1 w-full h-full flex-col min-h-0">
-                 <Chat 
-                    onBack={() => setActiveTab('home')} 
-                    userData={userData}
-                    initialContext={chatContext}
-                    messages={messages}
-                    setMessages={setMessages}
-                    currentMood={currentMood}
-                    setCurrentMood={setCurrentMood}
-                 />
+                <Chat
+                  onBack={() => handleNavigate('home')}
+                  userData={userData}
+                  initialContext={chatContext}
+                  messages={messages}
+                  setMessages={setMessages}
+                  currentMood={currentMood}
+                  setCurrentMood={setCurrentMood}
+                />
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto scrollbar-hide min-h-0">
-                <div className="w-full h-full mx-auto"> 
-                  
+                <div className="w-full h-full mx-auto">
+
                   {activeTab === 'analyze' && (
                     <Analyze userData={userData} onFinish={handleAnalyzeFinish} />
                   )}
 
                   {activeTab === 'home' && (
-                    <Home 
-                      userData={userData} 
+                    <Home
+                      userData={userData}
                       currentMood={currentMood}
                       setCurrentMood={setCurrentMood}
                       onStartAnalysis={handleStartAnalysis}
-                      onNavigate={setActiveTab}
+                      onNavigate={handleNavigate}
                     />
                   )}
-                  
-                  {activeTab === 'tracker' && <Tracker userData={userData} />}
-                  
+
+                  {activeTab === 'tracker' && (
+                    <Tracker
+                      userData={userData}
+                      onChatRequest={handleChatWithContext}
+                      onNavigate={handleNavigate}
+                    />
+                  )}
+
                   {activeTab === 'stats' && (
-                    <Statistics 
-                        userData={userData} 
-                        onChatRequest={handleChatWithContext} 
+                    <Statistics
+                      userData={userData}
+                      onChatRequest={handleChatWithContext}
+                      onNavigate={handleNavigate}
                     />
                   )}
-                  
+
                   {activeTab === 'profile' && (
-                    <Profile 
-                      userData={userData} 
-                      onLogout={onLogout} 
-                      onUpdateProfile={onUpdateProfile} 
+                    <Profile
+                      userData={userData}
+                      onLogout={onLogout}
+                      onUpdateProfile={onUpdateProfile}
                     />
                   )}
 
@@ -131,7 +146,7 @@ const DashboardLayout = ({ userData, onLogout, onUpdateProfile }) => {
 
         {activeTab !== 'chat' && (
           <div className="md:hidden">
-            <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+            <BottomNav activeTab={activeTab} setActiveTab={handleNavigate} />
           </div>
         )}
 

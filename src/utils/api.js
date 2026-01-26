@@ -99,6 +99,29 @@ export const api = {
     sendMessage: async ({ message, history, context, userData }) => {
       try {
         // 1. Prepare System Prompt
+        const getAnalysisData = (ctx) => {
+          if (!ctx) return null;
+          let summary = "-";
+          let factors = "-";
+
+          try {
+            const raw = ctx.ai_analysis;
+            if (typeof raw === 'object' && raw !== null) {
+              summary = raw.summary || "-";
+              factors = raw.factors || "-";
+            } else if (typeof raw === 'string') {
+              const parsed = JSON.parse(raw);
+              summary = parsed.summary || "-";
+              factors = parsed.factors || "-";
+            }
+          } catch (e) {
+            console.warn("Failed to parse analysis context for prompt", e);
+          }
+          return { summary, factors };
+        };
+
+        const analysisData = getAnalysisData(context?.activeContext);
+
         const systemPrompt = `
           Role: NeoRain (Teman Curhat & Support System Mental Health). 
           User: ${userData?.name || "Teman"}.
@@ -127,21 +150,20 @@ export const api = {
           Konteks Visual (Kamera): ${context?.emotion ? `Ekspresi wajah user terlihat "${context.emotion}". Validasi ini.` : "Tidak ada visual."}
 
           Konteks Analisis (Jika ada, user ingin membahas ini):
-          ${
-            context?.activeContext
-              ? `
+          ${context?.activeContext
+            ? `
             [DATA ANALISIS AKTIF]
             - Tanggal Tes: ${new Date(context.activeContext.created_at).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
             - Skor Depresi: ${context.activeContext.depression_score} (Skala DASS-21)
             - Skor Cemas: ${context.activeContext.anxiety_score} (Skala DASS-21)
             - Skor Stress: ${context.activeContext.stress_score} (Skala DASS-21)
-            - Ringkasan AI: "${context.activeContext.ai_analysis?.summary || "-"}"
-            - Faktor Pemicu: "${context.activeContext.ai_analysis?.factors || "-"}"
+            - Ringkasan AI: "${analysisData?.summary}"
+            - Faktor Pemicu: "${analysisData?.factors}"
             
             TUGAS KHUSUS: 
             Jelaskan hasil ini dengan empati jika user bertanya. Hubungkan skor dengan perasaan mereka. Beri validasi bahwa tidak apa-apa untuk merasa seperti itu.
           `
-              : "Mode Chat Umum (Tanpa data analisis spesifik)."
+            : "Mode Chat Umum (Tanpa data analisis spesifik)."
           }
 
           OUTPUT JSON ONLY:
@@ -153,10 +175,19 @@ export const api = {
         `;
 
         const contents = [
-          ...history.map((msg) => ({
-            role: msg.sender === "user" ? "user" : "model",
-            parts: [{ text: msg.text }],
-          })),
+          ...history.map((msg) => {
+            // Treat system messages (like context switch) as User inputs to force attention
+            if (msg.sender === 'system') {
+              return {
+                role: 'user',
+                parts: [{ text: `[SYSTEM INFO]: ${msg.text}` }]
+              };
+            }
+            return {
+              role: msg.sender === "user" ? "user" : "model",
+              parts: [{ text: msg.text }],
+            };
+          }),
           { role: "user", parts: [{ text: message }] },
         ];
 
@@ -249,7 +280,7 @@ export const api = {
         try {
           analysis = JSON.parse(rawResponse);
         } catch (e) {
-          // Fallback if clean JSON parsing fails (though _callGemini should return text)
+          // Fallback if clean JSON parsing fails (or markdown blocks)
           const cleanText = rawResponse.replace(/```json|```/g, "").trim();
           analysis = JSON.parse(cleanText);
         }
@@ -269,6 +300,55 @@ export const api = {
       } catch (error) {
         console.error("Analyst API Failed:", error);
         throw error;
+      }
+    },
+
+    generateDailyGoals: async ({ userData, lastAssessment, currentMood }) => {
+      try {
+        const prompt = `
+          Role: Life Coach & Teman Produktif.
+          User: ${userData?.name || "Teman"}.
+          Mood Saat Ini: ${currentMood || "Netral"}.
+          Terakhir Cek Mental: ${lastAssessment ? `Stress Level: ${lastAssessment.stress_score}` : "Belum pernah cek"}.
+
+          Tugas: Buat "Daily Mission" (Misi Harian) yang fresh untuk hari ini.
+          Fokus: Quick wins, mood booster, dan self-care.
+          
+          Rules:
+          1. 3 Misi Saja.
+          2. Kalimat santai, pendek, dan actionable.
+          3. Sesuaikan dengan Mood. Kalau sedih = restorative. Kalau semangat = challenge.
+
+          Output JSON:
+          {
+            "goals": ["Misi 1", "Misi 2", "Misi 3"],
+            "quote": "Quote penyemangat singkat sesuai mood hari ini."
+          }
+        `;
+
+        const rawResponse = await _callGemini(
+          {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" },
+          },
+          config.gemini.analyzeKeys,
+          "Daily Goals API",
+        );
+
+        let data;
+        try {
+          data = JSON.parse(rawResponse);
+        } catch (e) {
+          const cleanText = rawResponse.replace(/```json|```/g, "").trim();
+          data = JSON.parse(cleanText);
+        }
+        return data;
+      } catch (error) {
+        console.error("Generate Daily Goals Failed:", error);
+        return {
+          goals: ["Minum air putih", "Tarik napas dalam 3x", "Senyum ke diri sendiri di cermin"],
+          quote: "Small steps matter."
+        };
       }
     },
   },
