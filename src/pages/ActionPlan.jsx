@@ -53,20 +53,12 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
                 // LOGIC: Daily Reset & Sync with Home.jsx
                 if (currentPlan && currentPlan.date === todayStr) {
-                    // Plan exists for today - Use it (Prioritize goals from Home.jsx if available, else actions)
                     actions = currentPlan.goals || currentPlan.actions || [];
                 } else {
-                    // No plan for today - Generate NEW Daily Goals
-                    console.log("Generating new daily goals from ActionPlan...");
-
-                    // We need mood for generation, default to 'calm' if not in args (ActionPlan doesn't have mood prop, fetch or default)
-                    // Trying to fetch current mood from API is safest but extra call. 
-                    // For now, let's use assessment stress or default.
-
                     const newPlan = await api.analyst.generateDailyGoals({
                         userData,
                         lastAssessment: assessment,
-                        currentMood: 'calm' // Default since we don't have real-time mood here easily without prop
+                        currentMood: 'calm'
                     });
 
                     // Save this new plan
@@ -79,7 +71,7 @@ const ActionPlan = ({ userData, onNavigate }) => {
 
                     await api.saveDailyPlan(userData.uid, planToSave);
                     actions = newPlan.goals || [];
-                    currentPlan = planToSave; // Update current ref
+                    currentPlan = planToSave;
                 }
 
                 // Check for Daily Reset of Checks
