@@ -105,10 +105,9 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         intensity: 5
       });
       setGratitudeText('');
-      toast.success("Jurnal rasa syukur berhasil disimpan! ✨");
+      toast.success("Jurnal tersimpan :)");
 
     } catch (error) {
-      console.error("Failed to save gratitude:", error);
       toast.error("Gagal menyimpan jurnal. Coba lagi ya.");
     }
   };
@@ -142,7 +141,6 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
             last_login: new Date().toISOString()
           });
         } catch (e) {
-          console.error("Failed to sync gamification", e);
         }
       }
     };
@@ -214,7 +212,6 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
             setLoadingPlan(false);
           }
         } catch (error) {
-          console.error("Failed to load daily plan", error);
           setLoadingPlan(false);
         }
       }
@@ -339,19 +336,19 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handleToggleTask(idx)}
                       className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${isCompleted
-                          ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
-                          : 'bg-white/50 dark:bg-white/5 border-white/60 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/10'
+                        ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
+                        : 'bg-white/50 dark:bg-white/5 border-white/60 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/10'
                         }`}
                     >
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${isCompleted
-                          ? 'bg-green-500 text-white'
-                          : 'border-2 border-indigo-400 text-indigo-500/20'
+                        ? 'bg-green-500 text-white'
+                        : 'border-2 border-indigo-400 text-indigo-500/20'
                         }`}>
                         {isCompleted && <CheckCircle2 className="w-4 h-4" />}
                       </div>
                       <span className={`text-sm font-medium transition-all ${isCompleted
-                          ? 'text-slate-400 dark:text-slate-500 line-through'
-                          : 'text-slate-700 dark:text-slate-300'
+                        ? 'text-slate-400 dark:text-slate-500 line-through'
+                        : 'text-slate-700 dark:text-slate-300'
                         }`}>
                         {goal}
                       </span>
@@ -366,10 +363,10 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           </div>
 
           <button
-            onClick={onStartAnalysis}
+            onClick={() => onNavigate('action-plan')}
             className="relative z-10 w-full mt-6 py-4 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
           >
-            Cek Kesehatan Mental
+            Cek Misi Lainnya
           </button>
         </motion.div>
 

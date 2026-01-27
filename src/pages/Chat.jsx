@@ -180,7 +180,6 @@ const Chat = ({ onBack, userData, initialContext, messages, setMessages, current
         setHasMore(false);
       }
     } catch (e) {
-      console.error("Failed to load more chats", e);
     } finally {
       setIsLoadingMore(false);
     }

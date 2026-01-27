@@ -118,14 +118,12 @@ const Analyze = ({ userData, onFinish }) => {
       // --- STANDARD API INTEGRATION ---
       let aiAnalysis;
       try {
-        console.log("Generating report via api.analyst...");
         aiAnalysis = await api.analyst.generateReport({
           userData: { uid: userData?.uid, name: userData?.displayName || 'User' },
           scores: scores,
           context: { moodContext, streakContext, chatHistory: chatHistoryContext }
         });
       } catch (error) {
-        console.error("API Error, utilizing fallback:", error);
         // Fallback UI data if API fails completely
         aiAnalysis = {
           summary: "Analisis selesai. Skor kamu telah direkam.",

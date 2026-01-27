@@ -40,7 +40,7 @@ const _callGemini = async (payload, keys, contextName = "Gemini API") => {
     const apiKey = keys[i];
     try {
       console.log(
-        `[${contextName}] Attempting request with Key #${i + 1} (${apiKey.substring(0, 4)}***)...`,
+        `[${contextName}] Attempting request with Key #${i + 1}...`,
       );
 
       const response = await fetch(`${baseUrl}/${model}:generateContent`, {
@@ -315,7 +315,7 @@ export const api = {
           Fokus: Quick wins, mood booster, dan self-care.
           
           Rules:
-          1. 3 Misi Saja.
+          1. 5 Misi Saja.
           2. Kalimat santai, pendek, dan actionable.
           3. Sesuaikan dengan Mood. Kalau sedih = restorative. Kalau semangat = challenge.
 
