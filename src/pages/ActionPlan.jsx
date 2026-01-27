@@ -55,10 +55,25 @@ const ActionPlan = ({ userData, onNavigate }) => {
                 if (currentPlan && currentPlan.date === todayStr) {
                     actions = currentPlan.goals || currentPlan.actions || [];
                 } else {
+                    // Fetch chat history for context
+                    let chatContext = "";
+                    try {
+                        const chats = await api.getChats(userData.uid, 1);
+                        if (chats?.data) {
+                            chatContext = chats.data
+                                .slice(0, 15)
+                                .map(c => `${c.sender}: ${c.text}`)
+                                .join("\n");
+                        }
+                    } catch (e) {
+                        console.warn("Failed to fetch chat context for action plan", e);
+                    }
+
                     const newPlan = await api.analyst.generateDailyGoals({
                         userData,
                         lastAssessment: assessment,
-                        currentMood: 'calm'
+                        currentMood: 'calm',
+                        chatHistory: chatContext
                     });
 
                     // Save this new plan

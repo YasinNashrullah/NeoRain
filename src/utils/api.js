@@ -251,12 +251,18 @@ export const api = {
           
           Tugas: Buat "Action Plan" berupa Misi Harian yang personal.
           
+          Instruction:
+          1. ANALYZE CHAT HISTORY for HOBBIES, INTERESTS, and DISLIKES.
+          2. IF User likes 'gaming' -> Mission: "Main game santai 30 menit".
+          3. IF User likes 'art' -> Mission: "Coret-coret kertas sesuka hati".
+          4. IF User dislikes 'sports' -> DO NOT suggest heavy exercise. Suggest "Stretching 5 menit" instead.
+          
           Instruksi Khusus untuk "actions" (Wajib 5-7 Misi):
           1. RESTORATIVE: 1-2 Misi untuk menstabilkan mental (contoh: journaling, teknik grounding 5-4-3-2-1).
-          2. JOY & HOBBY: 1-2 Misi menyenangkan BERDASARKAN obrolan user di Riwayat Chat. (Analisa hobi mereka! Jika suka masak, beri tantangan masak simpel. Jika suka game, tantangan main santai).
+          2. JOY & HOBBY (PRIORITY): 1-2 Misi menyenangkan BERDASARKAN HOBI USER (Wajib beda dari restorative).
           3. MIND & BODY: 1-2 Misi fisik ringan (Tidur cukup 7 jam, Jalan kaki 10 menit, Minum air 2L).
-          4. SOCIAL CONNECT: 1 Misi sosial ringan (Sapa teman lama, Kirim stiker lucu ke grup, atau Curhat tipis orang terpercaya).
-          5. FUTURE SELF: 1 Misi produktivitas mikro (Rapikan meja, List 3 hal prioritas besok, Baca 1 artikel seru).
+          4. SOCIAL CONNECT: 1 Misi sosial ringan.
+          5. FUTURE SELF: 1 Misi produktivitas mikro.
           
           Output JSON:
           {
@@ -303,21 +309,31 @@ export const api = {
       }
     },
 
-    generateDailyGoals: async ({ userData, lastAssessment, currentMood }) => {
+    generateDailyGoals: async ({ userData, lastAssessment, currentMood, chatHistory }) => {
       try {
         const prompt = `
           Role: Life Coach & Teman Produktif.
           User: ${userData?.name || "Teman"}.
           Mood Saat Ini: ${currentMood || "Netral"}.
           Terakhir Cek Mental: ${lastAssessment ? `Stress Level: ${lastAssessment.stress_score}` : "Belum pernah cek"}.
+          
+          Riwayat Chat & Hobi (Gunakan untuk personalisasi):
+          ${chatHistory || "Tidak ada data chat."}
 
           Tugas: Buat "Daily Mission" (Misi Harian) yang fresh untuk hari ini.
+          
+          CRITICAL PERSONALIZATION INSTRUCTIONS:
+          1. BACA "Riwayat Chat & Hobi" di atas.
+          2. JIKA user menyebutkan HOBI (misal: "suka baca", "suka kucing", "suka kopi"), WAJIB buat 1 misi terkait itu. (Contoh: "Baca 1 halaman buku", "Main sama kucing sebentar", "Nikmati kopi pagi tanpa HP").
+          3. JIKA user menyebutkan KETIDAKSUKAAN (misal: "benci lari", "males keramaian"), JANGAN berikan misi itu.
+          4. Jika tidak ada info hobi, berikan misi umum yang menyenangkan (Tidur siang, Nonton film, Makan enak).
+          
           Fokus: Quick wins, mood booster, dan self-care.
           
           Rules:
           1. 5 Misi Saja.
           2. Kalimat santai, pendek, dan actionable.
-          3. Sesuaikan dengan Mood. Kalau sedih = restorative. Kalau semangat = challenge.
+          3. Sesuaikan dengan Mood.
 
           Output JSON:
           {
@@ -785,6 +801,19 @@ export const api = {
       return "default";
     } catch (error) {
       return handleError("Get Current Mood", error) || "default";
+    }
+  },
+
+  resetDailyPlan: async (firebaseUid) => {
+    try {
+      const userRef = doc(db, "users", firebaseUid);
+      await updateDoc(userRef, {
+        daily_plan: null,
+        updatedAt: serverTimestamp()
+      });
+      return { success: true };
+    } catch (error) {
+      return handleError("Reset Daily Plan", error);
     }
   },
 

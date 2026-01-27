@@ -145,6 +145,13 @@ const Analyze = ({ userData, onFinish }) => {
         console.warn("Gagal auto-save ke chat (non-critical):", chatError);
       }
 
+      // Reset Daily Plan agar generate baru di dashboard
+      try {
+        await api.resetDailyPlan(userData?.uid);
+      } catch (e) {
+        console.warn("Gagal reset daily plan", e);
+      }
+
       // selesai pindah halaman
       setTimeout(() => {
         onFinish();

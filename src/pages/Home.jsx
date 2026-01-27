@@ -200,10 +200,26 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
           } else {
             // Generate new plan  
             setLoadingPlan(true);
+
+            // Fetch chat history for context
+            let chatContext = "";
+            try {
+              const chats = await api.getChats(userData.uid, 1);
+              if (chats?.data) {
+                chatContext = chats.data
+                  .slice(0, 15) // ambil 15 chat terakhir
+                  .map(c => `${c.sender}: ${c.text}`)
+                  .join("\n");
+              }
+            } catch (e) {
+              console.warn("Failed to fetch chat context for daily plan", e);
+            }
+
             const newPlan = await api.analyst.generateDailyGoals({
               userData,
               lastAssessment,
-              currentMood: displayMood
+              currentMood: displayMood,
+              chatHistory: chatContext
             });
 
             const planToSave = { ...newPlan, date: todayStr };
@@ -212,6 +228,7 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
             setLoadingPlan(false);
           }
         } catch (error) {
+          console.error("Error fetching daily plan:", error); // Debug log
           setLoadingPlan(false);
         }
       }
@@ -266,205 +283,241 @@ const Home = ({ userData, currentMood, setCurrentMood, onStartAnalysis, onNaviga
         </div>
       </motion.div>
 
-      {/* main grid layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      {/* main layout container */}
+      <div className="flex flex-col gap-6">
 
-        {/* mood scanner card */}
-        <motion.div variants={itemVars} className={`md:col-span-2 ${cardBaseStyle}`}>
-          <div className="flex items-center justify-between w-full overflow-x-auto pb-2 scrollbar-hide gap-2">
-            {moods.map((m) => (
-              <motion.button
-                key={m.id}
-                onClick={() => setCurrentMood(m.id)}
-                whileHover={{
-                  scale: 1.05,
-                  y: -5,
-                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-                }}
-                whileTap={{ scale: 0.95 }}
-                className={`relative flex-1 min-w-[85px] mx-1 my-2 flex flex-col items-center justify-center gap-3 py-4 rounded-2xl border transition-all duration-300 group ${displayMood === m.id
-                  ? `${m.bg} ${m.border} shadow-lg ring-2 ring-offset-2 ring-indigo-500/20 dark:ring-offset-slate-900`
-                  : 'bg-white/80 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-500/30'
-                  }`}
-              >
-                <motion.div
-                  className={`p-2 rounded-full transition-colors duration-300 ${displayMood === m.id ? 'bg-white/60 dark:bg-white/10 shadow-inner' : 'bg-transparent group-hover:bg-white dark:group-hover:bg-white/5'}`}
-                  animate={displayMood === m.id ? {
-                    rotate: [0, -10, 10, -5, 5, 0],
-                    scale: [1, 1.1, 1]
-                  } : { rotate: 0, scale: 1 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                >
-                  <m.icon className={`w-8 h-8 md:w-10 md:h-10 transition-colors duration-300 ${m.color}`} />
-                </motion.div>
+        {/* Top Section: Split Columns */}
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
 
-                <span className={`text-[10px] md:text-xs font-bold transition-colors ${displayMood === m.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700'}`}>
-                  {m.label}
-                </span>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
+          {/* Left Column: Mood & Gratitude */}
+          <div className="flex flex-col gap-4 md:gap-6 lg:w-2/3">
 
-        {/* Daily Missions Card (Replaces generic AI Rec) */}
-        <motion.div variants={itemVars} className={`row-span-2 ${cardBaseStyle} group flex flex-col justify-between`}>
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 bg-indigo-500"></div>
-
-          <div className="relative z-10 w-full">
-            <div className="flex justify-between items-start mb-4">
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-bold px-2 py-1 rounded text-white flex items-center gap-1">
-                <Sun className="w-3 h-3" /> DAILY MISSIONS
-              </div>
-              <Activity className="w-5 h-5 text-slate-400 dark:text-white/50" />
-            </div>
-
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Misi Hari Ini</h3>
-
-            {loadingPlan ? (
-              <div className="space-y-3 animate-pulse">
-                <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-3/4"></div>
-                <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-full"></div>
-                <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-2/3"></div>
-              </div>
-            ) : dailyPlan?.goals ? (
-              <div className="space-y-3">
-                {dailyPlan.goals.map((goal, idx) => {
-                  const isCompleted = completedIndices.includes(idx);
-                  return (
+            {/* mood scanner card */}
+            <motion.div variants={itemVars} className={`${cardBaseStyle}`}>
+              <div className="flex items-center justify-between w-full overflow-x-auto pb-2 scrollbar-hide gap-2">
+                {moods.map((m) => (
+                  <motion.button
+                    key={m.id}
+                    onClick={() => setCurrentMood(m.id)}
+                    whileHover={{
+                      scale: 1.05,
+                      y: -5,
+                      boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`relative flex-1 min-w-[85px] mx-1 my-2 flex flex-col items-center justify-center gap-3 py-4 rounded-2xl border transition-all duration-300 group ${displayMood === m.id
+                      ? `${m.bg} ${m.border} shadow-lg ring-2 ring-offset-2 ring-indigo-500/20 dark:ring-offset-slate-900`
+                      : 'bg-white/80 dark:bg-white/5 border-slate-200 dark:border-white/10 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:border-indigo-200 dark:hover:border-indigo-500/30'
+                      }`}
+                  >
                     <motion.div
-                      key={idx}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleToggleTask(idx)}
-                      className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${isCompleted
-                        ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
-                        : 'bg-white/50 dark:bg-white/5 border-white/60 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/10'
-                        }`}
+                      className={`p-2 rounded-full transition-colors duration-300 ${displayMood === m.id ? 'bg-white/60 dark:bg-white/10 shadow-inner' : 'bg-transparent group-hover:bg-white dark:group-hover:bg-white/5'}`}
+                      animate={displayMood === m.id ? {
+                        rotate: [0, -10, 10, -5, 5, 0],
+                        scale: [1, 1.1, 1]
+                      } : { rotate: 0, scale: 1 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
                     >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${isCompleted
-                        ? 'bg-green-500 text-white'
-                        : 'border-2 border-indigo-400 text-indigo-500/20'
-                        }`}>
-                        {isCompleted && <CheckCircle2 className="w-4 h-4" />}
-                      </div>
-                      <span className={`text-sm font-medium transition-all ${isCompleted
-                        ? 'text-slate-400 dark:text-slate-500 line-through'
-                        : 'text-slate-700 dark:text-slate-300'
-                        }`}>
-                        {goal}
-                      </span>
+                      <m.icon className={`w-8 h-8 md:w-10 md:h-10 transition-colors duration-300 ${m.color}`} />
                     </motion.div>
-                  );
-                })}
+
+                    <span className={`text-[10px] md:text-xs font-bold transition-colors ${displayMood === m.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700'}`}>
+                      {m.label}
+                    </span>
+                  </motion.button>
+                ))}
               </div>
-            ) : (
-              <p className="text-sm text-slate-500">Siap untuk hari ini? Yuk mulai!</p>
-            )}
+            </motion.div>
 
+            {/* gratitude journal */}
+            <motion.div variants={itemVars} className={`${cardBaseStyle}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 bg-pink-100 dark:bg-pink-500/20 rounded-full text-pink-500"><Heart className="w-4 h-4" /></div>
+                <h4 className="text-slate-800 dark:text-white font-bold text-sm">Gratitude Journal</h4>
+              </div>
+              <div className="relative">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={gratitudeText}
+                    onChange={(e) => setGratitudeText(e.target.value)}
+                    placeholder="Satu hal yang kamu syukuri hari ini..."
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-4 text-slate-800 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-pink-500/50 focus:bg-white dark:focus:bg-white/10 transition-all"
+                    onKeyPress={(e) => e.key === 'Enter' && handleSaveGratitude()}
+                  />
+                  <button
+                    onClick={handleSaveGratitude}
+                    disabled={!gratitudeText.trim()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 disabled:opacity-0 disabled:scale-75 transition-all shadow-sm"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
 
-          <button
-            onClick={() => onNavigate('action-plan')}
-            className="relative z-10 w-full mt-6 py-4 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
-          >
-            Cek Misi Lainnya
-          </button>
-        </motion.div>
+          {/* Right Column: Daily Missions */}
+          <div className="flex flex-col lg:w-1/3 lg:relative">
+            {/* Daily Missions Card */}
+            <motion.div
+              variants={itemVars}
+              className={`${cardBaseStyle} group flex flex-col lg:absolute lg:inset-0 h-full w-full`}
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[80px] opacity-20 bg-indigo-500"></div>
 
-        {/* gratitude journal */}
-        <motion.div variants={itemVars} className={`md:col-span-1 lg:col-span-2 ${cardBaseStyle}`}>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-pink-100 dark:bg-pink-500/20 rounded-full text-pink-500"><Heart className="w-4 h-4" /></div>
-            <h4 className="text-slate-800 dark:text-white font-bold text-sm">Gratitude Journal</h4>
+              <div className="relative z-10 w-full flex flex-col h-full">
+                {/* Header Section (Fixed) */}
+                <div className="shrink-0">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-bold px-2 py-1 rounded text-white flex items-center gap-1">
+                      <Sun className="w-3 h-3" /> DAILY MISSIONS
+                    </div>
+                    <Activity className="w-5 h-5 text-slate-400 dark:text-white/50" />
+                  </div>
+
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Misi Hari Ini</h3>
+                </div>
+
+                {/* Scrollable List Section */}
+                <div className="flex-1 overflow-y-auto scrollbar-hide -mx-2 px-2">
+                  {loadingPlan ? (
+                    <div className="space-y-3 animate-pulse">
+                      <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-3/4"></div>
+                      <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-full"></div>
+                      <div className="h-4 bg-slate-200 dark:bg-white/10 rounded w-2/3"></div>
+                    </div>
+                  ) : dailyPlan?.goals ? (
+                    <div className="space-y-3 pb-2">
+                      {dailyPlan.goals.map((goal, idx) => {
+                        const isCompleted = completedIndices.includes(idx);
+                        return (
+                          <motion.div
+                            key={idx}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleToggleTask(idx)}
+                            className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${isCompleted
+                              ? 'bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20'
+                              : 'bg-white/50 dark:bg-white/5 border-white/60 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/10'
+                              }`}
+                          >
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-colors ${isCompleted
+                              ? 'bg-green-500 text-white'
+                              : 'border-2 border-indigo-400 text-indigo-500/20'
+                              }`}>
+                              {isCompleted && <CheckCircle2 className="w-4 h-4" />}
+                            </div>
+                            <span className={`text-sm font-medium transition-all ${isCompleted
+                              ? 'text-slate-400 dark:text-slate-500 line-through'
+                              : 'text-slate-700 dark:text-slate-300'
+                              }`}>
+                              {goal}
+                            </span>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-500">Siap untuk hari ini? Yuk mulai!</p>
+                  )}
+                </div>
+
+                {/* Footer Button (Fixed) */}
+                <div className="shrink-0 mt-4 pt-2 border-t border-slate-100 dark:border-white/5">
+                  <button
+                    onClick={() => onNavigate('action-plan')}
+                    className="relative z-10 w-full py-4 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                  >
+                    Cek Misi Lainnya
+                  </button>
+                </div>
+
+              </div>
+            </motion.div>
           </div>
-          <div className="relative">
-            <div className="relative">
-              <input
-                type="text"
-                value={gratitudeText}
-                onChange={(e) => setGratitudeText(e.target.value)}
-                placeholder="Satu hal yang kamu syukuri hari ini..."
-                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-4 pr-12 py-4 text-slate-800 dark:text-white text-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-pink-500/50 focus:bg-white dark:focus:bg-white/10 transition-all"
-                onKeyPress={(e) => e.key === 'Enter' && handleSaveGratitude()}
-              />
-              <button
-                onClick={handleSaveGratitude}
-                disabled={!gratitudeText.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 disabled:opacity-0 disabled:scale-75 transition-all shadow-sm"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* quick tools */}
-        <div className="grid grid-cols-2 gap-4 md:gap-6">
-          <motion.div variants={itemVars} onClick={() => onNavigate('chat')} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5 transition-all group shadow-sm dark:shadow-none`}>
-            <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
-              <MessageCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-slate-800 dark:text-white font-medium text-sm">Cerita AI</h4>
-              <p className="text-[10px] text-slate-500">Teman cerita 24/7</p>
-            </div>
-          </motion.div>
-
-          <motion.div variants={itemVars} onClick={toggleRain} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 border transition-all shadow-sm dark:shadow-none ${isPlayingRain ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-200 dark:border-blue-500/50' : 'bg-white/60 dark:bg-slate-900/60 border-white/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5'}`}>
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isPlayingRain ? 'bg-blue-500 text-white' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-500 dark:text-blue-400'}`}>
-              {isPlayingRain ? <span className="animate-pulse">❚❚</span> : <CloudRain className="w-5 h-5" />}
-            </div>
-            <div>
-              <h4 className="text-slate-800 dark:text-white font-medium text-sm">Sleep Sound</h4>
-              <p className="text-[10px] text-slate-500">{isPlayingRain ? 'Playing...' : 'Hujan & Petir'}</p>
-            </div>
-          </motion.div>
         </div>
 
-        {/* breathing widget */}
-        <motion.div
-          variants={itemVars}
-          onClick={() => setShowBreathingModal(true)}
-          className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-white/40 to-white/60 dark:from-indigo-900/20 dark:to-purple-900/20 backdrop-blur-md border border-white/40 dark:border-white/5 p-6 flex items-center justify-between shadow-sm dark:shadow-none cursor-pointer hover:bg-white/60 dark:hover:bg-indigo-900/30 transition-all group"
-        >
-          <div className="relative z-10">
-            <h4 className="text-slate-800 dark:text-white font-bold mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Tarik Napas</h4>
-            <p className="text-xs text-slate-500 max-w-[120px]">Ikuti lingkaran ini untuk menenangkan pikiranmu.</p>
-          </div>
-          <div className="relative w-16 h-16 flex items-center justify-center">
-            <div className="absolute inset-0 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full animate-ping opacity-20"></div>
-            {/* <div className="w-10 h-10 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)] group-hover:scale-110 transition-transform"></div> */}
-            <Wind className="w-10 h-10 text-indigo-500 group-hover:scale-110 transition-transform" />
-          </div>
-        </motion.div>
 
+        {/* Bottom Section: Quick Tools & Stats */}
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
+
+          {/* Left Column: Tools & Breathing */}
+          <div className="flex flex-col gap-4 md:gap-6 lg:w-2/3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+
+              {/* quick tools */}
+              <div className="grid grid-cols-2 gap-4 md:gap-6">
+                <motion.div variants={itemVars} onClick={() => onNavigate('chat')} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5 transition-all group shadow-sm dark:shadow-none`}>
+                  <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                    <MessageCircle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-slate-800 dark:text-white font-medium text-sm">Cerita AI</h4>
+                    <p className="text-[10px] text-slate-500">Teman cerita 24/7</p>
+                  </div>
+                </motion.div>
+
+                <motion.div variants={itemVars} onClick={toggleRain} className={`cursor-pointer rounded-[25px] p-5 flex flex-col gap-3 border transition-all shadow-sm dark:shadow-none ${isPlayingRain ? 'bg-blue-50 dark:bg-blue-600/20 border-blue-200 dark:border-blue-500/50' : 'bg-white/60 dark:bg-slate-900/60 border-white/40 dark:border-white/10 hover:bg-white/80 dark:hover:bg-white/5'}`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isPlayingRain ? 'bg-blue-500 text-white' : 'bg-blue-100 dark:bg-blue-500/20 text-blue-500 dark:text-blue-400'}`}>
+                    {isPlayingRain ? <span className="animate-pulse">❚❚</span> : <CloudRain className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h4 className="text-slate-800 dark:text-white font-medium text-sm">Sleep Sound</h4>
+                    <p className="text-[10px] text-slate-500">{isPlayingRain ? 'Playing...' : 'Hujan & Petir'}</p>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* breathing widget */}
+              <motion.div
+                variants={itemVars}
+                onClick={() => setShowBreathingModal(true)}
+                className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-white/40 to-white/60 dark:from-indigo-900/20 dark:to-purple-900/20 backdrop-blur-md border border-white/40 dark:border-white/5 p-6 flex items-center justify-between shadow-sm dark:shadow-none cursor-pointer hover:bg-white/60 dark:hover:bg-indigo-900/30 transition-all group"
+              >
+                <div className="relative z-10">
+                  <h4 className="text-slate-800 dark:text-white font-bold mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Tarik Napas</h4>
+                  <p className="text-xs text-slate-500 max-w-[120px]">Ikuti lingkaran ini untuk menenangkan pikiranmu.</p>
+                </div>
+                <div className="relative w-16 h-16 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full animate-ping opacity-20"></div>
+                  {/* <div className="w-10 h-10 bg-indigo-500 rounded-full animate-[pulse_4s_ease-in-out_infinite] shadow-[0_0_20px_rgba(99,102,241,0.5)] group-hover:scale-110 transition-transform"></div> */}
+                  <Wind className="w-10 h-10 text-indigo-500 group-hover:scale-110 transition-transform" />
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Right Column: Statistics */}
+          <div className="flex flex-col lg:w-1/3">
+            {/* last statistics */}
+            {lastAssessment && (
+              <motion.div variants={itemVars} className={`${cardBaseStyle} flex items-center justify-between ${hoverCardStyle} hover:border-slate-300 dark:hover:border-white/20 h-full`} onClick={onVerifyHistory}>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400">
+                    <Activity className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-slate-800 dark:text-white text-sm font-bold">Terakhir Dicek</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {new Date(lastAssessment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs text-slate-500 block">Stress Level</span>
+                  <span className={`text-sm font-bold ${lastAssessment.stress_score > 14 ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
+                    {lastAssessment.stress_score > 14 ? 'Tinggi' : 'Normal'}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+        </div>
         <BreathingModal
           isOpen={showBreathingModal}
           onClose={() => setShowBreathingModal(false)}
         />
-
-        {/* last statistics */}
-        {lastAssessment && (
-          <motion.div variants={itemVars} className={`md:col-span-2 lg:col-span-1 ${cardBaseStyle} flex items-center justify-between ${hoverCardStyle} hover:border-slate-300 dark:hover:border-white/20`} onClick={onVerifyHistory}>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400">
-                <Activity className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="text-slate-800 dark:text-white text-sm font-bold">Terakhir Dicek</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {new Date(lastAssessment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-xs text-slate-500 block">Stress Level</span>
-              <span className={`text-sm font-bold ${lastAssessment.stress_score > 14 ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
-                {lastAssessment.stress_score > 14 ? 'Tinggi' : 'Normal'}
-              </span>
-            </div>
-          </motion.div>
-        )}
-
       </div>
     </motion.div>
   );
