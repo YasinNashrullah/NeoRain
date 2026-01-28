@@ -41,7 +41,7 @@ const ScoreReferenceModal = ({ isOpen, onClose }) => (
                 >
                     <div className="p-6 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
                         <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                            <Info className="w-6 h-6 text-indigo-500" /> Panduan Skor (DASS-42)
+                            <Info className="w-6 h-6 text-indigo-500" /> Panduan Skor (DASS-21)
                         </h3>
                         <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition-colors">
                             <X className="w-5 h-5 text-slate-500" />
